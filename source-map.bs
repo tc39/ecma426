@@ -42,6 +42,7 @@ spec:url; type:dfn; for:/; text:url
 spec:infra; type:dfn;
     text:list
     for:list; text:for each
+    for:list; text:is not empty
 </pre>
 <pre class="anchors">
 urlPrefix:https://tc39.es/ecma262/#; type:dfn; spec:ECMA-262
@@ -363,7 +364,8 @@ following steps:
 1. Let |jsonMap| be the result of [=parse a JSON string to an Infra value|parsing a JSON string to
     an Infra value=] |str|.
 1. If |jsonMap| is not a [=/map=], report an error and abort these steps.
-1. [=Decode a source map=] given |jsonMap| and |baseURL|, and return its result if any.
+1. If |jsonMap|[`"sections"`] [=map/exists=], [=decode an index source map=] given |jsonMap| and |baseURL|, and return its result if any.
+1. Otherwise, [=decode a source map=] given |jsonMap| and |baseURL|, and return its result if any.
 
 To <dfn export>decode a source map</dfn> given a [=string=]-keyed [=/map=] |jsonMap| and a [=/URL=]
 |baseURL|, run the following steps:
@@ -794,6 +796,68 @@ Section objects have the following fields:
 
 The sections shall be sorted by starting position and the represented sections
 shall not overlap.
+
+## Decoding an Index Map ## {#decoding-index-map}
+
+To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=] |jsonMap| and a [=/URL=]
+|baseURL|, run the following steps:
+1. <p>Assert: |jsonMap|[`"sections"`] [=map/exists=].</p>
+1. If |jsonMap|[`"sections"`] is not a [=list=], report an error.
+1. If |jsonMap|[`"version"`] does not [=map/exist=] or |jsonMap|[`"version"`] is not 3,
+    [=optionally report an error=].
+1. Let |sourceMap| be a new [=decoded source map=].
+1. Set |sourceMap|'s [=decoded source map/file=] to [=optionally get a string=] `"file"` from |jsonMap|.
+1. Let |previousOffset| be null.
+1. Let |previousLastMapping| be null.
+1. [=For each=] |section| of |jsonMap|[`"sections"`]:
+    1. If |section| is not a [=/map=], [=optionally report an error=] and continue with the next iteration.
+    1. If |section|[`"offset"`] does not [=map/exist=], then report an error.
+    1. Let |offsetLine| be |section|[`"offset"`][`"line"`].
+    1. Let |offsetColumn| be |section|[`"offset"`][`"column"`].
+    1. If |offsetLine| is not a number, [=optionally report an error=].
+    1. If |offsetColumn| is not a number, [=optionally report an error=].
+    1. If |previousOffset| is not null,
+        1. If |previousLastMapping| is not null,
+            1. If |offsetLine| is less than |previousLastMapping|'s [=decoded mapping/generatedLine=], [=optionally report an error=].
+            1. If |offsetLine| is equal to |previousLastMapping|'s [=decoded mapping/generatedLine=] and |offsetColumn| is less than |previousLastMapping|'s [=decoded mapping/generatedColumn=], [=optionally report an error=].
+        1. Otherwise,
+            1. If |offsetLine| is less than |previousOffset|[`"line"`], [=optionally report an error=].
+            1. If |offsetLine| is equal to |previousOffset|[`"line"`] and |offsetColumn| is less than |previousOffset|[`"column"`], [=optionally report an error=].
+
+        Note: This part of the decoding algorithm checks that index source map sections do not overlap. While it is
+              expected that generators should not produce index source maps with overlapping sections, source map
+              consumers may choose instead to only check the simpler condition that the sections are ordered and therefore
+              that offsets appear in increasing order.
+
+    1. If |section|[`"map"`] does not [=map/exist=], then report an error.
+    1. Let |decodedSection| be the result of [=decoding a source map=] given |section|[`"map"`] and |baseURL|.
+    1. If the previous step reported an error, [=optionally report an error=] and continue with the next iteration.
+    1. Set |sourceMap|'s [=decoded source map/sources=] to the result of [=list/extending=] |sourceMap|'s [=decoded source map/sources=] with |decodedSection|'s [=decoded source map/sources=].
+    1. Let |offsetMappings| be a new [=list=].
+    1. [=For each=] |mapping| of |decodedSection|'s [=decoded source map/mappings=]:
+        1. Let |offsetMapping| be a new [=decoded mapping=].
+        1. Set |offsetMapping|'s [=decoded mapping/generatedLine=] to |mapping|'s [=decoded mapping/generatedLine=] + |offsetLine|.
+        1. Set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=] + |offsetColumn|.
+        1. Set |offsetMapping|'s [=decoded mapping/originalSource=] to |mapping|'s [=decoded mapping/originalSource=].
+        1. Set |offsetMapping|'s [=decoded mapping/originalLine=] to |mapping|'s [=decoded mapping/originalLine=].
+        1. Set |offsetMapping|'s [=decoded mapping/originalColumn=] to |mapping|'s [=decoded mapping/originalColumn=].
+        1. Set |offsetMapping|'s [=decoded mapping/name=] to |mapping|'s [=decoded mapping/name=].
+        1. [=list/Append=] |offsetMapping| to |offsetMappings|.
+    1. Set |sourceMap|'s [=decoded source map/mappings=] to the result of [=list/extending=] |sourceMap|'s [=decoded source map/mappings=] with |offsetMappings|.
+    1. Set |previousOffset| to |section|[`"offset"`].
+    1. Let |sortedMappings| be the result of [=list/sorting=] |offsetMappings| in ascending order, with an item |a| being less than |b| if |a| is [=generated position less than=] |b|.
+    1. Set |previousLastMapping| to the last item of |sortedMappings| if |sortedMappings| [=is not empty=] and to null otherwise.
+
+    Note: See the above note about section overlap and order. These last two steps of storing the last mapping of each
+          section are only necessary to enforce the conditions concerning section overlap.
+
+1. Return |sourceMap|.
+
+A [=decoded mapping=] |a| is <dfn>generated position less than</dfn> a [=decoded mapping=] b if the following steps return true:
+
+1. If |a|'s [=decoded mapping/generatedLine=] is less than |b|'s [=decoded mapping/generatedLine=], return true.
+1. If |a|'s [=decoded mapping/generatedLine=] is equal to |b|'s [=decoded mapping/generatedLine=] and |a|'s [=decoded mapping/generatedColumn=] is less than |b|'s [=decoded mapping/generatedColumn=], return true.
+1. Otherwise, return false.
 
 Retrieving source maps {#linking-and-fetching}
 ========================================================
