@@ -832,7 +832,7 @@ To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=
     1. If |section|[`"map"`] does not [=map/exist=], then report an error.
     1. Let |decodedSection| be the result of [=decoding a source map=] given |section|[`"map"`] and |baseURL|.
     1. If the previous step reported an error, [=optionally report an error=] and continue with the next iteration.
-    1. Set |sourceMap|'s [=decoded source map/sources=] to the result of [=list/extending=] |sourceMap|'s [=decoded source map/sources=] with |decodedSection|'s [=decoded source map/sources=].
+    1. [=list/Extend=] |sourceMap|'s [=decoded source map/sources=] with |decodedSection|'s [=decoded source map/sources=].
     1. Let |offsetMappings| be a new [=list=].
     1. Let |firstLine| be null.
     1. [=For each=] |mapping| of |decodedSection|'s [=decoded source map/mappings=]:
@@ -846,7 +846,7 @@ To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=
         1. Set |offsetMapping|'s [=decoded mapping/originalColumn=] to |mapping|'s [=decoded mapping/originalColumn=].
         1. Set |offsetMapping|'s [=decoded mapping/name=] to |mapping|'s [=decoded mapping/name=].
         1. [=list/Append=] |offsetMapping| to |offsetMappings|.
-    1. Set |sourceMap|'s [=decoded source map/mappings=] to the result of [=list/extending=] |sourceMap|'s [=decoded source map/mappings=] with |offsetMappings|.
+    1. [=list/Extend=] |sourceMap|'s [=decoded source map/mappings=] with |offsetMappings|.
     1. Set |previousOffset| to |section|[`"offset"`].
     1. Let |sortedMappings| be the result of [=list/sorting=] |offsetMappings| in ascending order, with an item |a| being less than |b| if |a| is [=generated position less than=] |b|.
     1. Set |previousLastMapping| to the last item of |sortedMappings| if |sortedMappings| [=is not empty=] and to null otherwise.
