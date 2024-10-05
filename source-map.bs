@@ -834,12 +834,10 @@ To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=
     1. If the previous step reported an error, [=optionally report an error=] and continue with the next iteration.
     1. [=list/Extend=] |sourceMap|'s [=decoded source map/sources=] with |decodedSection|'s [=decoded source map/sources=].
     1. Let |offsetMappings| be a new [=list=].
-    1. Let |firstLine| be null.
     1. [=For each=] |mapping| of |decodedSection|'s [=decoded source map/mappings=]:
         1. Let |offsetMapping| be a new [=decoded mapping=].
         1. Set |offsetMapping|'s [=decoded mapping/generatedLine=] to |mapping|'s [=decoded mapping/generatedLine=] + |offsetLine|.
-        1. If |firstLine| is null, set |firstLine| to |offsetMapping|'s [=decoded mapping/generatedLine=].
-        1. If |offsetMapping|'s [=decoded mapping/generatedLine=] is equal to |firstLine|, set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=] + |offsetColumn|.
+        1. If |offsetMapping|'s [=decoded mapping/generatedLine=] is equal to 1, set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=] + |offsetColumn|.
         1. Otherwise, set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=].
         1. Set |offsetMapping|'s [=decoded mapping/originalSource=] to |mapping|'s [=decoded mapping/originalSource=].
         1. Set |offsetMapping|'s [=decoded mapping/originalLine=] to |mapping|'s [=decoded mapping/originalLine=].
