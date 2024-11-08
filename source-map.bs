@@ -787,11 +787,11 @@ the file format is JSON with a top-level object.  It shares the [=json/version=]
 
 Section objects have the following fields:
 
-* <dfn dfn-for="index-map"><code>offset</code></dfn> is an object with two fields, `line` and `column`,
+* <code>offset</code> is an object with two fields, `line` and `column`,
     that represent the offset into generated code that the referenced source map
     represents.
 
-* <dfn dfn-for="index-map"><code>map</code></dfn> is an embedded complete source map object.
+* <code>map</code> is an embedded complete source map object.
     An embedded map does not inherit any values from the containing index map.
 
 The sections shall be sorted by starting position and the represented sections
