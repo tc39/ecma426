@@ -92,6 +92,7 @@ urlPrefix:https://tc39.es/ecma262/#; type:dfn; spec:ECMA-262
     url:prod-VariableStatement; text:VariableStatement
     url:sec-parameter-lists; text:Parameter List
     url:sec-syntactic-grammar; text:Syntactic Grammar
+    url:integral-number; text:integral Number
 
 urlPrefix:https://webassembly.github.io/spec/core/; type:dfn; spec:wasm
     url:binary/modules.html#binary-customsec; text:custom section
@@ -815,8 +816,8 @@ To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=
     1. If |section|[`"offset"`] does not [=map/exist=], then report an error.
     1. Let |offsetLine| be |section|[`"offset"`][`"line"`].
     1. Let |offsetColumn| be |section|[`"offset"`][`"column"`].
-    1. If |offsetLine| is not a number, [=optionally report an error=].
-    1. If |offsetColumn| is not a number, [=optionally report an error=].
+    1. If |offsetLine| is not an [=integral Number=], [=optionally report an error=] and set |offsetLine| to 0.
+    1. If |offsetColumn| is not an [=integral Number=], [=optionally report an error=] and set |offsetColumn| to 0.
     1. If |previousOffset| is not null,
         1. If |offsetLine| is less than |previousOffset|[`"line"`], [=optionally report an error=].
         1. If |offsetLine| is equal to |previousOffset|[`"line"`] and |offsetColumn| is less than |previousOffset|[`"column"`], [=optionally report an error=].
