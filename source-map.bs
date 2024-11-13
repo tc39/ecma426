@@ -808,6 +808,7 @@ To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=
 1. Let |sourceMap| be a new [=decoded source map=].
 1. Set |sourceMap|'s [=decoded source map/file=] to [=optionally get a string=] `"file"` from |jsonMap|.
 1. Let |previousOffset| be null.
+1. Let |previousFirstMapping| be null.
 1. Let |previousLastMapping| be null.
 1. [=For each=] |section| of |jsonMap|[`"sections"`]:
     1. If |section| is not a [=/map=], [=optionally report an error=] and continue with the next iteration.
@@ -817,18 +818,8 @@ To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=
     1. If |offsetLine| is not a number, [=optionally report an error=].
     1. If |offsetColumn| is not a number, [=optionally report an error=].
     1. If |previousOffset| is not null,
-        1. If |previousLastMapping| is not null,
-            1. If |offsetLine| is less than |previousLastMapping|'s [=decoded mapping/generatedLine=], [=optionally report an error=].
-            1. If |offsetLine| is equal to |previousLastMapping|'s [=decoded mapping/generatedLine=] and |offsetColumn| is less than |previousLastMapping|'s [=decoded mapping/generatedColumn=], [=optionally report an error=].
-        1. Otherwise,
-            1. If |offsetLine| is less than |previousOffset|[`"line"`], [=optionally report an error=].
-            1. If |offsetLine| is equal to |previousOffset|[`"line"`] and |offsetColumn| is less than |previousOffset|[`"column"`], [=optionally report an error=].
-
-        Note: This part of the decoding algorithm checks that index source map sections do not overlap. While it is
-              expected that generators should not produce index source maps with overlapping sections, source map
-              consumers may choose instead to only check the simpler condition that the sections are ordered and therefore
-              that offsets appear in increasing order.
-
+        1. If |offsetLine| is less than |previousOffset|[`"line"`], [=optionally report an error=].
+        1. If |offsetLine| is equal to |previousOffset|[`"line"`] and |offsetColumn| is less than |previousOffset|[`"column"`], [=optionally report an error=].
     1. If |section|[`"map"`] does not [=map/exist=], then report an error.
     1. Let |decodedSection| be the result of [=decoding a source map=] given |section|[`"map"`] and |baseURL|.
     1. If the previous step reported an error, [=optionally report an error=] and continue with the next iteration.
@@ -844,13 +835,20 @@ To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=
         1. Set |offsetMapping|'s [=decoded mapping/originalColumn=] to |mapping|'s [=decoded mapping/originalColumn=].
         1. Set |offsetMapping|'s [=decoded mapping/name=] to |mapping|'s [=decoded mapping/name=].
         1. [=list/Append=] |offsetMapping| to |offsetMappings|.
+
+        Note: Implementations may choose to represent index source map sections without appending the mappings together,
+              for example, by storing each section separately and conducting a binary search.
     1. [=list/Extend=] |sourceMap|'s [=decoded source map/mappings=] with |offsetMappings|.
     1. Set |previousOffset| to |section|[`"offset"`].
     1. Let |sortedMappings| be the result of [=list/sorting=] |offsetMappings| in ascending order, with an item |a| being less than |b| if |a| is [=generated position less than=] |b|.
-    1. Set |previousLastMapping| to the last item of |sortedMappings| if |sortedMappings| [=is not empty=] and to null otherwise.
+    1. If |previousFirstMapping| and |previousLastMapping| are not null,
+        1. If |previousLastMapping| is not [=generated position less than=] the first [=decoded mapping=] of |sortedMappings|, [=optionally report an error=].
 
-    Note: See the above note about section overlap and order. These last two steps of storing the last mapping of each
-          section are only necessary to enforce the conditions concerning section overlap.
+        Note: This part of the decoding algorithm checks that index source map sections are ordered and do not overlap.
+              While it is expected that generators should not produce index source maps with overlapping sections, source map
+              consumers may, for example, only check the simpler condition that the section offsets are ordered.
+    1. Set |previousFirstMapping| to the first item of |sortedMappings| if |sortedMappings| [=is not empty=].
+    1. Set |previousLastMapping| to the last item of |sortedMappings| if |sortedMappings| [=is not empty=].
 
 1. Return |sourceMap|.
 
