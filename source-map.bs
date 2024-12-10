@@ -798,7 +798,7 @@ Section objects have the following fields:
 The sections shall be sorted by starting position and the represented sections
 shall not overlap.
 
-## Decoding an Index Map ## {#decoding-index-map}
+## Decoding an index map ## {#decoding-index-map}
 
 To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=] |jsonMap| and a [=/URL=]
 |baseURL|, run the following steps:
