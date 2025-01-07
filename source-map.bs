@@ -256,7 +256,7 @@ For the purposes of this document, the following terms and definitions apply.
     and the "digits" are encoded into the string least significant first, and where the least
     significant bit of the first digit is used as the sign bit.
 
-    Note: The values that can be represented by the VLQ Base64 encoded are limited to
+    Note: The values that can be represented by the VLQ Base64 encoding are limited to
     32-bit quantities until some use case for larger values is presented.  This
     means that values exceeding 32-bits are invalid and implementations may reject
     them. The sign bit is counted towards the limit, but the continuation bits are not.
