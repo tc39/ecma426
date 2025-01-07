@@ -1490,7 +1490,7 @@ Possible extra rowspan handling
 </style>
   <meta content="Bikeshed version ac5ea272d, updated Fri Dec 6 15:45:15 2024 -0800" name="generator">
   <link href="https://tc39.es/ecma426/" rel="canonical">
-  <meta content="e49b38677407aea2f0b3738374b35bc607b8b6cc" name="revision">
+  <meta content="1581d569a8e22f9bc4ddbb5398870d06d234adc6" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
   /* match list styles of ecmarkup */
@@ -2182,7 +2182,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">Source map format specification</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Stage 0: Strawman, <time class="dt-updated" datetime="2024-12-09">9 December 2024</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Stage 0: Strawman, <time class="dt-updated" datetime="2025-01-07">7 January 2025</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2357,7 +2357,7 @@ latest edition of the referenced document (including any amendments) applies.</p
       <p>A <a data-link-type="biblio" href="#biblio-base64" title="IETF RFC 4648, The Base16, Base32, and Base64 Data Encodings">[base64]</a> value, where the most significant bit (the 6th bit) is used as the continuation bit,
 and the "digits" are encoded into the string least significant first, and where the least
 significant bit of the first digit is used as the sign bit.</p>
-      <p class="note" role="note"><span class="marker">Note:</span> The values that can be represented by the VLQ Base64 encoded are limited to
+      <p class="note" role="note"><span class="marker">Note:</span> The values that can be represented by the VLQ Base64 encoding are limited to
 32-bit quantities until some use case for larger values is presented.  This
 means that values exceeding 32-bits are invalid and implementations may reject
 them. The sign bit is counted towards the limit, but the continuation bits are not.</p>
