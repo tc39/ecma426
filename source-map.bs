@@ -612,9 +612,7 @@ To <dfn>decode a base64 VLQ</dfn> from a [=string=] |segment| given a [=position
     1. If |value| is greater than or equal to 2<sup>31</sup>, throw an error.
     1. Multiply |nextShift| by 32.
 1. Advance |position| by 1.
-1. If |value| is 0 and |sign| is -1, return -2147483648.
-
-    NOTE: -2147483648 is the smallest 32-bit signed integer.
+1. If |value| is 0 and |sign| is -1, return -2<sup>31</sup>.
 1. Return |value| * |sign|.
 
 NOTE: In addition to returning the decoded value, this algorithm updates the [=position variable=]
