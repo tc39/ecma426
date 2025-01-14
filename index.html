@@ -1490,7 +1490,7 @@ Possible extra rowspan handling
 </style>
   <meta content="Bikeshed version ac5ea272d, updated Fri Dec 6 15:45:15 2024 -0800" name="generator">
   <link href="https://tc39.es/ecma426/" rel="canonical">
-  <meta content="1581d569a8e22f9bc4ddbb5398870d06d234adc6" name="revision">
+  <meta content="5bf2e0ea2e84920fdbd16a237a9228747e484522" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
   /* match list styles of ecmarkup */
@@ -2182,7 +2182,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">Source map format specification</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Stage 0: Strawman, <time class="dt-updated" datetime="2025-01-07">7 January 2025</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Stage 0: Strawman, <time class="dt-updated" datetime="2025-01-14">14 January 2025</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2801,8 +2801,7 @@ with <code class="highlight"><c- p>,</c-></code> and <code class="highlight"><c-
      <li data-md>
       <p>Advance <var>position</var> by 1.</p>
      <li data-md>
-      <p>If <var>value</var> is 0 and <var>sign</var> is -1, return -2147483648.</p>
-      <p class="note" role="note"><span class="marker">NOTE:</span> -2147483648 is the smallest 32-bit signed integer.</p>
+      <p>If <var>value</var> is 0 and <var>sign</var> is -1, return -2<sup>31</sup>.</p>
      <li data-md>
       <p>Return <var>value</var> * <var>sign</var>.</p>
     </ol>
