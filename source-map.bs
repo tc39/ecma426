@@ -228,7 +228,7 @@ latest edition of the referenced document (including any amendments) applies.
 <h3 class="no-ref" id="normative"><span class="content">Normative references</span></h3>
 <div class="no-ref">
 <dl>
- </dd><dt id="biblio-ecma-262" data-no-self-link="">\[ECMA-262]
+ <dt id="biblio-ecma-262" data-no-self-link="">\[ECMA-262]
  </dt><dd><a href="https://tc39.es/ecma262/"><cite>ECMAScript® Language Specification</cite></a>. Standards Track. URL: <a href="https://tc39.es/ecma262/">https://tc39.es/ecma262/</a>
  </dd><dt id="biblio-json" data-no-self-link="">\[JSON]
  </dt><dd><a href="https://tc39.es/ecma404/"><cite>The JSON data interchange syntax</cite></a>. Standards Track. URL: <a href="https://tc39.es/ecma404/">https://tc39.es/ecma404/</a>
@@ -631,7 +631,7 @@ as per [=ECMAScript Lexical Grammar=]. [=decoded mapping|Mapping=] entries shall
     [=Comment=], [=HashbangComment=], [=StringLiteral=], [=Template=],
     [=TemplateSubstitutionTail=], [=WhiteSpace=] and [=LineTerminator=].
 
-### [=decoded mapping/Names=] for generated JavaScript code
+### [=decoded mapping/Names=] for generated JavaScript code ### {#names-javascript}
 
 Source map generators should create a [=decoded mapping|mapping=] entry with a
 [=decoded mapping/name=] field for a JavaScript token, if
@@ -1117,7 +1117,7 @@ JavaScript-style single-line comments.
 <h2 class="no-num" id="bibliography">Bibliography</h2>
 
 <dl>
- </dd><dt id="biblio-encoding" data-no-self-link="">\[ENCODING]
+ <dt id="biblio-encoding" data-no-self-link="">\[ENCODING]
  </dt><dd>Anne van Kesteren. <a href="https://encoding.spec.whatwg.org/"><cite>Encoding Standard</cite></a>. Living Standard. URL: <a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>
  </dd><dt id="biblio-fetch" data-no-self-link="">\[FETCH]
  </dt><dd>Anne van Kesteren. <a href="https://fetch.spec.whatwg.org/"><cite>Fetch Standard</cite></a>. Living Standard. URL: <a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>
@@ -1136,7 +1136,7 @@ JavaScript-style single-line comments.
 </dd></dl>
 </div>
 
-<h2 class="no-num" id="license">Copyright & Software License</h2>
+<h2 class="no-num" id="copyright-and-license">Copyright & Software License</h2>
 
 Ecma International
 
