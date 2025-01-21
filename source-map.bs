@@ -835,7 +835,7 @@ To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=
     1. [=For each=] |mapping| of |decodedSection|'s [=decoded source map/mappings=]:
         1. Let |offsetMapping| be a new [=decoded mapping=].
         1. Set |offsetMapping|'s [=decoded mapping/generatedLine=] to |mapping|'s [=decoded mapping/generatedLine=] + |offsetLine|.
-        1. If |offsetMapping|'s [=decoded mapping/generatedLine=] is equal to 0, set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=] + |offsetColumn|.
+        1. If |mapping|'s [=decoded mapping/generatedLine=] is equal to 0, set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=] + |offsetColumn|.
         1. Otherwise, set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=].
         1. Set |offsetMapping|'s [=decoded mapping/originalSource=] to |mapping|'s [=decoded mapping/originalSource=].
         1. Set |offsetMapping|'s [=decoded mapping/originalLine=] to |mapping|'s [=decoded mapping/originalLine=].
