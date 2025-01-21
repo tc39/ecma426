@@ -1488,9 +1488,9 @@ Possible extra rowspan handling
 		}
 	}
 </style>
-  <meta content="Bikeshed version ac5ea272d, updated Fri Dec 6 15:45:15 2024 -0800" name="generator">
+  <meta content="Bikeshed version c67c745b1, updated Fri Jan 17 14:27:28 2025 -0800" name="generator">
   <link href="https://tc39.es/ecma426/" rel="canonical">
-  <meta content="5bf2e0ea2e84920fdbd16a237a9228747e484522" name="revision">
+  <meta content="099aacc61d64290b25cff87709ab181f97141657" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
   /* match list styles of ecmarkup */
@@ -2182,7 +2182,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">Source map format specification</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Stage 0: Strawman, <time class="dt-updated" datetime="2025-01-14">14 January 2025</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Stage 0: Strawman, <time class="dt-updated" datetime="2025-01-21">21 January 2025</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2225,7 +2225,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
        <a href="#mappings-structure"><span class="secno">5.1</span> <span class="content">Mappings structure</span></a>
        <ol class="toc">
         <li><a href="#mappings-javascript"><span class="secno">5.1.1</span> <span class="content"><span>Mappings</span> for generated JavaScript code</span></a>
-        <li><a href="#names-for-generated-javascript-code"><span class="secno">5.1.2</span> <span class="content"><span>Names</span> for generated JavaScript code</span></a>
+        <li><a href="#names-javascript"><span class="secno">5.1.2</span> <span class="content"><span>Names</span> for generated JavaScript code</span></a>
        </ol>
       <li><a href="#resolving-sources"><span class="secno">5.2</span> <span class="content">Resolving sources</span></a>
       <li><a href="#extensions"><span class="secno">5.3</span> <span class="content">Extensions</span></a>
@@ -2269,10 +2269,10 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <li><a href="#issues-index"><span class="secno"></span> <span class="content">Issues Index</span></a>
     <li><a href="#bibliography"><span class="secno"></span> <span class="content">Bibliography</span></a>
     <li>
-     <a href="#license"><span class="secno"></span> <span class="content">Copyright &amp; Software License</span></a>
+     <a href="#copyright-and-license"><span class="secno"></span> <span class="content">Copyright &amp; Software License</span></a>
      <ol class="toc">
       <li><a href="#copyright"><span class="secno"></span> <span class="content">Copyright Notice</span></a>
-      <li><a href="#license①"><span class="secno"></span> <span class="content">License</span></a>
+      <li><a href="#license"><span class="secno"></span> <span class="content">License</span></a>
      </ol>
    </ol>
   </nav>
@@ -2476,8 +2476,7 @@ an Infra value</a> <var>str</var>.</p>
        <li data-md>
         <p><a data-link-type="dfn" href="#decode-source-map-sources-sources" id="ref-for-decode-source-map-sources-sources">sources</a> set to <a data-link-type="dfn" href="#optionally-get-a-list-of-optional-strings" id="ref-for-optionally-get-a-list-of-optional-strings">optionally get a list of optional strings</a> <code class="highlight"><c- u>"sources"</c-></code> from <var>jsonMap</var>;</p>
        <li data-md>
-        <p><a data-link-type="dfn" href="#decode-source-map-sources-sourcescontent" id="ref-for-decode-source-map-sources-sourcescontent">sourcesContent</a> set to <a data-link-type="dfn" href="#optionally-get-a-list-of-optional-strings" id="ref-for-optionally-get-a-list-of-optional-strings①">optionally get a list of optional
-strings</a> <code class="highlight"><c- u>"sourcesContent"</c-></code> from <var>jsonMap</var>;</p>
+        <p><a data-link-type="dfn" href="#decode-source-map-sources-sourcescontent" id="ref-for-decode-source-map-sources-sourcescontent">sourcesContent</a> set to <a data-link-type="dfn" href="#optionally-get-a-list-of-optional-strings" id="ref-for-optionally-get-a-list-of-optional-strings①">optionally get a list of optional strings</a> <code class="highlight"><c- u>"sourcesContent"</c-></code> from <var>jsonMap</var>;</p>
        <li data-md>
         <p><a data-link-type="dfn" href="#decode-source-map-sources-ignoredsources" id="ref-for-decode-source-map-sources-ignoredsources">ignoredSources</a> set to <a data-link-type="dfn" href="#optionally-get-a-list-of-array-indexes" id="ref-for-optionally-get-a-list-of-array-indexes">optionally get a list of array indexes</a> <code class="highlight"><c- u>"ignoreList"</c-></code> from <var>jsonMap</var>.</p>
       </ul>
@@ -2707,8 +2706,7 @@ and <a data-link-type="dfn" href="#decoded-mapping-name" id="ref-for-decoded-map
            <li data-md>
             <p>Increase <var>originalColumn</var> by <var>relativeOriginalColumn</var>.</p>
            <li data-md>
-            <p>If any of <var>sourceIndex</var>, <var>originalLine</var>, or <var>originalColumn</var> are less than 0, or if <var>sourceIndex</var> is greater than or equal to <var>sources</var>’s <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-size" id="ref-for-list-size①">size</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①②">optionally
-report an error</a>.</p>
+            <p>If any of <var>sourceIndex</var>, <var>originalLine</var>, or <var>originalColumn</var> are less than 0, or if <var>sourceIndex</var> is greater than or equal to <var>sources</var>’s <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-size" id="ref-for-list-size①">size</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①②">optionally report an error</a>.</p>
            <li data-md>
             <p>Else,</p>
             <ol>
@@ -2727,14 +2725,12 @@ report an error</a>.</p>
              <li data-md>
               <p>Increase <var>nameIndex</var> by <var>relativeNameIndex</var>.</p>
              <li data-md>
-              <p>If <var>nameIndex</var> is negative or greater than or equal to <var>names</var>’s <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-size" id="ref-for-list-size②">size</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①③">optionally
-report an error</a>.</p>
+              <p>If <var>nameIndex</var> is negative or greater than or equal to <var>names</var>’s <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-size" id="ref-for-list-size②">size</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①③">optionally report an error</a>.</p>
              <li data-md>
               <p>Else, set <var>decodedMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-name" id="ref-for-decoded-mapping-name①">name</a> to <var>names</var>[<var>nameIndex</var>].</p>
             </ol>
            <li data-md>
-            <p>If <var>position</var> does not point to the end of <var>segment</var>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①④">optionally report an
-error</a>.</p>
+            <p>If <var>position</var> does not point to the end of <var>segment</var>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①④">optionally report an error</a>.</p>
           </ol>
         </ol>
        <li data-md>
@@ -2814,7 +2810,7 @@ with <code class="highlight"><c- p>,</c-></code> and <code class="highlight"><c-
      <li data-md>
       <p>any code point of the source text matched by <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-Comment" id="ref-for-prod-Comment">Comment</a>, <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-HashbangComment" id="ref-for-prod-HashbangComment">HashbangComment</a>, <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-StringLiteral" id="ref-for-prod-StringLiteral">StringLiteral</a>, <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-Template" id="ref-for-prod-Template">Template</a>, <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-TemplateSubstitutionTail" id="ref-for-prod-TemplateSubstitutionTail">TemplateSubstitutionTail</a>, <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-WhiteSpace" id="ref-for-prod-WhiteSpace">WhiteSpace</a> and <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-LineTerminator" id="ref-for-prod-LineTerminator">LineTerminator</a>.</p>
     </ol>
-    <h4 class="heading settled" data-level="5.1.2" id="names-for-generated-javascript-code"><span class="secno">5.1.2. </span><span class="content"><a data-link-type="dfn" href="#decoded-mapping-name" id="ref-for-decoded-mapping-name②">Names</a> for generated JavaScript code</span><a class="self-link" href="#names-for-generated-javascript-code"></a></h4>
+    <h4 class="heading settled" data-level="5.1.2" id="names-javascript"><span class="secno">5.1.2. </span><span class="content"><a data-link-type="dfn" href="#decoded-mapping-name" id="ref-for-decoded-mapping-name②">Names</a> for generated JavaScript code</span><a class="self-link" href="#names-javascript"></a></h4>
     <p>Source map generators should create a <a data-link-type="dfn" href="#decoded-mapping" id="ref-for-decoded-mapping⑤">mapping</a> entry with a <a data-link-type="dfn" href="#decoded-mapping-name" id="ref-for-decoded-mapping-name③">name</a> field for a JavaScript token, if</p>
     <ol>
      <li data-md>
@@ -3534,7 +3530,7 @@ U+0060 (`), U+0022 ("), or U+0027 ('), or the the sequence U+002A U+002F (*/).</
      <dd><a href="https://en.wikipedia.org/wiki/Variable-length_quantity"><cite>Variable-length quantity</cite></a>. reference article. URL: <a href="https://en.wikipedia.org/wiki/Variable-length_quantity">https://en.wikipedia.org/wiki/Variable-length_quantity</a> 
     </dl>
    </div>
-   <h2 class="no-num heading settled" id="license"><span class="content">Copyright &amp; Software License</span><a class="self-link" href="#license"></a></h2>
+   <h2 class="no-num heading settled" id="copyright-and-license"><span class="content">Copyright &amp; Software License</span><a class="self-link" href="#copyright-and-license"></a></h2>
    <p>Ecma International</p>
    <p>Rue du Rhone 114</p>
    <p>CH-1204 Geneva</p>
@@ -3574,7 +3570,7 @@ International or its successors or assigns.</p>
 INTERNATIONAL DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY
 WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY OWNERSHIP RIGHTS OR ANY
 IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.</p>
-   <h3 class="heading settled" id="license①"><span class="content">License</span><a class="self-link" href="#license①"></a></h3>
+   <h3 class="heading settled" id="license"><span class="content">License</span><a class="self-link" href="#license"></a></h3>
    <p>All Software contained in this document ("Software") is protected by copyright
 and is being made available under the "BSD License", included below. This
 Software may be subject to third party rights (rights from parties other than
