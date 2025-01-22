@@ -457,7 +457,7 @@ The [=json/mappings=] data is broken down as follows:
 
 The fields in each segment are:
 
-1. The zero-based starting [=column=] of the line in the generated code that the segment represents.
+1. The zero-based starting [=/column=] of the line in the generated code that the segment represents.
     If this is the first field of the first segment, or the first segment following a new generated
     line (`;`), then this field holds the whole [=Base64 VLQ=].  Otherwise, this field contains
     a [=Base64 VLQ=] that is relative to the previous occurrence of this field.  <em>Note that this
@@ -472,7 +472,7 @@ The fields in each segment are:
     occurrence of this field, in which case the whole value is represented.  Shall be present if there
     is a source field.
 
-4. If present, the zero-based starting [=column=] of the line in the original source.  This
+4. If present, the zero-based starting [=/column=] of the line in the original source.  This
     field contains a [=Base64 VLQ=] relative to the previous occurrence of this field, unless it
     is the first occurrence of this field, in which case the whole value is represented. Shall
     be present if there is a source field.
@@ -494,23 +494,35 @@ misaligned with the original due to platform-specific line endings.
 
 A <dfn>decoded mapping</dfn> is a [=struct=] with the following fields:
 <dl dfn-for="decoded mapping">
-  <dt><dfn>generatedLine</dfn></dt>
-  <dd>A non-negative integer.</dd>
+  <dt><dfn>generatedPosition</dfn></dt>
+  <dd>A [=generated position=].</dd>
 
-  <dt><dfn>generatedColumn</dfn></dt>
-  <dd>A non-negative integer.</dd>
-
-  <dt><dfn>originalSource</dfn></dt>
-  <dd>A [=decoded source=] or null.</dd>
-
-  <dt><dfn>originalLine</dfn></dt>
-  <dd>A non-negative integer or null.</dd>
-
-  <dt><dfn>originalColumn</dfn></dt>
-  <dd>A non-negative integer or null.</dd>
+  <dt><dfn>originalPosition</dfn></dt>
+  <dd>A [=original position=] or null.</dd>
 
   <dt><dfn>name</dfn></dt>
   <dd>A [=string=] or null.</dd>
+</dl>
+
+A <dfn>generated position</dfn> is a [=struct=] with the following fields:
+<dl dfn-for="generated position">
+  <dt><dfn>line</dfn></dt>
+  <dd>A non-negative integer.</dd>
+
+  <dt><dfn>column</dfn></dt>
+  <dd>A non-negative integer.</dd>
+</dl>
+
+A <dfn>original position</dfn> is a [=struct=] with the following fields:
+<dl dfn-for="original position">
+  <dt><dfn>source</dfn></dt>
+  <dd>A [=decoded source=].</dd>
+
+  <dt><dfn>line</dfn></dt>
+  <dd>A non-negative integer.</dd>
+
+  <dt><dfn>column</dfn></dt>
+  <dd>A non-negative integer.</dd>
 </dl>
 
 
@@ -540,12 +552,12 @@ sources=] <dfn for="decode source map mappings">|sources|</dfn>, run the followi
                 with the next iteration.
             1. Increase |generatedColumn| by |relativeGeneratedColumn|. If the result is negative,
                 [=optionally report an error=] and continue with the next iteration.
+            1. Let |generatedPosition| be a new [=generated position=] whose
+                [=generated position/line=] is |generatedLine|,
+                and [=generated position/column=] is |generatedColumn|.
             1. Let |decodedMapping| be a new [=decoded mapping=] whose
-                [=decoded mapping/generatedLine=] is |generatedLine|,
-                [=decoded mapping/generatedColumn=] is |generatedColumn|,
-                [=decoded mapping/originalSource=] is null,
-                [=decoded mapping/originalLine=] is null,
-                [=decoded mapping/originalColumn=] is null,
+                [=decoded mapping/generatedPosition=] is |generatedPosition|,
+                [=decoded mapping/originalPosition=] is null,
                 and [=decoded mapping/name=] is null.
             1. Append |decodedMapping| to |decodedMappings|.
             1. [=Decode a base64 VLQ=] from |segment| given |position| and let |relativeSourceIndex|
@@ -564,10 +576,10 @@ sources=] <dfn for="decode source map mappings">|sources|</dfn>, run the followi
                 |sourceIndex| is greater than or equal to |sources|'s [=list/size=], [=optionally
                 report an error=].
             1. Else,
-                1. Set |decodedMapping|'s [=decoded mapping/originalSource=] to
-                    |sources|[|sourceIndex|].
-                1. Set |decodedMapping|'s [=decoded mapping/originalLine=] to |originalLine|.
-                1. Set |decodedMapping|'s [=decoded mapping/originalColumn=] to |originalColumn|.
+                1. Set |decodedMapping|'s [=decoded mapping/originalPosition=] to a new [=original position=] whose
+                    [=original position/source=] is |sources|[|sourceIndex|],
+                    [=original position/line=] is |originalLine|,
+                    and [=original position/column=] is |originalColumn|.
             1. [=Decode a base64 VLQ=] from |segment| given |position| and let |relativeNameIndex|
                 be the result.
             1. If |relativeNameIndex| is not null, then:
