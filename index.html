@@ -1490,7 +1490,7 @@ Possible extra rowspan handling
 </style>
   <meta content="Bikeshed version c67c745b1, updated Fri Jan 17 14:27:28 2025 -0800" name="generator">
   <link href="https://tc39.es/ecma426/" rel="canonical">
-  <meta content="099aacc61d64290b25cff87709ab181f97141657" name="revision">
+  <meta content="532ed0e43c710491cfe0917a5fd409d1216e3c87" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
   /* match list styles of ecmarkup */
@@ -2182,7 +2182,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">Source map format specification</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Stage 0: Strawman, <time class="dt-updated" datetime="2025-01-21">21 January 2025</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Stage 0: Strawman, <time class="dt-updated" datetime="2025-01-22">22 January 2025</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2234,6 +2234,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <a href="#index-map"><span class="secno">6</span> <span class="content">Index map</span></a>
      <ol class="toc">
       <li><a href="#section-object"><span class="secno">6.1</span> <span class="content">Section</span></a>
+      <li><a href="#decoding-index-map"><span class="secno">6.2</span> <span class="content">Decoding an index map</span></a>
      </ol>
     <li>
      <a href="#linking-and-fetching"><span class="secno">7</span> <span class="content">Retrieving source maps</span></a>
@@ -2454,16 +2455,18 @@ an Infra value</a> <var>str</var>.</p>
      <li data-md>
       <p>If <var>jsonMap</var> is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map">map</a>, report an error and abort these steps.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="#decode-a-source-map" id="ref-for-decode-a-source-map">Decode a source map</a> given <var>jsonMap</var> and <var>baseURL</var>, and return its result if any.</p>
+      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"sections"</c-></code>] <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists">exists</a>, <a data-link-type="dfn" href="#decode-an-index-source-map" id="ref-for-decode-an-index-source-map">decode an index source map</a> given <var>jsonMap</var> and <var>baseURL</var>, and return its result if any.</p>
+     <li data-md>
+      <p>Otherwise, <a data-link-type="dfn" href="#decode-a-source-map" id="ref-for-decode-a-source-map">decode a source map</a> given <var>jsonMap</var> and <var>baseURL</var>, and return its result if any.</p>
     </ol>
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="decode-a-source-map">decode a source map</dfn> given a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②">string</a>-keyed <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map①">map</a> <var>jsonMap</var> and a <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url" id="ref-for-concept-url②">URL</a> <var>baseURL</var>, run the following steps:</p>
     <ol>
      <li data-md>
-      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"version"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists">exist</a> or <var>jsonMap</var>[<code class="highlight"><c- u>"version"</c-></code>] is not 3, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①">optionally report an error</a>.</p>
+      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"version"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①">exist</a> or <var>jsonMap</var>[<code class="highlight"><c- u>"version"</c-></code>] is not 3, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①">optionally report an error</a>.</p>
      <li data-md>
-      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"mappings"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①">exist</a> or <var>jsonMap</var>[<code class="highlight"><c- u>"mappings"</c-></code>], is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string③">string</a>, throw an error.</p>
+      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"mappings"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②">exist</a> or <var>jsonMap</var>[<code class="highlight"><c- u>"mappings"</c-></code>], is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string③">string</a>, throw an error.</p>
      <li data-md>
-      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"sources"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists②">exist</a> or <var>jsonMap</var>[<code class="highlight"><c- u>"sources"</c-></code>], is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list②">list</a>, throw an error.</p>
+      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"sources"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③">exist</a> or <var>jsonMap</var>[<code class="highlight"><c- u>"sources"</c-></code>], is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list②">list</a>, throw an error.</p>
      <li data-md>
       <p>Let <var>sourceMap</var> be a new <a data-link-type="dfn" href="#decoded-source-map" id="ref-for-decoded-source-map">decoded source map</a>.</p>
      <li data-md>
@@ -2497,7 +2500,7 @@ an Infra value</a> <var>str</var>.</p>
 following steps:</p>
     <ol>
      <li data-md>
-      <p>If <var>jsonMap</var>[<var>key</var>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists③">exist</a>, return null.</p>
+      <p>If <var>jsonMap</var>[<var>key</var>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists④">exist</a>, return null.</p>
      <li data-md>
       <p>If <var>jsonMap</var>[<var>key</var>] is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string⑤">string</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error②">optionally report an error</a> and return null.</p>
      <li data-md>
@@ -2506,7 +2509,7 @@ following steps:</p>
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="optionally-get-a-list-of-strings">optionally get a list of strings</dfn> <var>key</var> from a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string⑥">string</a>-keyed <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map③">map</a> <var>jsonMap</var>, run the following steps:</p>
     <ol>
      <li data-md>
-      <p>If <var>jsonMap</var>[<var>key</var>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists④">exist</a>, return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list③">list</a>.</p>
+      <p>If <var>jsonMap</var>[<var>key</var>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists⑤">exist</a>, return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list③">list</a>.</p>
      <li data-md>
       <p>If <var>jsonMap</var>[<var>key</var>] is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list④">list</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error③">optionally report an error</a> and return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list⑤">list</a>.</p>
      <li data-md>
@@ -2525,7 +2528,7 @@ following steps:</p>
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="optionally-get-a-list-of-optional-strings">optionally get a list of optional strings</dfn> <var>key</var> from a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string⑧">string</a>-keyed <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map④">map</a> <var>jsonMap</var>, run the following steps:</p>
     <ol>
      <li data-md>
-      <p>If <var>jsonMap</var>[<var>key</var>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists⑤">exist</a>, return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list⑦">list</a>.</p>
+      <p>If <var>jsonMap</var>[<var>key</var>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists⑥">exist</a>, return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list⑦">list</a>.</p>
      <li data-md>
       <p>If <var>jsonMap</var>[<var>key</var>] is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list⑧">list</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error⑤">optionally report an error</a> and return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list⑨">list</a>.</p>
      <li data-md>
@@ -2550,7 +2553,7 @@ following steps:</p>
     <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="optionally-get-a-list-of-array-indexes">optionally get a list of array indexes</dfn> <var>key</var> from a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string①⓪">string</a>-keyed <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑤">map</a> <var>jsonMap</var>, run the following steps:</p>
     <ol>
      <li data-md>
-      <p>If <var>jsonMap</var>[<var>key</var>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists⑥">exist</a>, return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list①①">list</a>.</p>
+      <p>If <var>jsonMap</var>[<var>key</var>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists⑦">exist</a>, return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list①①">list</a>.</p>
      <li data-md>
       <p>If <var>jsonMap</var>[<var>key</var>] is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list①②">list</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error⑦">optionally report an error</a> and return a new empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list①③">list</a>.</p>
      <li data-md>
@@ -2960,15 +2963,121 @@ the file format is JSON with a top-level object.  It shares the <a data-link-typ
     <p>Section objects have the following fields:</p>
     <ul>
      <li data-md>
-      <p><dfn class="dfn-paneled" data-dfn-for="index-map" data-dfn-type="dfn" data-noexport id="index-map-offset"><code class="highlight">offset</code></dfn> is an object with two fields, <code class="highlight">line</code> and <code class="highlight">column</code>,
+      <p><code class="highlight">offset</code> is an object with two fields, <code class="highlight">line</code> and <code class="highlight">column</code>,
 that represent the offset into generated code that the referenced source map
 represents.</p>
      <li data-md>
-      <p><dfn class="dfn-paneled" data-dfn-for="index-map" data-dfn-type="dfn" data-noexport id="index-map-map"><code class="highlight">map</code></dfn> is an embedded complete source map object.
+      <p><code class="highlight">map</code> is an embedded complete source map object.
 An embedded map does not inherit any values from the containing index map.</p>
     </ul>
     <p>The sections shall be sorted by starting position and the represented sections
 shall not overlap.</p>
+    <h3 class="heading settled" data-level="6.2" id="decoding-index-map"><span class="secno">6.2. </span><span class="content">Decoding an index map</span><a class="self-link" href="#decoding-index-map"></a></h3>
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="decode-an-index-source-map">decode an index source map</dfn> given a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string①⑨">string</a>-keyed <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑥">map</a> <var>jsonMap</var> and a <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url" id="ref-for-concept-url④">URL</a> <var>baseURL</var>, run the following steps:</p>
+    <ol>
+     <li data-md>
+      <p>Assert: <var>jsonMap</var>[<code class="highlight"><c- u>"sections"</c-></code>] <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists⑧">exists</a>.</p>
+     <li data-md>
+      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"sections"</c-></code>] is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list②②">list</a>, report an error.</p>
+     <li data-md>
+      <p>If <var>jsonMap</var>[<code class="highlight"><c- u>"version"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists⑨">exist</a> or <var>jsonMap</var>[<code class="highlight"><c- u>"version"</c-></code>] is not 3, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①⑥">optionally report an error</a>.</p>
+     <li data-md>
+      <p>Let <var>sourceMap</var> be a new <a data-link-type="dfn" href="#decoded-source-map" id="ref-for-decoded-source-map①">decoded source map</a>.</p>
+     <li data-md>
+      <p>Set <var>sourceMap</var>’s <a data-link-type="dfn" href="#decoded-source-map-file" id="ref-for-decoded-source-map-file①">file</a> to <a data-link-type="dfn" href="#optionally-get-a-string" id="ref-for-optionally-get-a-string②">optionally get a string</a> <code class="highlight"><c- u>"file"</c-></code> from <var>jsonMap</var>.</p>
+     <li data-md>
+      <p>Let <var>previousOffset</var> be null.</p>
+     <li data-md>
+      <p>Let <var>previousLastMapping</var> be null.</p>
+     <li data-md>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate⑤">For each</a> <var>section</var> of <var>jsonMap</var>[<code class="highlight"><c- u>"sections"</c-></code>]:</p>
+      <ol>
+       <li data-md>
+        <p>If <var>section</var> is not a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#ordered-map" id="ref-for-ordered-map⑦">map</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①⑦">optionally report an error</a> and continue with the next iteration.</p>
+       <li data-md>
+        <p>If <var>section</var>[<code class="highlight"><c- u>"offset"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①⓪">exist</a>, then report an error.</p>
+       <li data-md>
+        <p>Let <var>offsetLine</var> be <var>section</var>[<code class="highlight"><c- u>"offset"</c-></code>][<code class="highlight"><c- u>"line"</c-></code>].</p>
+       <li data-md>
+        <p>Let <var>offsetColumn</var> be <var>section</var>[<code class="highlight"><c- u>"offset"</c-></code>][<code class="highlight"><c- u>"column"</c-></code>].</p>
+       <li data-md>
+        <p>If <var>offsetLine</var> is not an <a data-link-type="dfn" href="https://tc39.es/ecma262/#integral-number" id="ref-for-integral-number">integral Number</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①⑧">optionally report an error</a> and set <var>offsetLine</var> to 0.</p>
+       <li data-md>
+        <p>If <var>offsetColumn</var> is not an <a data-link-type="dfn" href="https://tc39.es/ecma262/#integral-number" id="ref-for-integral-number①">integral Number</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error①⑨">optionally report an error</a> and set <var>offsetColumn</var> to 0.</p>
+       <li data-md>
+        <p>If <var>previousOffset</var> is not null,</p>
+        <ol>
+         <li data-md>
+          <p>If <var>offsetLine</var> is less than <var>previousOffset</var>[<code class="highlight"><c- u>"line"</c-></code>], <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error②⓪">optionally report an error</a>.</p>
+         <li data-md>
+          <p>If <var>offsetLine</var> is equal to <var>previousOffset</var>[<code class="highlight"><c- u>"line"</c-></code>] and <var>offsetColumn</var> is less than <var>previousOffset</var>[<code class="highlight"><c- u>"column"</c-></code>], <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error②①">optionally report an error</a>.</p>
+        </ol>
+       <li data-md>
+        <p>If <var>previousLastMapping</var> is not null,</p>
+        <ol>
+         <li data-md>
+          <p>If <var>offsetLine</var> is less than <var>previousLastMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline①">generatedLine</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error②②">optionally report an error</a>.</p>
+         <li data-md>
+          <p>If <var>offsetLine</var> is equal to <var>previousLastMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline②">generatedLine</a> and <var>offsetColumn</var> is less than <var>previousLastMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedcolumn" id="ref-for-decoded-mapping-generatedcolumn①">generatedColumn</a>, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error②③">optionally report an error</a>.</p>
+        </ol>
+        <p class="note" role="note"><span class="marker">Note:</span> This part of the decoding algorithm checks that index source map sections are ordered and do not overlap.
+      While it is expected that generators should not produce index source maps with overlapping sections, source map
+      consumers may, for example, only check the simpler condition that the section offsets are ordered.</p>
+       <li data-md>
+        <p>If <var>section</var>[<code class="highlight"><c- u>"map"</c-></code>] does not <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#map-exists" id="ref-for-map-exists①①">exist</a>, then report an error.</p>
+       <li data-md>
+        <p>Let <var>decodedSection</var> be the result of <a data-link-type="dfn" href="#decode-a-source-map" id="ref-for-decode-a-source-map①">decoding a source map</a> given <var>section</var>[<code class="highlight"><c- u>"map"</c-></code>] and <var>baseURL</var>.</p>
+       <li data-md>
+        <p>If the previous step reported an error, <a data-link-type="dfn" href="#optionally-report-an-error" id="ref-for-optionally-report-an-error②④">optionally report an error</a> and continue with the next iteration.</p>
+       <li data-md>
+        <p>Set <var>sourceMap</var>’s <a data-link-type="dfn" href="#decoded-source-map-sources" id="ref-for-decoded-source-map-sources②">sources</a> to the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#set-union" id="ref-for-set-union">union</a> of <var>sourceMap</var>’s <a data-link-type="dfn" href="#decoded-source-map-sources" id="ref-for-decoded-source-map-sources③">sources</a> and <var>decodedSection</var>’s <a data-link-type="dfn" href="#decoded-source-map-sources" id="ref-for-decoded-source-map-sources④">sources</a>.</p>
+       <li data-md>
+        <p>Let <var>offsetMappings</var> be a new <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list②③">list</a>.</p>
+       <li data-md>
+        <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate⑥">For each</a> <var>mapping</var> of <var>decodedSection</var>’s <a data-link-type="dfn" href="#decoded-source-map-mappings" id="ref-for-decoded-source-map-mappings①">mappings</a>:</p>
+        <ol>
+         <li data-md>
+          <p>Let <var>offsetMapping</var> be a new <a data-link-type="dfn" href="#decoded-mapping" id="ref-for-decoded-mapping①③">decoded mapping</a>.</p>
+         <li data-md>
+          <p>Set <var>offsetMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline③">generatedLine</a> to <var>mapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline④">generatedLine</a> + <var>offsetLine</var>.</p>
+         <li data-md>
+          <p>If <var>mapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline⑤">generatedLine</a> is equal to 0, set <var>offsetMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedcolumn" id="ref-for-decoded-mapping-generatedcolumn②">generatedColumn</a> to <var>mapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedcolumn" id="ref-for-decoded-mapping-generatedcolumn③">generatedColumn</a> + <var>offsetColumn</var>.</p>
+         <li data-md>
+          <p>Otherwise, set <var>offsetMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedcolumn" id="ref-for-decoded-mapping-generatedcolumn④">generatedColumn</a> to <var>mapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedcolumn" id="ref-for-decoded-mapping-generatedcolumn⑤">generatedColumn</a>.</p>
+         <li data-md>
+          <p>Set <var>offsetMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-originalsource" id="ref-for-decoded-mapping-originalsource②">originalSource</a> to <var>mapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-originalsource" id="ref-for-decoded-mapping-originalsource③">originalSource</a>.</p>
+         <li data-md>
+          <p>Set <var>offsetMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-originalline" id="ref-for-decoded-mapping-originalline②">originalLine</a> to <var>mapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-originalline" id="ref-for-decoded-mapping-originalline③">originalLine</a>.</p>
+         <li data-md>
+          <p>Set <var>offsetMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-originalcolumn" id="ref-for-decoded-mapping-originalcolumn②">originalColumn</a> to <var>mapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-originalcolumn" id="ref-for-decoded-mapping-originalcolumn③">originalColumn</a>.</p>
+         <li data-md>
+          <p>Set <var>offsetMapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-name" id="ref-for-decoded-mapping-name⑦">name</a> to <var>mapping</var>’s <a data-link-type="dfn" href="#decoded-mapping-name" id="ref-for-decoded-mapping-name⑧">name</a>.</p>
+         <li data-md>
+          <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-append" id="ref-for-list-append④">Append</a> <var>offsetMapping</var> to <var>offsetMappings</var>.</p>
+        </ol>
+        <p class="note" role="note"><span class="marker">Note:</span> Implementations may choose to represent index source map sections without appending the mappings together,
+      for example, by storing each section separately and conducting a binary search.</p>
+       <li data-md>
+        <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-extend" id="ref-for-list-extend">Extend</a> <var>sourceMap</var>’s <a data-link-type="dfn" href="#decoded-source-map-mappings" id="ref-for-decoded-source-map-mappings②">mappings</a> with <var>offsetMappings</var>.</p>
+       <li data-md>
+        <p>Set <var>previousOffset</var> to <var>section</var>[<code class="highlight"><c- u>"offset"</c-></code>].</p>
+       <li data-md>
+        <p>Let <var>sortedMappings</var> be the result of <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-sort-in-ascending-order" id="ref-for-list-sort-in-ascending-order">sorting</a> <var>offsetMappings</var> in ascending order, with an item <var>a</var> being less than <var>b</var> if <var>a</var> is <a data-link-type="dfn" href="#generated-position-less-than" id="ref-for-generated-position-less-than">generated position less than</a> <var>b</var>.</p>
+       <li data-md>
+        <p>Set <var>previousLastMapping</var> to the last item of <var>sortedMappings</var> if <var>sortedMappings</var> <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-is-empty" id="ref-for-list-is-empty">is not empty</a>.</p>
+      </ol>
+     <li data-md>
+      <p>Return <var>sourceMap</var>.</p>
+    </ol>
+    <p>A <a data-link-type="dfn" href="#decoded-mapping" id="ref-for-decoded-mapping①④">decoded mapping</a> <var>a</var> is <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="generated-position-less-than">generated position less than</dfn> a <a data-link-type="dfn" href="#decoded-mapping" id="ref-for-decoded-mapping①⑤">decoded mapping</a> b if the following steps return true:</p>
+    <ol>
+     <li data-md>
+      <p>If <var>a</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline⑥">generatedLine</a> is less than <var>b</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline⑦">generatedLine</a>, return true.</p>
+     <li data-md>
+      <p>If <var>a</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline⑧">generatedLine</a> is equal to <var>b</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedline" id="ref-for-decoded-mapping-generatedline⑨">generatedLine</a> and <var>a</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedcolumn" id="ref-for-decoded-mapping-generatedcolumn⑥">generatedColumn</a> is less than <var>b</var>’s <a data-link-type="dfn" href="#decoded-mapping-generatedcolumn" id="ref-for-decoded-mapping-generatedcolumn⑦">generatedColumn</a>, return true.</p>
+     <li data-md>
+      <p>Otherwise, return false.</p>
+    </ol>
     <h2 class="heading settled" data-level="7" id="linking-and-fetching"><span class="secno">7. </span><span class="content">Retrieving source maps</span><a class="self-link" href="#linking-and-fetching"></a></h2>
     <h3 class="heading settled" data-level="7.1" id="linking-generated-code"><span class="secno">7.1. </span><span class="content">Linking generated code to source maps</span><a class="self-link" href="#linking-generated-code"></a></h3>
     <p>While the source map format is intended to be language and platform agnostic, it is useful
@@ -3038,25 +3147,25 @@ algorithms whenever there is a comment (or comment-like) that contains the chara
 U+0060 (`), U+0022 ("), or U+0027 ('), or the the sequence U+002A U+002F (*/).</p>
     </div>
     <h5 class="heading settled" data-level="7.1.2.1" id="extraction-javascript"><span class="secno">7.1.2.1. </span><span class="content">Extraction methods for JavaScript sources</span><a class="self-link" href="#extraction-javascript"></a></h5>
-    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="extract-a-source-map-url-from-javascript-through-parsing">extract a Source Map URL from JavaScript through parsing</dfn> a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string①⑨">string</a> <var>source</var>,
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="extract-a-source-map-url-from-javascript-through-parsing">extract a Source Map URL from JavaScript through parsing</dfn> a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②⓪">string</a> <var>source</var>,
 run the following steps:</p>
     <ol>
      <li data-md>
-      <p>Let <var>tokens</var> be the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list②②">list</a> of <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-lexical-and-regexp-grammars" id="ref-for-sec-lexical-and-regexp-grammars">tokens</a> obtained by parsing <var>source</var> according to <a data-link-type="biblio" href="#biblio-ecma-262" title="ECMAScript Language Specification">[ECMA-262]</a>.</p>
+      <p>Let <var>tokens</var> be the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list" id="ref-for-list②④">list</a> of <a data-link-type="dfn" href="https://tc39.es/ecma262/#sec-lexical-and-regexp-grammars" id="ref-for-sec-lexical-and-regexp-grammars">tokens</a> obtained by parsing <var>source</var> according to <a data-link-type="biblio" href="#biblio-ecma-262" title="ECMAScript Language Specification">[ECMA-262]</a>.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate⑤">For each</a> <var>token</var> in <var>tokens</var>, in reverse order:</p>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate⑦">For each</a> <var>token</var> in <var>tokens</var>, in reverse order:</p>
       <ol>
        <li data-md>
         <p>If <var>token</var> is not a <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-SingleLineComment" id="ref-for-prod-SingleLineComment">single-line comment</a> or a <a data-link-type="dfn" href="https://tc39.es/ecma262/#prod-MultiLineComment" id="ref-for-prod-MultiLineComment">multi-line comment</a>, return null.</p>
        <li data-md>
         <p>Let <var>comment</var> be the content of <var>token</var>.</p>
        <li data-md>
-        <p>If <a data-link-type="dfn" href="#match-a-source-map-url-in-a-comment" id="ref-for-match-a-source-map-url-in-a-comment">matching a Source Map URL in</a> <var>comment</var> returns a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②⓪">string</a>, return it.</p>
+        <p>If <a data-link-type="dfn" href="#match-a-source-map-url-in-a-comment" id="ref-for-match-a-source-map-url-in-a-comment">matching a Source Map URL in</a> <var>comment</var> returns a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②①">string</a>, return it.</p>
       </ol>
      <li data-md>
       <p>Return null.</p>
     </ol>
-    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="extract-a-source-map-url-from-javascript-without-parsing">extract a Source Map URL from JavaScript without parsing</dfn> a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②①">string</a> <var>source</var>,
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-export id="extract-a-source-map-url-from-javascript-without-parsing">extract a Source Map URL from JavaScript without parsing</dfn> a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②②">string</a> <var>source</var>,
 run the following steps:</p>
     <ol>
      <li data-md>
@@ -3064,7 +3173,7 @@ run the following steps:</p>
      <li data-md>
       <p>Let <var>lastURL</var> be null.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate⑥">For each</a> <var>line</var> in <var>lines</var>:</p>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate⑧">For each</a> <var>line</var> in <var>lines</var>:</p>
       <ol>
        <li data-md>
         <p>Let <var>position</var> be a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string-position-variable" id="ref-for-string-position-variable③">position variable</a> for <var>line</var>, initially pointing at the start of <var>line</var>.</p>
@@ -3094,7 +3203,7 @@ white space code points</a> from <var>line</var> given <var>position</var>.</p>
              <li data-md>
               <p>Let <var>comment</var> be the <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#code-point-substring" id="ref-for-code-point-substring">code point substring</a> from <var>position</var> to the end of <var>line</var>.</p>
              <li data-md>
-              <p>If <a data-link-type="dfn" href="#match-a-source-map-url-in-a-comment" id="ref-for-match-a-source-map-url-in-a-comment①">matching a Source Map URL in</a> <var>comment</var> returns a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②②">string</a>, set <var>lastURL</var> to it.</p>
+              <p>If <a data-link-type="dfn" href="#match-a-source-map-url-in-a-comment" id="ref-for-match-a-source-map-url-in-a-comment①">matching a Source Map URL in</a> <var>comment</var> returns a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②③">string</a>, set <var>lastURL</var> to it.</p>
              <li data-md>
               <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#iteration-break" id="ref-for-iteration-break①">Break</a>.</p>
             </ol>
@@ -3102,7 +3211,7 @@ white space code points</a> from <var>line</var> given <var>position</var>.</p>
             <p>Else if <var>second</var> is U+002A (*), then:</p>
             <ol>
              <li data-md>
-              <p>Let <var>comment</var> be the empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②③">string</a>.</p>
+              <p>Let <var>comment</var> be the empty <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②④">string</a>.</p>
              <li data-md>
               <p>While <var>position</var> + 1 doesn’t point past the end of <var>line</var>:</p>
               <ol>
@@ -3116,7 +3225,7 @@ white space code points</a> from <var>line</var> given <var>position</var>.</p>
                 <p>If <var>c1</var> is U+002A (*) and <var>c2</var> is U+002F (/), then:</p>
                 <ol>
                  <li data-md>
-                  <p>If <a data-link-type="dfn" href="#match-a-source-map-url-in-a-comment" id="ref-for-match-a-source-map-url-in-a-comment②">matching a Source Map URL in</a> <var>comment</var> returns a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②④">string</a>, set <var>lastURL</var> to it.</p>
+                  <p>If <a data-link-type="dfn" href="#match-a-source-map-url-in-a-comment" id="ref-for-match-a-source-map-url-in-a-comment②">matching a Source Map URL in</a> <var>comment</var> returns a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②⑤">string</a>, set <var>lastURL</var> to it.</p>
                  <li data-md>
                   <p>Increment <var>position</var> by 1.</p>
                 </ol>
@@ -3173,7 +3282,7 @@ returning early after scanning through a line that contains a <code class="highl
 <c- k>return</c-> lastURL<c- p>;</c->
 </pre>
     </div>
-    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="match-a-source-map-url-in-a-comment">match a Source Map URL in a comment</dfn> <var>comment</var> (a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②⑤">string</a>), run the following steps:</p>
+    <p>To <dfn class="dfn-paneled" data-dfn-type="dfn" data-noexport id="match-a-source-map-url-in-a-comment">match a Source Map URL in a comment</dfn> <var>comment</var> (a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#string" id="ref-for-string②⑥">string</a>), run the following steps:</p>
     <ol>
      <li data-md>
       <p>Let <var>pattern</var> be the regular expression <code class="highlight"><c- sr>/^[@#]\s*sourceMappingURL=(\S*?)\s*$/</c-></code>.</p>
@@ -3199,7 +3308,7 @@ a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id
      <li data-md>
       <p>If <var>module</var> is error, return null.</p>
      <li data-md>
-      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate⑦">For each</a> <a data-link-type="dfn" href="https://webassembly.github.io/spec/core/binary/modules.html#binary-customsec" id="ref-for-binary-customsec">custom section</a> <var>customSection</var> of <var>module</var>,</p>
+      <p><a data-link-type="dfn" href="https://infra.spec.whatwg.org/#list-iterate" id="ref-for-list-iterate⑨">For each</a> <a data-link-type="dfn" href="https://webassembly.github.io/spec/core/binary/modules.html#binary-customsec" id="ref-for-binary-customsec">custom section</a> <var>customSection</var> of <var>module</var>,</p>
       <ol>
        <li data-md>
         <p>Let <var>name</var> be the <code class="highlight">name</code> of <var>customSection</var>, <a data-link-type="dfn" href="https://encoding.spec.whatwg.org/#utf-8-decode-without-bom-or-fail" id="ref-for-utf-8-decode-without-bom-or-fail">decoded as UTF-8</a>.</p>
@@ -3221,7 +3330,7 @@ a <a data-link-type="dfn" href="https://infra.spec.whatwg.org/#byte-sequence" id
 The URL is encoded using <a data-link-type="biblio" href="#biblio-wasmnamesbinaryformat" title="WebAssembly Names binary format">[WasmNamesBinaryFormat]</a>, and it’s placed as the content of the <a data-link-type="dfn" href="https://webassembly.github.io/spec/core/binary/modules.html#binary-customsec" id="ref-for-binary-customsec①">custom section</a>. It is invalid for
 tools that generate WebAssembly code to generate two or more <a data-link-type="dfn" href="https://webassembly.github.io/spec/core/binary/modules.html#binary-customsec" id="ref-for-binary-customsec②">custom sections</a> with the "sourceMappingURL" name.</p>
     <h3 class="heading settled" data-level="7.2" id="fetching-source-maps"><span class="secno">7.2. </span><span class="content">Fetching source maps</span><a class="self-link" href="#fetching-source-maps"></a></h3>
-    <p>To fetch a source map given a <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url" id="ref-for-concept-url④">URL</a> <var>url</var>, run the following steps:</p>
+    <p>To fetch a source map given a <a data-link-type="dfn" href="https://url.spec.whatwg.org/#concept-url" id="ref-for-concept-url⑤">URL</a> <var>url</var>, run the following steps:</p>
     <ol>
      <li data-md>
       <p>Let <var>promise</var> be <a data-link-type="dfn" href="https://webidl.spec.whatwg.org/#a-new-promise" id="ref-for-a-new-promise">a new promise</a>.</p>
@@ -3296,6 +3405,7 @@ JavaScript-style single-line comments.</p>
       <li><a href="#column">Column</a><span>, in § 4</span>
       <li><a href="#decoded-source-content">content</a><span>, in § 5</span>
       <li><a href="#decode-a-base64-vlq">decode a base64 VLQ</a><span>, in § 5.1</span>
+      <li><a href="#decode-an-index-source-map">decode an index source map</a><span>, in § 6.2</span>
       <li><a href="#decode-a-source-map">decode a source map</a><span>, in § 5</span>
       <li><a href="#decode-a-source-map-from-a-json-string">decode a source map from a JSON string</a><span>, in § 5</span>
       <li><a href="#decoded-mapping">decoded mapping</a><span>, in § 5.1</span>
@@ -3315,10 +3425,10 @@ JavaScript-style single-line comments.</p>
       <li><a href="#generated-code">Generated Code</a><span>, in § 4</span>
       <li><a href="#decoded-mapping-generatedcolumn">generatedColumn</a><span>, in § 5.1</span>
       <li><a href="#decoded-mapping-generatedline">generatedLine</a><span>, in § 5.1</span>
+      <li><a href="#generated-position-less-than">generated position less than</a><span>, in § 6.2</span>
       <li><a href="#decoded-source-ignored">ignored</a><span>, in § 5</span>
       <li><a href="#decode-source-map-sources-ignoredsources">ignoredSources</a><span>, in § 5.2</span>
       <li><a href="#json-ignorelist">ignoreList</a><span>, in § 5</span>
-      <li><a href="#index-map-map">map</a><span>, in § 6.1</span>
       <li>
        mappings
        <ul>
@@ -3335,7 +3445,6 @@ JavaScript-style single-line comments.</p>
         <li><a href="#decode-source-map-mappings-names">dfn for decode source map mappings</a><span>, in § 5.1</span>
         <li><a href="#json-names">dfn for json</a><span>, in § 5</span>
        </ul>
-      <li><a href="#index-map-offset">offset</a><span>, in § 6.1</span>
       <li><a href="#optionally-get-a-list-of-array-indexes">optionally get a list of array indexes</a><span>, in § 5</span>
       <li><a href="#optionally-get-a-list-of-optional-strings">optionally get a list of optional strings</a><span>, in § 5</span>
       <li><a href="#optionally-get-a-list-of-strings">optionally get a list of strings</a><span>, in § 5</span>
@@ -3401,6 +3510,7 @@ JavaScript-style single-line comments.</p>
         <li><span class="dfn-paneled" id="8b7e15d1">HashbangComment</span>
         <li><span class="dfn-paneled" id="be284f27">IdentifierName</span>
         <li><span class="dfn-paneled" id="b91b4803">IdentifierReference</span>
+        <li><span class="dfn-paneled" id="cc0e62c1">integral Number</span>
         <li><span class="dfn-paneled" id="202ccff6">LexicalDeclaration</span>
         <li><span class="dfn-paneled" id="e26c4ece">line terminator code points</span>
         <li><span class="dfn-paneled" id="8afe8386">LineTerminator</span>
@@ -3455,7 +3565,9 @@ JavaScript-style single-line comments.</p>
         <li><span class="dfn-paneled" id="d24334b4">collect a sequence of code points</span>
         <li><span class="dfn-paneled" id="4a3bf5fb">concatenate</span>
         <li><span class="dfn-paneled" id="1243a891">exist</span>
+        <li><span class="dfn-paneled" id="d8f8bd6e">extend</span>
         <li><span class="dfn-paneled" id="16d07e10">for each</span>
+        <li><span class="dfn-paneled" id="dd460c8e">is not empty</span>
         <li><span class="dfn-paneled" id="36333997">length</span>
         <li><span class="dfn-paneled" id="649608b9">list</span>
         <li><span class="dfn-paneled" id="3fca5a9e">map</span>
@@ -3463,10 +3575,12 @@ JavaScript-style single-line comments.</p>
         <li><span class="dfn-paneled" id="83c1dbea">parse JSON bytes to a JavaScript value</span>
         <li><span class="dfn-paneled" id="75bee4d5">position variable</span>
         <li><span class="dfn-paneled" id="0204d188">size</span>
+        <li><span class="dfn-paneled" id="95c866a0">sorting</span>
         <li><span class="dfn-paneled" id="904cdc91">starts with</span>
         <li><span class="dfn-paneled" id="e5fc5b88">strictly split</span>
         <li><span class="dfn-paneled" id="0698d556">string</span>
         <li><span class="dfn-paneled" id="984221ca">struct</span>
+        <li><span class="dfn-paneled" id="5eb733b4">union</span>
         <li><span class="dfn-paneled" id="34f375cb">value</span>
         <li><span class="dfn-paneled" id="cbdc89b4">while</span>
        </ul>
@@ -3937,11 +4051,11 @@ function parseHTML(markup) {
 let dfnPanelData = {
 "0204d188": {"dfnID":"0204d188","dfnText":"size","external":true,"refSections":[{"refs":[{"id":"ref-for-list-size"},{"id":"ref-for-list-size\u2460"},{"id":"ref-for-list-size\u2461"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-list-size\u2462"}],"title":"5.2. Resolving sources"}],"url":"https://infra.spec.whatwg.org/#list-size"},
 "051a7861": {"dfnID":"051a7861","dfnText":"Syntactic Grammar","external":true,"refSections":[{"refs":[{"id":"ref-for-sec-syntactic-grammar"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#sec-syntactic-grammar"},
-"0698d556": {"dfnID":"0698d556","dfnText":"string","external":true,"refSections":[{"refs":[{"id":"ref-for-string"},{"id":"ref-for-string\u2460"},{"id":"ref-for-string\u2461"},{"id":"ref-for-string\u2462"},{"id":"ref-for-string\u2463"},{"id":"ref-for-string\u2464"},{"id":"ref-for-string\u2465"},{"id":"ref-for-string\u2466"},{"id":"ref-for-string\u2467"},{"id":"ref-for-string\u2468"},{"id":"ref-for-string\u2460\u24ea"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-string\u2460\u2460"},{"id":"ref-for-string\u2460\u2461"},{"id":"ref-for-string\u2460\u2462"},{"id":"ref-for-string\u2460\u2463"},{"id":"ref-for-string\u2460\u2464"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-string\u2460\u2465"},{"id":"ref-for-string\u2460\u2466"},{"id":"ref-for-string\u2460\u2467"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-string\u2460\u2468"},{"id":"ref-for-string\u2461\u24ea"},{"id":"ref-for-string\u2461\u2460"},{"id":"ref-for-string\u2461\u2461"},{"id":"ref-for-string\u2461\u2462"},{"id":"ref-for-string\u2461\u2463"},{"id":"ref-for-string\u2461\u2464"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://infra.spec.whatwg.org/#string"},
+"0698d556": {"dfnID":"0698d556","dfnText":"string","external":true,"refSections":[{"refs":[{"id":"ref-for-string"},{"id":"ref-for-string\u2460"},{"id":"ref-for-string\u2461"},{"id":"ref-for-string\u2462"},{"id":"ref-for-string\u2463"},{"id":"ref-for-string\u2464"},{"id":"ref-for-string\u2465"},{"id":"ref-for-string\u2466"},{"id":"ref-for-string\u2467"},{"id":"ref-for-string\u2468"},{"id":"ref-for-string\u2460\u24ea"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-string\u2460\u2460"},{"id":"ref-for-string\u2460\u2461"},{"id":"ref-for-string\u2460\u2462"},{"id":"ref-for-string\u2460\u2463"},{"id":"ref-for-string\u2460\u2464"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-string\u2460\u2465"},{"id":"ref-for-string\u2460\u2466"},{"id":"ref-for-string\u2460\u2467"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-string\u2460\u2468"}],"title":"6.2. Decoding an index map"},{"refs":[{"id":"ref-for-string\u2461\u24ea"},{"id":"ref-for-string\u2461\u2460"},{"id":"ref-for-string\u2461\u2461"},{"id":"ref-for-string\u2461\u2462"},{"id":"ref-for-string\u2461\u2463"},{"id":"ref-for-string\u2461\u2464"},{"id":"ref-for-string\u2461\u2465"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://infra.spec.whatwg.org/#string"},
 "08b51e40": {"dfnID":"08b51e40","dfnText":"processResponseConsumeBody","external":true,"refSections":[{"refs":[{"id":"ref-for-process-response-end-of-body"}],"title":"7.2. Fetching source maps"}],"url":"https://fetch.spec.whatwg.org/#process-response-end-of-body"},
 "0f5ada00": {"dfnID":"0f5ada00","dfnText":"FunctionExpression","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-FunctionExpression"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-FunctionExpression"},
-"1243a891": {"dfnID":"1243a891","dfnText":"exist","external":true,"refSections":[{"refs":[{"id":"ref-for-map-exists"},{"id":"ref-for-map-exists\u2460"},{"id":"ref-for-map-exists\u2461"},{"id":"ref-for-map-exists\u2462"},{"id":"ref-for-map-exists\u2463"},{"id":"ref-for-map-exists\u2464"},{"id":"ref-for-map-exists\u2465"}],"title":"5. Source map format"}],"url":"https://infra.spec.whatwg.org/#map-exists"},
-"16d07e10": {"dfnID":"16d07e10","dfnText":"for each","external":true,"refSections":[{"refs":[{"id":"ref-for-list-iterate"},{"id":"ref-for-list-iterate\u2460"},{"id":"ref-for-list-iterate\u2461"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-list-iterate\u2462"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-list-iterate\u2463"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-list-iterate\u2464"},{"id":"ref-for-list-iterate\u2465"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"},{"refs":[{"id":"ref-for-list-iterate\u2466"}],"title":"7.1.2.3. Extraction methods for WebAssembly binaries"}],"url":"https://infra.spec.whatwg.org/#list-iterate"},
+"1243a891": {"dfnID":"1243a891","dfnText":"exist","external":true,"refSections":[{"refs":[{"id":"ref-for-map-exists"},{"id":"ref-for-map-exists\u2460"},{"id":"ref-for-map-exists\u2461"},{"id":"ref-for-map-exists\u2462"},{"id":"ref-for-map-exists\u2463"},{"id":"ref-for-map-exists\u2464"},{"id":"ref-for-map-exists\u2465"},{"id":"ref-for-map-exists\u2466"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-map-exists\u2467"},{"id":"ref-for-map-exists\u2468"},{"id":"ref-for-map-exists\u2460\u24ea"},{"id":"ref-for-map-exists\u2460\u2460"}],"title":"6.2. Decoding an index map"}],"url":"https://infra.spec.whatwg.org/#map-exists"},
+"16d07e10": {"dfnID":"16d07e10","dfnText":"for each","external":true,"refSections":[{"refs":[{"id":"ref-for-list-iterate"},{"id":"ref-for-list-iterate\u2460"},{"id":"ref-for-list-iterate\u2461"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-list-iterate\u2462"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-list-iterate\u2463"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-list-iterate\u2464"},{"id":"ref-for-list-iterate\u2465"}],"title":"6.2. Decoding an index map"},{"refs":[{"id":"ref-for-list-iterate\u2466"},{"id":"ref-for-list-iterate\u2467"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"},{"refs":[{"id":"ref-for-list-iterate\u2468"}],"title":"7.1.2.3. Extraction methods for WebAssembly binaries"}],"url":"https://infra.spec.whatwg.org/#list-iterate"},
 "196081f0": {"dfnID":"196081f0","dfnText":"single-line comment","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-SingleLineComment"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://tc39.es/ecma262/#prod-SingleLineComment"},
 "1a29e6a2": {"dfnID":"1a29e6a2","dfnText":"ECMAScript Lexical Grammar","external":true,"refSections":[{"refs":[{"id":"ref-for-sec-ecmascript-language-lexical-grammar"}],"title":"5.1.1. Mappings for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#sec-ecmascript-language-lexical-grammar"},
 "202ccff6": {"dfnID":"202ccff6","dfnText":"LexicalDeclaration","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-LexicalDeclaration"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-LexicalDeclaration"},
@@ -3958,17 +4072,18 @@ let dfnPanelData = {
 "3bdc3edf": {"dfnID":"3bdc3edf","dfnText":"BindingIdentifier","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-BindingIdentifier"},{"id":"ref-for-prod-BindingIdentifier\u2460"},{"id":"ref-for-prod-BindingIdentifier\u2461"},{"id":"ref-for-prod-BindingIdentifier\u2462"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-BindingIdentifier"},
 "3c380f81": {"dfnID":"3c380f81","dfnText":"module_decode","external":true,"refSections":[{"refs":[{"id":"ref-for-embed-module-decode"}],"title":"7.1.2.3. Extraction methods for WebAssembly binaries"}],"url":"https://webassembly.github.io/spec/core/appendix/embedding.html#embed-module-decode"},
 "3de9e659": {"dfnID":"3de9e659","dfnText":"byte sequence","external":true,"refSections":[{"refs":[{"id":"ref-for-byte-sequence"}],"title":"7.1.2.3. Extraction methods for WebAssembly binaries"},{"refs":[{"id":"ref-for-byte-sequence\u2460"}],"title":"7.2. Fetching source maps"}],"url":"https://infra.spec.whatwg.org/#byte-sequence"},
-"3fca5a9e": {"dfnID":"3fca5a9e","dfnText":"map","external":true,"refSections":[{"refs":[{"id":"ref-for-ordered-map"},{"id":"ref-for-ordered-map\u2460"},{"id":"ref-for-ordered-map\u2461"},{"id":"ref-for-ordered-map\u2462"},{"id":"ref-for-ordered-map\u2463"},{"id":"ref-for-ordered-map\u2464"}],"title":"5. Source map format"}],"url":"https://infra.spec.whatwg.org/#ordered-map"},
+"3fca5a9e": {"dfnID":"3fca5a9e","dfnText":"map","external":true,"refSections":[{"refs":[{"id":"ref-for-ordered-map"},{"id":"ref-for-ordered-map\u2460"},{"id":"ref-for-ordered-map\u2461"},{"id":"ref-for-ordered-map\u2462"},{"id":"ref-for-ordered-map\u2463"},{"id":"ref-for-ordered-map\u2464"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-ordered-map\u2465"},{"id":"ref-for-ordered-map\u2466"}],"title":"6.2. Decoding an index map"}],"url":"https://infra.spec.whatwg.org/#ordered-map"},
 "4266bc80": {"dfnID":"4266bc80","dfnText":"ArrowParameters","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-ArrowParameters"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-ArrowParameters"},
 "4436fcdd": {"dfnID":"4436fcdd","dfnText":"AsyncArrowBindingIdentifier","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-AsyncArrowBindingIdentifier"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-AsyncArrowBindingIdentifier"},
 "4609d334": {"dfnID":"4609d334","dfnText":"Expression","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-Expression"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-Expression"},
 "4a3bf5fb": {"dfnID":"4a3bf5fb","dfnText":"concatenate","external":true,"refSections":[{"refs":[{"id":"ref-for-string-concatenate"}],"title":"5.2. Resolving sources"}],"url":"https://infra.spec.whatwg.org/#string-concatenate"},
-"53275e46": {"dfnID":"53275e46","dfnText":"append","external":true,"refSections":[{"refs":[{"id":"ref-for-list-append"},{"id":"ref-for-list-append\u2460"},{"id":"ref-for-list-append\u2461"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-list-append\u2462"}],"title":"5.2. Resolving sources"}],"url":"https://infra.spec.whatwg.org/#list-append"},
+"53275e46": {"dfnID":"53275e46","dfnText":"append","external":true,"refSections":[{"refs":[{"id":"ref-for-list-append"},{"id":"ref-for-list-append\u2460"},{"id":"ref-for-list-append\u2461"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-list-append\u2462"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-list-append\u2463"}],"title":"6.2. Decoding an index map"}],"url":"https://infra.spec.whatwg.org/#list-append"},
 "55213b5b": {"dfnID":"55213b5b","dfnText":"request","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-request"}],"title":"7.2. Fetching source maps"}],"url":"https://fetch.spec.whatwg.org/#concept-request"},
 "59912c93": {"dfnID":"59912c93","dfnText":"code unit","external":true,"refSections":[{"refs":[{"id":"ref-for-code-unit"},{"id":"ref-for-code-unit\u2460"},{"id":"ref-for-code-unit\u2461"}],"title":"5.1. Mappings structure"}],"url":"https://infra.spec.whatwg.org/#code-unit"},
 "5a25aef5": {"dfnID":"5a25aef5","dfnText":"Comment","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-Comment"}],"title":"5.1.1. Mappings for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-Comment"},
+"5eb733b4": {"dfnID":"5eb733b4","dfnText":"union","external":true,"refSections":[{"refs":[{"id":"ref-for-set-union"}],"title":"6.2. Decoding an index map"}],"url":"https://infra.spec.whatwg.org/#set-union"},
 "5ff3a316": {"dfnID":"5ff3a316","dfnText":"parse a JSON string to an Infra value","external":true,"refSections":[{"refs":[{"id":"ref-for-parse-a-json-string-to-an-infra-value"}],"title":"5. Source map format"}],"url":"https://infra.spec.whatwg.org/#parse-a-json-string-to-an-infra-value"},
-"649608b9": {"dfnID":"649608b9","dfnText":"list","external":true,"refSections":[{"refs":[{"id":"ref-for-list"},{"id":"ref-for-list\u2460"},{"id":"ref-for-list\u2461"},{"id":"ref-for-list\u2462"},{"id":"ref-for-list\u2463"},{"id":"ref-for-list\u2464"},{"id":"ref-for-list\u2465"},{"id":"ref-for-list\u2466"},{"id":"ref-for-list\u2467"},{"id":"ref-for-list\u2468"},{"id":"ref-for-list\u2460\u24ea"},{"id":"ref-for-list\u2460\u2460"},{"id":"ref-for-list\u2460\u2461"},{"id":"ref-for-list\u2460\u2462"},{"id":"ref-for-list\u2460\u2463"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-list\u2460\u2464"},{"id":"ref-for-list\u2460\u2465"},{"id":"ref-for-list\u2460\u2466"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-list\u2460\u2467"},{"id":"ref-for-list\u2460\u2468"},{"id":"ref-for-list\u2461\u24ea"},{"id":"ref-for-list\u2461\u2460"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-list\u2461\u2461"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://infra.spec.whatwg.org/#list"},
+"649608b9": {"dfnID":"649608b9","dfnText":"list","external":true,"refSections":[{"refs":[{"id":"ref-for-list"},{"id":"ref-for-list\u2460"},{"id":"ref-for-list\u2461"},{"id":"ref-for-list\u2462"},{"id":"ref-for-list\u2463"},{"id":"ref-for-list\u2464"},{"id":"ref-for-list\u2465"},{"id":"ref-for-list\u2466"},{"id":"ref-for-list\u2467"},{"id":"ref-for-list\u2468"},{"id":"ref-for-list\u2460\u24ea"},{"id":"ref-for-list\u2460\u2460"},{"id":"ref-for-list\u2460\u2461"},{"id":"ref-for-list\u2460\u2462"},{"id":"ref-for-list\u2460\u2463"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-list\u2460\u2464"},{"id":"ref-for-list\u2460\u2465"},{"id":"ref-for-list\u2460\u2466"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-list\u2460\u2467"},{"id":"ref-for-list\u2460\u2468"},{"id":"ref-for-list\u2461\u24ea"},{"id":"ref-for-list\u2461\u2460"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-list\u2461\u2461"},{"id":"ref-for-list\u2461\u2462"}],"title":"6.2. Decoding an index map"},{"refs":[{"id":"ref-for-list\u2461\u2463"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://infra.spec.whatwg.org/#list"},
 "75bee4d5": {"dfnID":"75bee4d5","dfnText":"position variable","external":true,"refSections":[{"refs":[{"id":"ref-for-string-position-variable"},{"id":"ref-for-string-position-variable\u2460"},{"id":"ref-for-string-position-variable\u2461"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-string-position-variable\u2462"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://infra.spec.whatwg.org/#string-position-variable"},
 "7b0d918d": {"dfnID":"7b0d918d","dfnText":"break","external":true,"refSections":[{"refs":[{"id":"ref-for-iteration-break"},{"id":"ref-for-iteration-break\u2460"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://infra.spec.whatwg.org/#iteration-break"},
 "808e1390": {"dfnID":"808e1390","dfnText":"GeneratorExpression","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-GeneratorExpression"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-GeneratorExpression"},
@@ -3984,6 +4099,7 @@ let dfnPanelData = {
 "904cdc91": {"dfnID":"904cdc91","dfnText":"starts with","external":true,"refSections":[{"refs":[{"id":"ref-for-byte-sequence-starts-with"}],"title":"7.2. Fetching source maps"}],"url":"https://infra.spec.whatwg.org/#byte-sequence-starts-with"},
 "915aff5e": {"dfnID":"915aff5e","dfnText":"code point","external":true,"refSections":[{"refs":[{"id":"ref-for-code-point"},{"id":"ref-for-code-point\u2460"},{"id":"ref-for-code-point\u2461"},{"id":"ref-for-code-point\u2462"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://infra.spec.whatwg.org/#code-point"},
 "951b74c1": {"dfnID":"951b74c1","dfnText":"code unit substring","external":true,"refSections":[{"refs":[{"id":"ref-for-code-unit-substring"}],"title":"5.2. Resolving sources"}],"url":"https://infra.spec.whatwg.org/#code-unit-substring"},
+"95c866a0": {"dfnID":"95c866a0","dfnText":"sorting","external":true,"refSections":[{"refs":[{"id":"ref-for-list-sort-in-ascending-order"}],"title":"6.2. Decoding an index map"}],"url":"https://infra.spec.whatwg.org/#list-sort-in-ascending-order"},
 "984221ca": {"dfnID":"984221ca","dfnText":"struct","external":true,"refSections":[{"refs":[{"id":"ref-for-struct"},{"id":"ref-for-struct\u2460"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-struct\u2461"}],"title":"5.1. Mappings structure"}],"url":"https://infra.spec.whatwg.org/#struct"},
 "a33db89a": {"dfnID":"a33db89a","dfnText":"fetch","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-fetch"}],"title":"7.2. Fetching source maps"}],"url":"https://fetch.spec.whatwg.org/#concept-fetch"},
 "a499d34e": {"dfnID":"a499d34e","dfnText":"RegExpBuiltinExec","external":true,"refSections":[{"refs":[{"id":"ref-for-sec-regexpbuiltinexec"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://tc39.es/ecma262/#sec-regexpbuiltinexec"},
@@ -4004,16 +4120,20 @@ let dfnPanelData = {
 "c7677a90": {"dfnID":"c7677a90","dfnText":"RegularExpressionLiteral","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-RegularExpressionLiteral"}],"title":"5.1.1. Mappings for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-RegularExpressionLiteral"},
 "ca3ca4ae": {"dfnID":"ca3ca4ae","dfnText":"URL parser","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-url-parser"}],"title":"5.2. Resolving sources"}],"url":"https://url.spec.whatwg.org/#concept-url-parser"},
 "cbdc89b4": {"dfnID":"cbdc89b4","dfnText":"while","external":true,"refSections":[{"refs":[{"id":"ref-for-iteration-while"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"},{"refs":[{"id":"ref-for-iteration-while\u2460"}],"title":"7.2. Fetching source maps"}],"url":"https://infra.spec.whatwg.org/#iteration-while"},
+"cc0e62c1": {"dfnID":"cc0e62c1","dfnText":"integral Number","external":true,"refSections":[{"refs":[{"id":"ref-for-integral-number"},{"id":"ref-for-integral-number\u2460"}],"title":"6.2. Decoding an index map"}],"url":"https://tc39.es/ecma262/#integral-number"},
 "column": {"dfnID":"column","dfnText":"Column","external":false,"refSections":[{"refs":[{"id":"ref-for-column"},{"id":"ref-for-column\u2460"}],"title":"5.1. Mappings structure"}],"url":"#column"},
 "d24334b4": {"dfnID":"d24334b4","dfnText":"collect a sequence of code points","external":true,"refSections":[{"refs":[{"id":"ref-for-collect-a-sequence-of-code-points"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://infra.spec.whatwg.org/#collect-a-sequence-of-code-points"},
 "d8d647a6": {"dfnID":"d8d647a6","dfnText":"Parameter List","external":true,"refSections":[{"refs":[{"id":"ref-for-sec-parameter-lists"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#sec-parameter-lists"},
+"d8f8bd6e": {"dfnID":"d8f8bd6e","dfnText":"extend","external":true,"refSections":[{"refs":[{"id":"ref-for-list-extend"}],"title":"6.2. Decoding an index map"}],"url":"https://infra.spec.whatwg.org/#list-extend"},
 "dacde8b5": {"dfnID":"dacde8b5","dfnText":"a new promise","external":true,"refSections":[{"refs":[{"id":"ref-for-a-new-promise"}],"title":"7.2. Fetching source maps"}],"url":"https://webidl.spec.whatwg.org/#a-new-promise"},
 "dc1cd39b": {"dfnID":"dc1cd39b","dfnText":"URL","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-request-url"}],"title":"7.2. Fetching source maps"}],"url":"https://fetch.spec.whatwg.org/#concept-request-url"},
-"dcffbccd": {"dfnID":"dcffbccd","dfnText":"URL","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-url"},{"id":"ref-for-concept-url\u2460"},{"id":"ref-for-concept-url\u2461"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-concept-url\u2462"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-concept-url\u2463"}],"title":"7.2. Fetching source maps"}],"url":"https://url.spec.whatwg.org/#concept-url"},
+"dcffbccd": {"dfnID":"dcffbccd","dfnText":"URL","external":true,"refSections":[{"refs":[{"id":"ref-for-concept-url"},{"id":"ref-for-concept-url\u2460"},{"id":"ref-for-concept-url\u2461"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-concept-url\u2462"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-concept-url\u2463"}],"title":"6.2. Decoding an index map"},{"refs":[{"id":"ref-for-concept-url\u2464"}],"title":"7.2. Fetching source maps"}],"url":"https://url.spec.whatwg.org/#concept-url"},
+"dd460c8e": {"dfnID":"dd460c8e","dfnText":"is not empty","external":true,"refSections":[{"refs":[{"id":"ref-for-list-is-empty"}],"title":"6.2. Decoding an index map"}],"url":"https://infra.spec.whatwg.org/#list-is-empty"},
 "de33a767": {"dfnID":"de33a767","dfnText":"TemplateSubstitutionTail","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-TemplateSubstitutionTail"}],"title":"5.1.1. Mappings for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-TemplateSubstitutionTail"},
 "decode-a-base64-vlq": {"dfnID":"decode-a-base64-vlq","dfnText":"decode a base64 VLQ","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-a-base64-vlq"},{"id":"ref-for-decode-a-base64-vlq\u2460"},{"id":"ref-for-decode-a-base64-vlq\u2461"},{"id":"ref-for-decode-a-base64-vlq\u2462"},{"id":"ref-for-decode-a-base64-vlq\u2463"}],"title":"5.1. Mappings structure"}],"url":"#decode-a-base64-vlq"},
-"decode-a-source-map": {"dfnID":"decode-a-source-map","dfnText":"decode a source map","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-a-source-map"}],"title":"5. Source map format"}],"url":"#decode-a-source-map"},
+"decode-a-source-map": {"dfnID":"decode-a-source-map","dfnText":"decode a source map","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-a-source-map"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-decode-a-source-map\u2460"}],"title":"6.2. Decoding an index map"}],"url":"#decode-a-source-map"},
 "decode-a-source-map-from-a-json-string": {"dfnID":"decode-a-source-map-from-a-json-string","dfnText":"decode a source map from a JSON string","external":false,"refSections":[],"url":"#decode-a-source-map-from-a-json-string"},
+"decode-an-index-source-map": {"dfnID":"decode-an-index-source-map","dfnText":"decode an index source map","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-an-index-source-map"}],"title":"5. Source map format"}],"url":"#decode-an-index-source-map"},
 "decode-source-map-mappings": {"dfnID":"decode-source-map-mappings","dfnText":"decode source map mappings","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-source-map-mappings"}],"title":"5. Source map format"}],"url":"#decode-source-map-mappings"},
 "decode-source-map-mappings-mappings": {"dfnID":"decode-source-map-mappings-mappings","dfnText":"mappings","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-source-map-mappings-mappings"}],"title":"5. Source map format"}],"url":"#decode-source-map-mappings-mappings"},
 "decode-source-map-mappings-names": {"dfnID":"decode-source-map-mappings-names","dfnText":"names","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-source-map-mappings-names"}],"title":"5. Source map format"}],"url":"#decode-source-map-mappings-names"},
@@ -4023,20 +4143,20 @@ let dfnPanelData = {
 "decode-source-map-sources-sourceroot": {"dfnID":"decode-source-map-sources-sourceroot","dfnText":"sourceRoot","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-source-map-sources-sourceroot"}],"title":"5. Source map format"}],"url":"#decode-source-map-sources-sourceroot"},
 "decode-source-map-sources-sources": {"dfnID":"decode-source-map-sources-sources","dfnText":"sources","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-source-map-sources-sources"}],"title":"5. Source map format"}],"url":"#decode-source-map-sources-sources"},
 "decode-source-map-sources-sourcescontent": {"dfnID":"decode-source-map-sources-sourcescontent","dfnText":"sourcesContent","external":false,"refSections":[{"refs":[{"id":"ref-for-decode-source-map-sources-sourcescontent"}],"title":"5. Source map format"}],"url":"#decode-source-map-sources-sourcescontent"},
-"decoded-mapping": {"dfnID":"decoded-mapping","dfnText":"decoded mapping","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-decoded-mapping\u2460"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping\u2461"},{"id":"ref-for-decoded-mapping\u2462"},{"id":"ref-for-decoded-mapping\u2463"}],"title":"5.1.1. Mappings for generated JavaScript code"},{"refs":[{"id":"ref-for-decoded-mapping\u2464"},{"id":"ref-for-decoded-mapping\u2465"},{"id":"ref-for-decoded-mapping\u2466"},{"id":"ref-for-decoded-mapping\u2467"},{"id":"ref-for-decoded-mapping\u2468"},{"id":"ref-for-decoded-mapping\u2460\u24ea"},{"id":"ref-for-decoded-mapping\u2460\u2460"},{"id":"ref-for-decoded-mapping\u2460\u2461"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"#decoded-mapping"},
-"decoded-mapping-generatedcolumn": {"dfnID":"decoded-mapping-generatedcolumn","dfnText":"generatedColumn","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-generatedcolumn"}],"title":"5.1. Mappings structure"}],"url":"#decoded-mapping-generatedcolumn"},
-"decoded-mapping-generatedline": {"dfnID":"decoded-mapping-generatedline","dfnText":"generatedLine","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-generatedline"}],"title":"5.1. Mappings structure"}],"url":"#decoded-mapping-generatedline"},
-"decoded-mapping-name": {"dfnID":"decoded-mapping-name","dfnText":"name","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-name"},{"id":"ref-for-decoded-mapping-name\u2460"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping-name\u2461"},{"id":"ref-for-decoded-mapping-name\u2462"},{"id":"ref-for-decoded-mapping-name\u2463"},{"id":"ref-for-decoded-mapping-name\u2464"},{"id":"ref-for-decoded-mapping-name\u2465"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"#decoded-mapping-name"},
-"decoded-mapping-originalcolumn": {"dfnID":"decoded-mapping-originalcolumn","dfnText":"originalColumn","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-originalcolumn"},{"id":"ref-for-decoded-mapping-originalcolumn\u2460"}],"title":"5.1. Mappings structure"}],"url":"#decoded-mapping-originalcolumn"},
-"decoded-mapping-originalline": {"dfnID":"decoded-mapping-originalline","dfnText":"originalLine","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-originalline"},{"id":"ref-for-decoded-mapping-originalline\u2460"}],"title":"5.1. Mappings structure"}],"url":"#decoded-mapping-originalline"},
-"decoded-mapping-originalsource": {"dfnID":"decoded-mapping-originalsource","dfnText":"originalSource","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-originalsource"},{"id":"ref-for-decoded-mapping-originalsource\u2460"}],"title":"5.1. Mappings structure"}],"url":"#decoded-mapping-originalsource"},
+"decoded-mapping": {"dfnID":"decoded-mapping","dfnText":"decoded mapping","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-decoded-mapping\u2460"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping\u2461"},{"id":"ref-for-decoded-mapping\u2462"},{"id":"ref-for-decoded-mapping\u2463"}],"title":"5.1.1. Mappings for generated JavaScript code"},{"refs":[{"id":"ref-for-decoded-mapping\u2464"},{"id":"ref-for-decoded-mapping\u2465"},{"id":"ref-for-decoded-mapping\u2466"},{"id":"ref-for-decoded-mapping\u2467"},{"id":"ref-for-decoded-mapping\u2468"},{"id":"ref-for-decoded-mapping\u2460\u24ea"},{"id":"ref-for-decoded-mapping\u2460\u2460"},{"id":"ref-for-decoded-mapping\u2460\u2461"}],"title":"5.1.2. Names for generated JavaScript code"},{"refs":[{"id":"ref-for-decoded-mapping\u2460\u2462"},{"id":"ref-for-decoded-mapping\u2460\u2463"},{"id":"ref-for-decoded-mapping\u2460\u2464"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-mapping"},
+"decoded-mapping-generatedcolumn": {"dfnID":"decoded-mapping-generatedcolumn","dfnText":"generatedColumn","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-generatedcolumn"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping-generatedcolumn\u2460"},{"id":"ref-for-decoded-mapping-generatedcolumn\u2461"},{"id":"ref-for-decoded-mapping-generatedcolumn\u2462"},{"id":"ref-for-decoded-mapping-generatedcolumn\u2463"},{"id":"ref-for-decoded-mapping-generatedcolumn\u2464"},{"id":"ref-for-decoded-mapping-generatedcolumn\u2465"},{"id":"ref-for-decoded-mapping-generatedcolumn\u2466"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-mapping-generatedcolumn"},
+"decoded-mapping-generatedline": {"dfnID":"decoded-mapping-generatedline","dfnText":"generatedLine","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-generatedline"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping-generatedline\u2460"},{"id":"ref-for-decoded-mapping-generatedline\u2461"},{"id":"ref-for-decoded-mapping-generatedline\u2462"},{"id":"ref-for-decoded-mapping-generatedline\u2463"},{"id":"ref-for-decoded-mapping-generatedline\u2464"},{"id":"ref-for-decoded-mapping-generatedline\u2465"},{"id":"ref-for-decoded-mapping-generatedline\u2466"},{"id":"ref-for-decoded-mapping-generatedline\u2467"},{"id":"ref-for-decoded-mapping-generatedline\u2468"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-mapping-generatedline"},
+"decoded-mapping-name": {"dfnID":"decoded-mapping-name","dfnText":"name","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-name"},{"id":"ref-for-decoded-mapping-name\u2460"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping-name\u2461"},{"id":"ref-for-decoded-mapping-name\u2462"},{"id":"ref-for-decoded-mapping-name\u2463"},{"id":"ref-for-decoded-mapping-name\u2464"},{"id":"ref-for-decoded-mapping-name\u2465"}],"title":"5.1.2. Names for generated JavaScript code"},{"refs":[{"id":"ref-for-decoded-mapping-name\u2466"},{"id":"ref-for-decoded-mapping-name\u2467"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-mapping-name"},
+"decoded-mapping-originalcolumn": {"dfnID":"decoded-mapping-originalcolumn","dfnText":"originalColumn","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-originalcolumn"},{"id":"ref-for-decoded-mapping-originalcolumn\u2460"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping-originalcolumn\u2461"},{"id":"ref-for-decoded-mapping-originalcolumn\u2462"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-mapping-originalcolumn"},
+"decoded-mapping-originalline": {"dfnID":"decoded-mapping-originalline","dfnText":"originalLine","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-originalline"},{"id":"ref-for-decoded-mapping-originalline\u2460"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping-originalline\u2461"},{"id":"ref-for-decoded-mapping-originalline\u2462"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-mapping-originalline"},
+"decoded-mapping-originalsource": {"dfnID":"decoded-mapping-originalsource","dfnText":"originalSource","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-mapping-originalsource"},{"id":"ref-for-decoded-mapping-originalsource\u2460"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-mapping-originalsource\u2461"},{"id":"ref-for-decoded-mapping-originalsource\u2462"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-mapping-originalsource"},
 "decoded-source": {"dfnID":"decoded-source","dfnText":"decoded source","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-decoded-source\u2460"},{"id":"ref-for-decoded-source\u2461"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-decoded-source\u2462"}],"title":"5.2. Resolving sources"}],"url":"#decoded-source"},
 "decoded-source-content": {"dfnID":"decoded-source-content","dfnText":"content","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-content"},{"id":"ref-for-decoded-source-content\u2460"}],"title":"5.2. Resolving sources"}],"url":"#decoded-source-content"},
 "decoded-source-ignored": {"dfnID":"decoded-source-ignored","dfnText":"ignored","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-ignored"},{"id":"ref-for-decoded-source-ignored\u2460"}],"title":"5.2. Resolving sources"}],"url":"#decoded-source-ignored"},
-"decoded-source-map": {"dfnID":"decoded-source-map","dfnText":"decoded source map","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-map"}],"title":"5. Source map format"}],"url":"#decoded-source-map"},
-"decoded-source-map-file": {"dfnID":"decoded-source-map-file","dfnText":"file","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-map-file"}],"title":"5. Source map format"}],"url":"#decoded-source-map-file"},
-"decoded-source-map-mappings": {"dfnID":"decoded-source-map-mappings","dfnText":"mappings","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-map-mappings"}],"title":"5. Source map format"}],"url":"#decoded-source-map-mappings"},
-"decoded-source-map-sources": {"dfnID":"decoded-source-map-sources","dfnText":"sources","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-map-sources"},{"id":"ref-for-decoded-source-map-sources\u2460"}],"title":"5. Source map format"}],"url":"#decoded-source-map-sources"},
+"decoded-source-map": {"dfnID":"decoded-source-map","dfnText":"decoded source map","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-map"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-decoded-source-map\u2460"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-source-map"},
+"decoded-source-map-file": {"dfnID":"decoded-source-map-file","dfnText":"file","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-map-file"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-decoded-source-map-file\u2460"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-source-map-file"},
+"decoded-source-map-mappings": {"dfnID":"decoded-source-map-mappings","dfnText":"mappings","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-map-mappings"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-decoded-source-map-mappings\u2460"},{"id":"ref-for-decoded-source-map-mappings\u2461"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-source-map-mappings"},
+"decoded-source-map-sources": {"dfnID":"decoded-source-map-sources","dfnText":"sources","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-map-sources"},{"id":"ref-for-decoded-source-map-sources\u2460"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-decoded-source-map-sources\u2461"},{"id":"ref-for-decoded-source-map-sources\u2462"},{"id":"ref-for-decoded-source-map-sources\u2463"}],"title":"6.2. Decoding an index map"}],"url":"#decoded-source-map-sources"},
 "decoded-source-url": {"dfnID":"decoded-source-url","dfnText":"URL","external":false,"refSections":[{"refs":[{"id":"ref-for-decoded-source-url"},{"id":"ref-for-decoded-source-url\u2460"}],"title":"5.2. Resolving sources"}],"url":"#decoded-source-url"},
 "e1141bfc": {"dfnID":"e1141bfc","dfnText":"AsyncGeneratorExpression","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-AsyncGeneratorExpression"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-AsyncGeneratorExpression"},
 "e26c4ece": {"dfnID":"e26c4ece","dfnText":"line terminator code points","external":true,"refSections":[{"refs":[{"id":"ref-for-table-line-terminator-code-points"}],"title":"7.1.2.1. Extraction methods for JavaScript sources"}],"url":"https://tc39.es/ecma262/#table-line-terminator-code-points"},
@@ -4056,8 +4176,7 @@ let dfnPanelData = {
 "f73c7a1b": {"dfnID":"f73c7a1b","dfnText":"WhiteSpace","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-WhiteSpace"}],"title":"5.1.1. Mappings for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-WhiteSpace"},
 "fc0eee36": {"dfnID":"fc0eee36","dfnText":"AsyncFunctionExpression","external":true,"refSections":[{"refs":[{"id":"ref-for-prod-AsyncFunctionExpression"}],"title":"5.1.2. Names for generated JavaScript code"}],"url":"https://tc39.es/ecma262/#prod-AsyncFunctionExpression"},
 "generated-code": {"dfnID":"generated-code","dfnText":"Generated Code","external":false,"refSections":[{"refs":[{"id":"ref-for-generated-code"}],"title":"4. Terms and definitions"}],"url":"#generated-code"},
-"index-map-map": {"dfnID":"index-map-map","dfnText":"map","external":false,"refSections":[],"url":"#index-map-map"},
-"index-map-offset": {"dfnID":"index-map-offset","dfnText":"offset","external":false,"refSections":[],"url":"#index-map-offset"},
+"generated-position-less-than": {"dfnID":"generated-position-less-than","dfnText":"generated position less than","external":false,"refSections":[{"refs":[{"id":"ref-for-generated-position-less-than"}],"title":"6.2. Decoding an index map"}],"url":"#generated-position-less-than"},
 "index-map-sections": {"dfnID":"index-map-sections","dfnText":"sections","external":false,"refSections":[{"refs":[{"id":"ref-for-index-map-sections"},{"id":"ref-for-index-map-sections\u2460"}],"title":"6. Index map"}],"url":"#index-map-sections"},
 "json-file": {"dfnID":"json-file","dfnText":"file","external":false,"refSections":[{"refs":[{"id":"ref-for-json-file"}],"title":"6. Index map"}],"url":"#json-file"},
 "json-ignorelist": {"dfnID":"json-ignorelist","dfnText":"ignoreList","external":false,"refSections":[{"refs":[{"id":"ref-for-json-ignorelist"}],"title":"5. Source map format"}],"url":"#json-ignorelist"},
@@ -4072,8 +4191,8 @@ let dfnPanelData = {
 "optionally-get-a-list-of-array-indexes": {"dfnID":"optionally-get-a-list-of-array-indexes","dfnText":"optionally get a list of array indexes","external":false,"refSections":[{"refs":[{"id":"ref-for-optionally-get-a-list-of-array-indexes"}],"title":"5. Source map format"}],"url":"#optionally-get-a-list-of-array-indexes"},
 "optionally-get-a-list-of-optional-strings": {"dfnID":"optionally-get-a-list-of-optional-strings","dfnText":"optionally get a list of optional strings","external":false,"refSections":[{"refs":[{"id":"ref-for-optionally-get-a-list-of-optional-strings"},{"id":"ref-for-optionally-get-a-list-of-optional-strings\u2460"}],"title":"5. Source map format"}],"url":"#optionally-get-a-list-of-optional-strings"},
 "optionally-get-a-list-of-strings": {"dfnID":"optionally-get-a-list-of-strings","dfnText":"optionally get a list of strings","external":false,"refSections":[{"refs":[{"id":"ref-for-optionally-get-a-list-of-strings"}],"title":"5. Source map format"}],"url":"#optionally-get-a-list-of-strings"},
-"optionally-get-a-string": {"dfnID":"optionally-get-a-string","dfnText":"optionally get a string","external":false,"refSections":[{"refs":[{"id":"ref-for-optionally-get-a-string"},{"id":"ref-for-optionally-get-a-string\u2460"}],"title":"5. Source map format"}],"url":"#optionally-get-a-string"},
-"optionally-report-an-error": {"dfnID":"optionally-report-an-error","dfnText":"optionally report an error","external":false,"refSections":[{"refs":[{"id":"ref-for-optionally-report-an-error"}],"title":"2. Conformance"},{"refs":[{"id":"ref-for-optionally-report-an-error\u2460"},{"id":"ref-for-optionally-report-an-error\u2461"},{"id":"ref-for-optionally-report-an-error\u2462"},{"id":"ref-for-optionally-report-an-error\u2463"},{"id":"ref-for-optionally-report-an-error\u2464"},{"id":"ref-for-optionally-report-an-error\u2465"},{"id":"ref-for-optionally-report-an-error\u2466"},{"id":"ref-for-optionally-report-an-error\u2467"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-optionally-report-an-error\u2468"},{"id":"ref-for-optionally-report-an-error\u2460\u24ea"},{"id":"ref-for-optionally-report-an-error\u2460\u2460"},{"id":"ref-for-optionally-report-an-error\u2460\u2461"},{"id":"ref-for-optionally-report-an-error\u2460\u2462"},{"id":"ref-for-optionally-report-an-error\u2460\u2463"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-optionally-report-an-error\u2460\u2464"}],"title":"5.2. Resolving sources"}],"url":"#optionally-report-an-error"},
+"optionally-get-a-string": {"dfnID":"optionally-get-a-string","dfnText":"optionally get a string","external":false,"refSections":[{"refs":[{"id":"ref-for-optionally-get-a-string"},{"id":"ref-for-optionally-get-a-string\u2460"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-optionally-get-a-string\u2461"}],"title":"6.2. Decoding an index map"}],"url":"#optionally-get-a-string"},
+"optionally-report-an-error": {"dfnID":"optionally-report-an-error","dfnText":"optionally report an error","external":false,"refSections":[{"refs":[{"id":"ref-for-optionally-report-an-error"}],"title":"2. Conformance"},{"refs":[{"id":"ref-for-optionally-report-an-error\u2460"},{"id":"ref-for-optionally-report-an-error\u2461"},{"id":"ref-for-optionally-report-an-error\u2462"},{"id":"ref-for-optionally-report-an-error\u2463"},{"id":"ref-for-optionally-report-an-error\u2464"},{"id":"ref-for-optionally-report-an-error\u2465"},{"id":"ref-for-optionally-report-an-error\u2466"},{"id":"ref-for-optionally-report-an-error\u2467"}],"title":"5. Source map format"},{"refs":[{"id":"ref-for-optionally-report-an-error\u2468"},{"id":"ref-for-optionally-report-an-error\u2460\u24ea"},{"id":"ref-for-optionally-report-an-error\u2460\u2460"},{"id":"ref-for-optionally-report-an-error\u2460\u2461"},{"id":"ref-for-optionally-report-an-error\u2460\u2462"},{"id":"ref-for-optionally-report-an-error\u2460\u2463"}],"title":"5.1. Mappings structure"},{"refs":[{"id":"ref-for-optionally-report-an-error\u2460\u2464"}],"title":"5.2. Resolving sources"},{"refs":[{"id":"ref-for-optionally-report-an-error\u2460\u2465"},{"id":"ref-for-optionally-report-an-error\u2460\u2466"},{"id":"ref-for-optionally-report-an-error\u2460\u2467"},{"id":"ref-for-optionally-report-an-error\u2460\u2468"},{"id":"ref-for-optionally-report-an-error\u2461\u24ea"},{"id":"ref-for-optionally-report-an-error\u2461\u2460"},{"id":"ref-for-optionally-report-an-error\u2461\u2461"},{"id":"ref-for-optionally-report-an-error\u2461\u2462"},{"id":"ref-for-optionally-report-an-error\u2461\u2463"}],"title":"6.2. Decoding an index map"}],"url":"#optionally-report-an-error"},
 "original-source": {"dfnID":"original-source","dfnText":"Original Source","external":false,"refSections":[{"refs":[{"id":"ref-for-original-source"}],"title":"5. Source map format"}],"url":"#original-source"},
 "source-mapping-url": {"dfnID":"source-mapping-url","dfnText":"Source Mapping URL","external":false,"refSections":[{"refs":[{"id":"ref-for-source-mapping-url"},{"id":"ref-for-source-mapping-url\u2460"}],"title":"7.1. Linking generated code to source maps"}],"url":"#source-mapping-url"},
 "source-origin": {"dfnID":"source-origin","dfnText":"source origin","external":false,"refSections":[{"refs":[{"id":"ref-for-source-origin"},{"id":"ref-for-source-origin\u2460"},{"id":"ref-for-source-origin\u2461"},{"id":"ref-for-source-origin\u2462"},{"id":"ref-for-source-origin\u2463"}],"title":"7.1. Linking generated code to source maps"}],"url":"#source-origin"},
@@ -4471,6 +4590,7 @@ let refsData = {
 "#column": {"displayText":"column","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"column","type":"dfn","url":"#column"},
 "#decode-a-base64-vlq": {"displayText":"decode a base64 vlq","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"decode a base64 vlq","type":"dfn","url":"#decode-a-base64-vlq"},
 "#decode-a-source-map": {"displayText":"decode a source map","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"decode a source map","type":"dfn","url":"#decode-a-source-map"},
+"#decode-an-index-source-map": {"displayText":"decode an index source map","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"decode an index source map","type":"dfn","url":"#decode-an-index-source-map"},
 "#decode-source-map-mappings": {"displayText":"decode source map mappings","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"decode source map mappings","type":"dfn","url":"#decode-source-map-mappings"},
 "#decode-source-map-mappings-mappings": {"displayText":"mappings","export":true,"for_":["decode source map mappings"],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"mappings","type":"dfn","url":"#decode-source-map-mappings-mappings"},
 "#decode-source-map-mappings-names": {"displayText":"names","export":true,"for_":["decode source map mappings"],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"names","type":"dfn","url":"#decode-source-map-mappings-names"},
@@ -4498,6 +4618,7 @@ let refsData = {
 "#extract-a-source-map-url-from-javascript-through-parsing": {"displayText":"extract a source map url from javascript through parsing","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"extract a source map url from javascript through parsing","type":"dfn","url":"#extract-a-source-map-url-from-javascript-through-parsing"},
 "#extract-a-source-map-url-from-javascript-without-parsing": {"displayText":"extract a source map url from javascript without parsing","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"extract a source map url from javascript without parsing","type":"dfn","url":"#extract-a-source-map-url-from-javascript-without-parsing"},
 "#generated-code": {"displayText":"generated code","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"generated code","type":"dfn","url":"#generated-code"},
+"#generated-position-less-than": {"displayText":"generated position less than","export":true,"for_":[],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"generated position less than","type":"dfn","url":"#generated-position-less-than"},
 "#index-map-sections": {"displayText":"sections","export":true,"for_":["index-map"],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"sections","type":"dfn","url":"#index-map-sections"},
 "#json-file": {"displayText":"file","export":true,"for_":["json"],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"file","type":"dfn","url":"#json-file"},
 "#json-ignorelist": {"displayText":"ignorelist","export":true,"for_":["json"],"level":"","normative":true,"shortname":"source-map","spec":"source-map","status":"local","text":"ignorelist","type":"dfn","url":"#json-ignorelist"},
@@ -4543,17 +4664,22 @@ let refsData = {
 "https://infra.spec.whatwg.org/#iteration-while": {"displayText":"while","export":true,"for_":["iteration"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"while","type":"dfn","url":"https://infra.spec.whatwg.org/#iteration-while"},
 "https://infra.spec.whatwg.org/#list": {"displayText":"list","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"list","type":"dfn","url":"https://infra.spec.whatwg.org/#list"},
 "https://infra.spec.whatwg.org/#list-append": {"displayText":"append","export":true,"for_":["list"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"append","type":"dfn","url":"https://infra.spec.whatwg.org/#list-append"},
+"https://infra.spec.whatwg.org/#list-extend": {"displayText":"extend","export":true,"for_":["list"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"extend","type":"dfn","url":"https://infra.spec.whatwg.org/#list-extend"},
+"https://infra.spec.whatwg.org/#list-is-empty": {"displayText":"is not empty","export":true,"for_":["list","stack","queue","set"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"is not empty","type":"dfn","url":"https://infra.spec.whatwg.org/#list-is-empty"},
 "https://infra.spec.whatwg.org/#list-iterate": {"displayText":"for each","export":true,"for_":["list","set"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"for each","type":"dfn","url":"https://infra.spec.whatwg.org/#list-iterate"},
 "https://infra.spec.whatwg.org/#list-size": {"displayText":"size","export":true,"for_":["list","stack","queue","set"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"size","type":"dfn","url":"https://infra.spec.whatwg.org/#list-size"},
+"https://infra.spec.whatwg.org/#list-sort-in-ascending-order": {"displayText":"sorting","export":true,"for_":["list","stack","queue","set"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"sorting","type":"dfn","url":"https://infra.spec.whatwg.org/#list-sort-in-ascending-order"},
 "https://infra.spec.whatwg.org/#map-exists": {"displayText":"exist","export":true,"for_":["map"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"exist","type":"dfn","url":"https://infra.spec.whatwg.org/#map-exists"},
 "https://infra.spec.whatwg.org/#ordered-map": {"displayText":"map","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"map","type":"dfn","url":"https://infra.spec.whatwg.org/#ordered-map"},
 "https://infra.spec.whatwg.org/#parse-a-json-string-to-an-infra-value": {"displayText":"parse a JSON string to an Infra value","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"parse a json string to an infra value","type":"dfn","url":"https://infra.spec.whatwg.org/#parse-a-json-string-to-an-infra-value"},
 "https://infra.spec.whatwg.org/#parse-json-bytes-to-a-javascript-value": {"displayText":"parse JSON bytes to a JavaScript value","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"parse json bytes to a javascript value","type":"dfn","url":"https://infra.spec.whatwg.org/#parse-json-bytes-to-a-javascript-value"},
+"https://infra.spec.whatwg.org/#set-union": {"displayText":"union","export":true,"for_":["set"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"union","type":"dfn","url":"https://infra.spec.whatwg.org/#set-union"},
 "https://infra.spec.whatwg.org/#strictly-split": {"displayText":"strictly split","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"strictly split","type":"dfn","url":"https://infra.spec.whatwg.org/#strictly-split"},
 "https://infra.spec.whatwg.org/#string": {"displayText":"string","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"string","type":"dfn","url":"https://infra.spec.whatwg.org/#string"},
 "https://infra.spec.whatwg.org/#string-concatenate": {"displayText":"concatenate","export":true,"for_":["string"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"concatenate","type":"dfn","url":"https://infra.spec.whatwg.org/#string-concatenate"},
 "https://infra.spec.whatwg.org/#string-position-variable": {"displayText":"position variable","export":true,"for_":["string"],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"position variable","type":"dfn","url":"https://infra.spec.whatwg.org/#string-position-variable"},
 "https://infra.spec.whatwg.org/#struct": {"displayText":"struct","export":true,"for_":[],"level":"1","normative":true,"shortname":"infra","spec":"infra","status":"current","text":"struct","type":"dfn","url":"https://infra.spec.whatwg.org/#struct"},
+"https://tc39.es/ecma262/#integral-number": {"displayText":"integral Number","export":true,"for_":[],"level":"262","normative":true,"shortname":"ecma","spec":"ecma-262","status":"anchor-block","text":"integral number","type":"dfn","url":"https://tc39.es/ecma262/#integral-number"},
 "https://tc39.es/ecma262/#prod-ArrowFormalParameters": {"displayText":"ArrowFormalParameters","export":true,"for_":[],"level":"262","normative":true,"shortname":"ecma","spec":"ecma-262","status":"anchor-block","text":"arrowformalparameters","type":"dfn","url":"https://tc39.es/ecma262/#prod-ArrowFormalParameters"},
 "https://tc39.es/ecma262/#prod-ArrowFunction": {"displayText":"ArrowFunction","export":true,"for_":[],"level":"262","normative":true,"shortname":"ecma","spec":"ecma-262","status":"anchor-block","text":"arrowfunction","type":"dfn","url":"https://tc39.es/ecma262/#prod-ArrowFunction"},
 "https://tc39.es/ecma262/#prod-ArrowParameters": {"displayText":"ArrowParameters","export":true,"for_":[],"level":"262","normative":true,"shortname":"ecma","spec":"ecma-262","status":"anchor-block","text":"arrowparameters","type":"dfn","url":"https://tc39.es/ecma262/#prod-ArrowParameters"},
