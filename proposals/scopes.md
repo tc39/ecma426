@@ -49,7 +49,7 @@ orzo();
 throw Error()
 ```
 With the encoded environment it becomes possible to:
-- Reconstruct the stack trace with the original function names for the `Error` 
+- Reconstruct the stack trace with the original function names for the `Error`
 - Have `Step Over` and `Step Out` actions during the debugging for the inlined functions
 
 2. Debugging folded or erased variables
@@ -196,17 +196,14 @@ interface OriginalPosition {
 
 ### Encoding
 
-We introduce two new fields "scopes" and "expressions" to the source map JSON:
-
-  * "scopes" is a string. It contains a list of comma-separated items. Each item is prefixed with a unique "tag". The items themselves build a tree structure that describe "original scope" and "generated range" trees.
-  * "expressions" is an array of strings. It is similar to "names" and serves as a string table for JavaScript expressions. `null` is a valid value in this string array and is used to signify that variables are unavailable.
+We introduce a new field "scopes" to the source map JSON: "scopes" is a string. It contains a list of comma-separated items. Each item is prefixed with a unique "tag". The items themselves build a tree structure that describe "original scope" and "generated range" trees.
 
 The format of "scopes" is presented in an EBNF-like grammar, with:
 
   * Three terminals: Signed, unsigned VLQ and comma '`,`'. VLQ terminals are labelled and we denote them with UPPERCASE.
     We prefix the terminal with `u` or `s` to signify an unsigned or signed VLQ respectively. E.g. the terminal `uLINE` signifies
     an unsigned VLQ labelled `LINE`.
-  
+
   * Non-terminals are denoted with `snake_case`.
 
   * `symbol?` means zero or one `symbol`.
@@ -215,21 +212,21 @@ The format of "scopes" is presented in an EBNF-like grammar, with:
 The start symbol is `scopes`:
 
 ```
-scopes := item_list
+scopes := original_scope_list generated_range_list
 
-item_list :=
-    top_level_item
-  | top_level_item ',' item_list
-
-top_level_item :=
+original_scope_list :=
     original_scope_tree
-  | generated_range_tree
+  | ε
+  | original_scope_list ',' original_scope_tree
+  | original_scope_list ',' ε
+
+generated_range_list :=
+    generated_range_tree
+  | generated_range_list ',' generated_range_tree
 ```
 
-The recommendation is to use one top-level `original_scope_tree` per `sources` file, but multiple are technically allowed.
-Multiple top-level `generated_range_tree`s are also allowed, this is especially useful when multiple bundles are straight-up
-concatenated.
-
+Only one top-level `original_scope_tree` per `sources` file is allowed. The n-th top-level `original_scope_tree` describes the scope tree for `sources[n]`. To signify that a certain `sources[m]` authored file doesn't have scopes information available, an empty item must be used.
+Multiple top-level `generated_range_tree`s are allowed, this is especially useful when multiple bundles are straight-up concatenated.
 
 #### Original Scope Trees
 
@@ -258,21 +255,11 @@ original_scope_variables :=
   'D'        // Tag: 0x3 unsigned
   sVARIABLE+
 
-original_scope_source_index :=
-  'E'    // Tag: 0x4 unsigned
-  uINDEX
-
 original_scope_end :=
   'C'     // Tag: 0x2 unsigned
   uLINE
   uCOLUMN
 ```
-
-The encoding scheme supports two different ways to connect a top-level `original_scope_tree` with a specific source file:
-
-  1) Use a `original_scope_source_index` item. It's `uINDEX` is an index into the `sources` array.
-  2) If `scopes` contains exactly N top-level `original_scope_trees` where N is the length of the `sources` array, then the `i`th
-     `original_scope_tree` describes `sources[i]`.
 
 The `uFLAGS` field in `original_scope_start` is a bit field defined as follows:
   * 0x1 has name
@@ -310,16 +297,16 @@ corresponding to the immediately surrounding start/end pair.
 
 ```
 generated_range_start :=
-  'F'     // Tag: 0x5 unsigned
+  'F'          // Tag: 0x5 unsigned
   uFLAGS
-  uCOLUMN
   uLINE?       // Present if FLAGS<0> is set.
+  uCOLUMN
   sDEFINITION? // Present if FLAGS<1> is set.
 
 generated_range_end :=
   'G'    // Tag: 0x6 unsigned
-  uCOLUMN
   uLINE?
+  uCOLUMN
 ```
 
 Since bundles tend to consist of a single line (or very few lines), `generated_range_start` and `generated_range_end` omit the line by default.
@@ -356,12 +343,12 @@ If a "generated range" contains a callsite, then the range describes an inlined 
 ```
 generated_range_bindings :=
   'H'       // Tag: 0x7 unsigned
-  sBINDING+ 
+  sBINDING+
 ```
 
-`generated_range_bindings` are only valid for generated ranges that have a `sDEFINITION`. The bindings list must be equal in length as the variable list of the original scope the `sDEFINITION` references. `sBINDING+` is a list of indices into the `"expressions"` field of the source map JSON. Each binding is a JavaScript expression that, when evaluated, produces the **value** of the corresponding variable.
+`generated_range_bindings` are only valid for generated ranges that have a `sDEFINITION`. The bindings list must be equal in length as the variable list of the original scope the `sDEFINITION` references. `sBINDING+` is a list of indices into the `"names"` field of the source map JSON. Each binding is a JavaScript expression that, when evaluated, produces the **value** of the corresponding variable.
 
-`sBINDING+` indices are encoded relative to each other. To signify that a variable is unavailable, it is valid to put the JavaScript value `null` into the `"expressions"` array and point to that.
+`sBINDING+` indices are encoded absolute. To signify that a variable is unavailable, use the index `-1`.
 
 ```
 generated_range_subrange_binding :=
