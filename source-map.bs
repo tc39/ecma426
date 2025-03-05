@@ -42,6 +42,7 @@ spec:url; type:dfn; for:/; text:url
 spec:infra; type:dfn;
     text:list
     for:list; text:for each
+    for:list; text:is not empty
 </pre>
 <pre class="anchors">
 urlPrefix:https://tc39.es/ecma262/#; type:dfn; spec:ECMA-262
@@ -91,6 +92,7 @@ urlPrefix:https://tc39.es/ecma262/#; type:dfn; spec:ECMA-262
     url:prod-VariableStatement; text:VariableStatement
     url:sec-parameter-lists; text:Parameter List
     url:sec-syntactic-grammar; text:Syntactic Grammar
+    url:integral-number; text:integral Number
 
 urlPrefix:https://webassembly.github.io/spec/core/; type:dfn; spec:wasm
     url:binary/modules.html#binary-customsec; text:custom section
@@ -228,7 +230,7 @@ latest edition of the referenced document (including any amendments) applies.
 <h3 class="no-ref" id="normative"><span class="content">Normative references</span></h3>
 <div class="no-ref">
 <dl>
- </dd><dt id="biblio-ecma-262" data-no-self-link="">\[ECMA-262]
+ <dt id="biblio-ecma-262" data-no-self-link="">\[ECMA-262]
  </dt><dd><a href="https://tc39.es/ecma262/"><cite>ECMAScript® Language Specification</cite></a>. Standards Track. URL: <a href="https://tc39.es/ecma262/">https://tc39.es/ecma262/</a>
  </dd><dt id="biblio-json" data-no-self-link="">\[JSON]
  </dt><dd><a href="https://tc39.es/ecma404/"><cite>The JSON data interchange syntax</cite></a>. Standards Track. URL: <a href="https://tc39.es/ecma404/">https://tc39.es/ecma404/</a>
@@ -363,7 +365,8 @@ following steps:
 1. Let |jsonMap| be the result of [=parse a JSON string to an Infra value|parsing a JSON string to
     an Infra value=] |str|.
 1. If |jsonMap| is not a [=/map=], report an error and abort these steps.
-1. [=Decode a source map=] given |jsonMap| and |baseURL|, and return its result if any.
+1. If |jsonMap|[`"sections"`] [=map/exists=], [=decode an index source map=] given |jsonMap| and |baseURL|, and return its result if any.
+1. Otherwise, [=decode a source map=] given |jsonMap| and |baseURL|, and return its result if any.
 
 To <dfn export>decode a source map</dfn> given a [=string=]-keyed [=/map=] |jsonMap| and a [=/URL=]
 |baseURL|, run the following steps:
@@ -631,7 +634,7 @@ as per [=ECMAScript Lexical Grammar=]. [=decoded mapping|Mapping=] entries shall
     [=Comment=], [=HashbangComment=], [=StringLiteral=], [=Template=],
     [=TemplateSubstitutionTail=], [=WhiteSpace=] and [=LineTerminator=].
 
-### [=decoded mapping/Names=] for generated JavaScript code
+### [=decoded mapping/Names=] for generated JavaScript code ### {#names-javascript}
 
 Source map generators should create a [=decoded mapping|mapping=] entry with a
 [=decoded mapping/name=] field for a JavaScript token, if
@@ -785,15 +788,74 @@ the file format is JSON with a top-level object.  It shares the [=json/version=]
 
 Section objects have the following fields:
 
-* <dfn dfn-for="index-map"><code>offset</code></dfn> is an object with two fields, `line` and `column`,
+* <code>offset</code> is an object with two fields, `line` and `column`,
     that represent the offset into generated code that the referenced source map
     represents.
 
-* <dfn dfn-for="index-map"><code>map</code></dfn> is an embedded complete source map object.
+* <code>map</code> is an embedded complete source map object.
     An embedded map does not inherit any values from the containing index map.
 
 The sections shall be sorted by starting position and the represented sections
 shall not overlap.
+
+## Decoding an index map ## {#decoding-index-map}
+
+To <dfn export>decode an index source map</dfn> given a [=string=]-keyed [=/map=] |jsonMap| and a [=/URL=]
+|baseURL|, run the following steps:
+1. <p>Assert: |jsonMap|[`"sections"`] [=map/exists=].</p>
+1. If |jsonMap|[`"sections"`] is not a [=list=], report an error.
+1. If |jsonMap|[`"version"`] does not [=map/exist=] or |jsonMap|[`"version"`] is not 3,
+    [=optionally report an error=].
+1. Let |sourceMap| be a new [=decoded source map=].
+1. Set |sourceMap|'s [=decoded source map/file=] to [=optionally get a string=] `"file"` from |jsonMap|.
+1. Let |previousOffset| be null.
+1. Let |previousLastMapping| be null.
+1. [=For each=] |section| of |jsonMap|[`"sections"`]:
+    1. If |section| is not a [=/map=], [=optionally report an error=] and continue with the next iteration.
+    1. If |section|[`"offset"`] does not [=map/exist=], then report an error.
+    1. Let |offsetLine| be |section|[`"offset"`][`"line"`].
+    1. Let |offsetColumn| be |section|[`"offset"`][`"column"`].
+    1. If |offsetLine| is not an [=integral Number=], [=optionally report an error=] and set |offsetLine| to 0.
+    1. If |offsetColumn| is not an [=integral Number=], [=optionally report an error=] and set |offsetColumn| to 0.
+    1. If |previousOffset| is not null,
+        1. If |offsetLine| is less than |previousOffset|[`"line"`], [=optionally report an error=].
+        1. If |offsetLine| is equal to |previousOffset|[`"line"`] and |offsetColumn| is less than |previousOffset|[`"column"`], [=optionally report an error=].
+    1. If |previousLastMapping| is not null,
+        1. If |offsetLine| is less than |previousLastMapping|'s [=decoded mapping/generatedLine=], [=optionally report an error=].
+        1. If |offsetLine| is equal to |previousLastMapping|'s [=decoded mapping/generatedLine=] and |offsetColumn| is less than |previousLastMapping|'s [=decoded mapping/generatedColumn=], [=optionally report an error=].
+
+        Note: This part of the decoding algorithm checks that index source map sections are ordered and do not overlap.
+              While it is expected that generators should not produce index source maps with overlapping sections, source map
+              consumers may, for example, only check the simpler condition that the section offsets are ordered.
+    1. If |section|[`"map"`] does not [=map/exist=], then report an error.
+    1. Let |decodedSection| be the result of [=decoding a source map=] given |section|[`"map"`] and |baseURL|.
+    1. If the previous step reported an error, [=optionally report an error=] and continue with the next iteration.
+    1. Set |sourceMap|'s [=decoded source map/sources=] to the [=set/union=] of |sourceMap|'s [=decoded source map/sources=] and |decodedSection|'s [=decoded source map/sources=].
+    1. Let |offsetMappings| be a new [=list=].
+    1. [=For each=] |mapping| of |decodedSection|'s [=decoded source map/mappings=]:
+        1. Let |offsetMapping| be a new [=decoded mapping=].
+        1. Set |offsetMapping|'s [=decoded mapping/generatedLine=] to |mapping|'s [=decoded mapping/generatedLine=] + |offsetLine|.
+        1. If |mapping|'s [=decoded mapping/generatedLine=] is equal to 0, set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=] + |offsetColumn|.
+        1. Otherwise, set |offsetMapping|'s [=decoded mapping/generatedColumn=] to |mapping|'s [=decoded mapping/generatedColumn=].
+        1. Set |offsetMapping|'s [=decoded mapping/originalSource=] to |mapping|'s [=decoded mapping/originalSource=].
+        1. Set |offsetMapping|'s [=decoded mapping/originalLine=] to |mapping|'s [=decoded mapping/originalLine=].
+        1. Set |offsetMapping|'s [=decoded mapping/originalColumn=] to |mapping|'s [=decoded mapping/originalColumn=].
+        1. Set |offsetMapping|'s [=decoded mapping/name=] to |mapping|'s [=decoded mapping/name=].
+        1. [=list/Append=] |offsetMapping| to |offsetMappings|.
+
+        Note: Implementations may choose to represent index source map sections without appending the mappings together,
+              for example, by storing each section separately and conducting a binary search.
+    1. [=list/Extend=] |sourceMap|'s [=decoded source map/mappings=] with |offsetMappings|.
+    1. Set |previousOffset| to |section|[`"offset"`].
+    1. Let |sortedMappings| be the result of [=list/sorting=] |offsetMappings| in ascending order, with an item |a| being less than |b| if |a| is [=generated position less than=] |b|.
+    1. Set |previousLastMapping| to the last item of |sortedMappings| if |sortedMappings| [=is not empty=].
+1. Return |sourceMap|.
+
+A [=decoded mapping=] |a| is <dfn>generated position less than</dfn> a [=decoded mapping=] b if the following steps return true:
+
+1. If |a|'s [=decoded mapping/generatedLine=] is less than |b|'s [=decoded mapping/generatedLine=], return true.
+1. If |a|'s [=decoded mapping/generatedLine=] is equal to |b|'s [=decoded mapping/generatedLine=] and |a|'s [=decoded mapping/generatedColumn=] is less than |b|'s [=decoded mapping/generatedColumn=], return true.
+1. Otherwise, return false.
 
 Retrieving source maps {#linking-and-fetching}
 ========================================================
@@ -1117,7 +1179,7 @@ JavaScript-style single-line comments.
 <h2 class="no-num" id="bibliography">Bibliography</h2>
 
 <dl>
- </dd><dt id="biblio-encoding" data-no-self-link="">\[ENCODING]
+ <dt id="biblio-encoding" data-no-self-link="">\[ENCODING]
  </dt><dd>Anne van Kesteren. <a href="https://encoding.spec.whatwg.org/"><cite>Encoding Standard</cite></a>. Living Standard. URL: <a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>
  </dd><dt id="biblio-fetch" data-no-self-link="">\[FETCH]
  </dt><dd>Anne van Kesteren. <a href="https://fetch.spec.whatwg.org/"><cite>Fetch Standard</cite></a>. Living Standard. URL: <a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>
@@ -1136,7 +1198,7 @@ JavaScript-style single-line comments.
 </dd></dl>
 </div>
 
-<h2 class="no-num" id="license">Copyright & Software License</h2>
+<h2 class="no-num" id="copyright-and-license">Copyright & Software License</h2>
 
 Ecma International
 
