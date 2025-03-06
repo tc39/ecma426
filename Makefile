@@ -2,15 +2,12 @@
 all: build
 
 .PHONY: build
-build: .venv
-	.venv/bin/bikeshed spec
+build: node_modules
+	npm run build
 
 .PHONY: watch
-watch: .venv
-	.venv/bin/bikeshed watch
+watch: node_modules
+	npm run watch
 
-.venv:
-	python3 -mvenv .venv
-	.venv/bin/pip install --upgrade pip
-	.venv/bin/pip install bikeshed
-	.venv/bin/bikeshed update
+node_modules:
+	npm ci
