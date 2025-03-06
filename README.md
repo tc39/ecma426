@@ -5,7 +5,7 @@ well as older revisions of the format developed prior to moving to Ecma.
 
 ## What's here
 
-* [Draft Source](source-map.bs)
+* [Draft Source](spec.emu)
 * [Rendered Draft](https://tc39.es/ecma426/)
 
 The current specification is an evolution of the original third revision. The
@@ -18,8 +18,8 @@ don't have widespread adoption in tools.
 
 ## Generating the draft specification
 
-1. Run `make build` from this repository's root folder
-2. Open source-map.html in your browser
+1. Run `npm ci && npm run build` from this repository's root folder
+2. Open `./out/index.html` in your browser
 
 ## Current Proposals
 

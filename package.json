@@ -1,0 +1,23 @@
+{
+  "private": true,
+  "name": "ecma426",
+  "version": "1.0.0",
+  "description": "The Source Map specification",
+  "scripts": {
+    "prebuild-only": "npm run clean && mkdir out  && cp -R img out",
+    "build-only": "ecmarkup --verbose --load-biblio @tc39/ecma262-biblio spec.emu out/index.html",
+    "build": "npm run build-only",
+    "clean": "rm -rf out",
+    "format": "emu-format --write spec.emu",
+    "test": "exit 0",
+    "watch": "npm run build-only -- --watch"
+  },
+  "repository": "tc39/ecma426",
+  "author": "Ecma TC39 (TG4)",
+  "license": "SEE LICENSE IN https://tc39.es/ecma426/#sec-copyright-and-software-license",
+  "homepage": "https://tc39.es/ecma426/",
+  "devDependencies": {
+    "@tc39/ecma262-biblio": "^2.1.2837",
+    "ecmarkup": "^20.0.0"
+  }
+}

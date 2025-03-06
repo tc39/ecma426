@@ -1,4 +1,4 @@
-name: 'ecma-262'
+name: IPR
 
 on:
   pull_request_target:
@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
       - run: node scripts/ipr-check.js tc39/ecma426 ${{ github.event.pull_request.head.sha || 'HEAD' }}
         env:

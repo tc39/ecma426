@@ -1,18 +1,48 @@
 name: CI
 on:
-  pull_request: {}
+  pull_request_target:
+    types: [opened, reopened, synchronize]
   push:
     branches-ignore:
       - 'gh-pages'
 jobs:
-  main:
-    name: Build, Validate and Deploy
+  build:
+    name: Build and Validate
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v3
-      - uses: w3c/spec-prod@v2
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+      - run: npm ci
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
         with:
-          GH_PAGES_BRANCH: gh-pages
-          TOOLCHAIN: bikeshed
-          SOURCE: source-map.bs
-          DESTINATION: ${{ github.ref_name == 'main' && 'index.html' || format('{0}/index.html', github.ref_name) }}
+          path: out/
+
+  deploy:
+    name: Deploy
+    needs: build
+    permissions:
+      contents: write
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+      - uses: actions/download-artifact@v4
+        if: success() || failure()
+      - run: cp -r ./artifact/. .
+        if: github.ref_name == 'main'
+      - run: mkdir -p pr && cp -r ./artifact/. ./pr/${{ github.event.number }}
+        if: github.event_name != 'push'
+      - run: mkdir -p branch && cp -r ./artifact/. ./branch/${{ github.ref_name }}
+        if: github.event_name == 'push' && github.ref_name != 'main'
+      - run: rm -r artifact
+      - name: Configure git
+        run: |
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+      - name: Push to gh-pages
+        run: |
+          git add .
+          git commit -m "Deploy ${{ github.event_name }} ${{ github.ref_name }}" --allow-empty
+          git push

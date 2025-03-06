@@ -1,0 +1,1434 @@
+<!DOCTYPE html>
+<html lang="en-GB-oxendict">
+<meta charset="utf-8">
+<link rel="icon" href="img/favicon.ico">
+<style>
+  #metadata-block {
+    margin: 4em 0;
+    padding: 10px;
+    border: 1px solid #ee8421;
+  }
+  #metadata-block h1 {
+    font-size: 1.5em;
+    margin-top: 0;
+  }
+  #metadata-block > ul {
+    list-style-type: none;
+    margin: 0; padding: 0;
+  }
+
+  #ecma-logo {
+    width: 500px;
+  }
+
+
+  /* TODO: Get proper Ecmarkup support for examples */
+  emu-note[example] {
+    --note-type: example;
+    --note-label: "Example";
+    --note-text-color: #574b0f;
+    --note-border-color: #e0cb52;
+    --note-background-color: #fcfaee;
+  }
+  emu-note[issue] {
+    --note-type: issue;
+    --note-label: "Issue";
+    --note-border-color: #e05252;
+    --note-background-color: #fbe9e9;
+  }
+
+  emu-note[issue], emu-note[example] {
+    counter-increment: var(--note-type);
+    border-left-color: var(--note-border-color);
+    background-color: var(--note-background-color);
+    padding: 0.5em;
+
+    &::before {
+      content: var(--note-label) "\00A0" counter(var(--note-type));
+      color: var(--note-text-color, black);
+      text-transform: uppercase;
+    }
+
+    & .note {
+      display: none;
+    }
+  }
+
+  emu-clause[example][normative-optional] .attributes-tag emu-xref {
+    display: none;
+  }
+  emu-clause[example][normative-optional] .attributes-tag::before {
+    content: "Example";
+  }
+
+  dfn code {
+    font-style: normal;
+  }
+
+  emu-annex#sec-external-definitions dd dfn {
+    font-style: normal;
+  }
+</style>
+<pre class="metadata">
+  title: Source map format specification
+  shortname: ECMA-426
+  status: draft
+  location: https://tc39.es/ecma426/
+</pre>
+<p><img src="img/ecma-logo.svg" id="ecma-logo" alt="Ecma International logo"></p>
+<div id="metadata-block">
+  <h1>About this Specification</h1>
+  <p>The document at <a href="https://tc39.es/ecma426/">https://tc39.es/ecma426/</a> is the most accurate and up-to-date source map specification. It contains the content of the most recently published snapshot plus any modifications that will be included in the next snapshot.</p>
+  <h1>Contributing to this Specification</h1>
+  <p>This specification is developed on GitHub. There are a number of ways to contribute to the development of this specification:</p>
+  <ul>
+    <li>GitHub Repository: <a href="https://github.com/tc39/ecma426">https://github.com/tc39/ecma426</a></li>
+    <li>Issues: <a href="https://github.com/tc39/ecma426/issues">All Issues</a>, <a href="https://github.com/tc39/ecma426/issues/new">File a New Issue</a></li>
+    <li>Pull Requests: <a href="https://github.com/tc39/ecma426/pulls">All Pull Requests</a>, <a href="https://github.com/tc39/ecma426/pulls/new">Create a New Pull Request</a></li>
+    <li>Test Suite: <a href="https://github.com/tc39/source-map-tests/">tc39/source-map-tests</a></li>
+    <li>
+      Editors:
+      <ul>
+        <li><a href="https://github.com/takikawa">Asumu Takikawa</a> (Igalia)</li>
+      </ul>
+    </li>
+  </ul>
+  <p>Refer to the <emu-xref href="#sec-colophon">colophon</emu-xref> for more information on how this document is created.</p>
+</div>
+
+<emu-intro id="sec-intro">
+  <h1>Introduction</h1>
+  <p>This Ecma Standard defines the Source map format, used for mapping transpiled source code back to the original sources.</p>
+  <p>The source map format has the following goals:</p>
+  <ul>
+    <li>Support source-level debugging allowing bidirectional mapping</li>
+    <li>Support server-side stack trace deobfuscation</li>
+  </ul>
+  <p>The <emu-not-ref>original source</emu-not-ref> map format (v1) was created by Joseph Schorr for use by Closure Inspector to enable source-level debugging of optimized JavaScript code (although the format itself is language agnostic). However, as the size of the projects using source maps expanded, the verbosity of the format started to become a problem. The v2 format (Source Map Revision 2 Proposal) was created by trading some simplicity and flexibility to reduce the overall size of the source map. Even with the changes made with the v2 version of the format, the source map file size was limiting its usefulness. The v3 format is based on suggestions made by Pavel Podivilov (Google).</p>
+  <p>The source map format does not have version numbers anymore, and it is instead hard-coded to always be "3".</p>
+  <p>In 2023-2024, the source map format was developed into a more precise Ecma standard, with significant contributions from many people. Further iteration on the source map format is expected to come from TC39-TG4.</p>
+  <p>
+    Asumu Takikawa, Nicolò Ribaudo, Jon Kuperman<br/>
+    ECMA-426, 1<sup>st</sup> edition, Project Editors
+  </p>
+</emu-intro>
+
+<emu-clause id="sec-scope">
+  <h1>Scope</h1>
+  <p>This Standard defines the source map format, used by different types of developer tools to improve the debugging experience of code compiled to JavaScript, WebAssembly, and CSS.</p>
+</emu-clause>
+
+<emu-clause id="sec-conformance">
+  <h1>Conformance</h1>
+  <p>A conforming source map document is a JSON document that conforms to the structure detailed in this specification.</p>
+  <p>A conforming source map generator should generate documents which are conforming source map documents, and can be decoded by the algorithms in this specification without reporting any errors (even those which are specified as optional).</p>
+  <p>A conforming source map consumer should implement the algorithms specified in this specification for retrieving (where applicable) and decoding source map documents. A conforming consumer is permitted to ignore errors or report them without terminating where the specification indicates that an algorithm may optionally report an error.</p>
+</emu-clause>
+
+<emu-clause id="sec-references">
+  <h1>References</h1>
+  <p>The following documents are referred to in the text in such a way that some or all of their content constitutes requirements of this document. For dated references, only the edition cited applies. For undated references, the latest edition of the referenced document (including any amendments) applies.</p>
+
+  <!-- All documents listed here must also be listed in the "Biography" annex. -->
+
+  <emu-clause id="sec-references-normative">
+    <h1>Normative References</h1>
+    <p>
+      ECMA-262, <i>ECMAScript® Language Specification</i>.<br>
+      <a href="https://tc39.es/ecma262/">https://tc39.es/ecma262/</a>
+    </p>
+    <p>
+      ECMA-404, <i>The JSON Data Interchange Format</i>.<br>
+      <a href="https://www.ecma-international.org/publications-and-standards/standards/ecma-404/">https://www.ecma-international.org/publications-and-standards/standards/ecma-404/</a>
+    </p>
+  </emu-clause>
+
+  <emu-clause id="sec-references-informative">
+    <h1>Informative References</h1>
+
+    <!-- NOTE: These references should actually be normative, but Ecma is allergic to normatively referencing web specs. As a rule of thumb, Ecma/IEEE/Unicode specs can go in the "normative" section, while the rest should go here. -->
+
+    <p>
+      IETF RFC 4648, <i>The Base16, Base32, and Base64 Data Encodings</i>.<br>
+      <a href="https://datatracker.ietf.org/doc/html/rfc4648">https://datatracker.ietf.org/doc/html/rfc4648</a>
+    </p>
+    <p>
+      <i>WebAssembly Core Specification</i>.<br>
+      <a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>
+    </p>
+    <p>
+      WHATWG <i>Encoding</i>.<br>
+      <a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>
+    </p>
+    <p>
+      WHATWG <emu-not-ref><i>Fetch</i></emu-not-ref>.<br>
+      <a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>
+    </p>
+    <p>
+      WHATWG <i>Infra</i>.<br>
+      <a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>
+    </p>
+    <p>
+      WHATWG <emu-not-ref><i>URL</i></emu-not-ref>.<br>
+      <a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>
+    </p>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-notational-conventions">
+  <h1>Notational Conventions</h1>
+  <p>This specification follows the same notational conventions as defined by <a href="https://tc39.es/ecma262/#sec-notational-conventions">ECMA-262 (Notational conventions)</a>, with the extensions defined in this section.</p>
+
+  <emu-clause id="sec-algorithm-conventions">
+    <h1>Algorithm Conventions</h1>
+
+    <emu-clause id="sec-implicit-completions">
+      <h1>Implicit Completions</h1>
+
+      <p>All abstract operations declared in this specification are implicitly assumed to either return a normal completion containing the algorithm's declared return type, or a throw completion. For example, an abstract operation declared as</p>
+
+      <blockquote>
+        <emu-clause id="example-get-the-answer" type="abstract operation" example>
+          <h1>
+            GetTheAnswer (
+              _input_: an integer,
+            ): an integer
+          </h1>
+          <dl class="header"></dl>
+        </emu-clause>
+      </blockquote>
+      <p>is equivalent to:</p>
+      <blockquote>
+        <emu-clause id="example-get-the-answer-2" type="abstract operation" example>
+          <h1>
+            GetTheAnswer2 (
+              _input_: an integer,
+            ): either a normal completion containing an integer or a throw completion
+          </h1>
+          <dl class="header"></dl>
+        </emu-clause>
+      </blockquote>
+
+      <p>All calls to abstract operations that return completion records are implicitly assumed to be wrapped by a ReturnIfAbrupt macro, unless they are explicitly wrapped by an explicit Completion call. For example:</p>
+      <emu-alg>
+        1. Let _result_ be GetTheAnswer(_value_).
+        1. Let _second_ be Completion(GetTheAnswer(_value_)).
+      </emu-alg>
+      <p>is equivalent to:</p>
+      <emu-alg>
+        1. Let _result_ be ReturnIfAbrupt(GetTheAnswer(_value_)).
+        1. Let _second_ be Completion(GetTheAnswer(_value_)).
+      </emu-alg>
+
+    </emu-clause>
+
+    <emu-clause id="sec-optional-errors">
+      <h1>Optional Errors</h1>
+
+      <p>Whenever an algorithm is to <dfn>optionally report an error</dfn>, an implementation may choose one of the following behaviors:</p>
+      <ul>
+        <li>Continue executing the rest of the algorithm.</li>
+        <li>Report an error to the user (for example, in the browser console), and continue executing the rest of the algorithm.</li>
+        <li>Return a ThrowCompletion.</li>
+      </ul>
+
+      <p>An implementation can choose different behaviors for different optional errors.</p>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-terms-and-definitions">
+  <h1>Terms and Definitions</h1>
+  <p>For the purposes of this document, the following terms and definitions apply.</p>
+
+  <dl>
+    <dt><dfn id="sec-terms-and-definitions-generated-code">generated code</dfn></dt>
+    <dd>
+      <p>code which is generated by the compiler or transpiler.</p>
+    </dd>
+
+    <dt><dfn id="sec-terms-and-definitions-original-source">original source</dfn></dt>
+    <dd>
+      <p>source code which has not been passed through a compiler or transpiler.</p>
+    </dd>
+
+    <dt><dfn id="sec-terms-and-definitions-base64-vlq">base64 VLQ</dfn></dt>
+    <dd>
+      <p>a <emu-xref href="#sec-references-informative">base64</emu-xref>-encoded variable-length quantity, where the most significant bit (the 6th bit) is used as the continuation bit, and the "digits" are encoded into the string least significant first, and where the least significant bit of the first digit is used as the sign bit.</p>
+      <emu-note>The values that can be represented by the base64 VLQ encoding are limited to 32-bit quantities until some use case for larger values is presented. This means that values exceeding 32-bits are invalid and implementations may reject them. The sign bit is counted towards the limit, but the continuation bits are not.</emu-note>
+      <emu-note example>
+        The string `"iB"` represents a base64 VLQ with two digits. The first digit `"i"` encodes the bit pattern `0x100010`, which has a continuation bit of `1` (the VLQ continues), a sign bit of `0` (non-negative), and the value bits `0x0001`. The second digit `B` encodes the bit pattern `0x000001`, which has a continuation bit of `0`, no sign bit, and value bits `0x00001`. The decoding of this VLQ string is the number 17.
+      </emu-note>
+      <emu-note example>
+        The string `"V"` represents a base64 VLQ with one digit. The digit `"V"` encodes the bit pattern `0x010101`, which has a continuation bit of `0` (no continuation), a sign bit of `1` (negative), and the value bits `0x1010`. The decoding of this VLQ string is the number -10.
+      </emu-note>
+    </dd>
+
+    <dt><dfn id="sec-terms-and-definitions-source-mapping-url">source map URL</dfn></dt>
+    <dd>
+      <p>URL referencing the location of a source map from the generated code.</p>
+    </dd>
+
+    <dt><dfn id="sec-terms-and-definitions-colun">column</dfn></dt>
+    <dd>
+      <p>zero-based indexed offset within a line of the generated code, computed as UTF-16 code units for JavaScript and CSS source maps, and as byte indexes in the binary content (represented as a single line) for WebAssembly source maps.</p>
+      <emu-note>That means that "A" (`LATIN CAPITAL LETTER A`) measures as 1 code unit, and "🔥" (`FIRE`) measures as 2 code units. Source maps for other content types may diverge from this.</emu-note>
+    </dd>
+  </dl>
+</emu-clause>
+
+<emu-clause id="sec-json-values-utilities">
+  <h1>JSON values utilities</h1>
+
+  <p>While this specification's algorithms are defined on top of ECMA-262 internals, it is meant to be easily implementable by non-JavaScript platforms. This section contains utilities for working with JSON values, abstracting away ECMA-262  details from the rest of the document.</p>
+
+  <p>A <dfn id="type-json-value" variants="JSON values">JSON value</dfn> is either a JSON object, a JSON array, a <emu-xref href="#sec-ecmascript-language-types-string-type">String</emu-xref>, a <emu-xref href="#sec-ecmascript-language-types-number-type">Number</emu-xref>, a <emu-xref href="#sec-ecmascript-language-types-boolean-type">Boolean</emu-xref>, or <emu-xref href="#sec-ecmascript-language-types-null-type">*null*</emu-xref>.</p>
+
+  <p>A <dfn id="type-json-object">JSON object</dfn> is an Object such that each of its properties:</p>
+  <ul>
+    <li>is a data property,</li>
+    <li>has a String key,</li>
+    <li>has JSON value value.</li>
+  </ul>
+
+  <p>A <dfn id="type-json-array">JSON array</dfn> is a JSON object such that:</p>
+  <ul>
+    <li>it has a property whose key is *"length"* and whose value is a Number,</li>
+    <li>all its other properties' keys are integer indices.</li>
+  </ul>
+
+  <emu-clause id="sec-ParseJSON" type="abstract operation">
+    <h1>
+      ParseJSON (
+        _string_: a String,
+      ): a JSON value
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _result_ be Call(<emu-xref href="#sec-json.parse">%JSON.parse%</emu-xref>, *null*, « _string_ »).
+      1. Assert: _result_ is a JSON value.
+      1. Return _result_.
+    </emu-alg>
+
+    <emu-note type="editor">
+      This abstract operation is in the process of being exposed by ECMA-262 itself, at <a href="https://github.com/tc39/ecma262/pull/3540">tc39/ecma262#3540</a>.
+    </emu-note>
+  </emu-clause>
+
+  <emu-clause id="sec-JSONObjectGet" type="abstract operation">
+    <h1>
+      JSONObjectGet (
+        _object_: a JSON object,
+        _key_: a String,
+      ): a JSON value or ~missing~
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>It returns the value associated with the specified _key_ in _object_.</dd>
+    </dl>
+    <emu-alg>
+      1. If _object_ does not have an own property with key _key_, return ~missing~.
+      1. Let _prop_ be _object_'s own property whose key is _key_.
+      1. Return _prop_'s [[Value]] attribute.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-JSONArrayIterate" type="abstract operation">
+    <h1>
+      JSONArrayIterate (
+        _array_: a JSON array,
+      ): a List of JSON values
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>It returns a List containing all elements of _array_, so that it can be iterated by algorithms using "For each".</dd>
+    </dl>
+    <emu-alg>
+      1. Let _length_ be JSONObjectGet(_array_, *"length"*).
+      1. Assert: _length_ is a non-negative integral Number.
+      1. Let _list_ be a new empty List.
+      1. Let _i_ be 0.
+      1. While _i_ &lt; ℝ(_length_), do
+        1. Let _value_ be JSONObjectGet(_array_, ToString(𝔽(_i_))).
+        1. Assert: _value_ is not ~missing~.
+        1. Append _value_ to _list_.
+        1. Set _i_ to _i_ + 1.
+      1. Return _list_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-StringSplit" type="abstract operation">
+    <h1>
+      StringSplit (
+        _string_: a String,
+        _separators_: a List of String
+      ): a List of Strings
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>It splits the string in substrings separated by any of the elements of _separators_. If multiple separators match, those appearing first in _separators_ have higher priority.</dd>
+    </dl>
+    <emu-alg>
+      1. Let _parts_ be a new empty List.
+      1. Let _strLen_ be the length of _string_.
+      1. Let _lastStart_ be 0.
+      1. Let _i_ be 0.
+      1. While _i_ &lt; _strLen_, do
+        1. Let _matched_ be *false*.
+        1. For each _sep_ of _separators_, do
+          1. Let _sepLen_ be the length of _sep_.
+          1. Let _candidate_ be the substring of _string_ from _i_ to min(_i_ + _sepLen_, _strLen_).
+          1. If _candidate_ = _sep_ and _matched_ is *false*, then
+            1. Let _chunk_ be the substring of _string_ from _lastStart_ to _i_.
+            1. Append _chunk_ to _parts_.
+            1. Set _lastStart_ to _i_ + _sepLen_.
+            1. Set _i_ to _i_ + _sepLen_.
+            1. Set _matched_ to *true*.
+        1. If _matched_ is *false*, set _i_ to _i_ + 1.
+      1. Let _chunk_ be the substring of _string_ from _lastStart_ to _strLen_.
+      1. Append _chunk_ to _parts_.
+      1. Return _parts_.
+    </emu-alg>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-source-map-format">
+  <h1>Source map format</h1>
+
+  <p>A source map is a JSON document containing a top-level JSON object with the following structure:</p>
+  <pre><code class="json">
+  {
+    "version" : 3,
+    "file": "out.js",
+    "sourceRoot": "",
+    "sources": ["foo.js", "bar.js"],
+    "sourcesContent": [null, null],
+    "names": ["src", "maps", "are", "fun"],
+    "mappings": "A,AAAB;;ABCDE"
+    "ignoreList": [0]
+  }
+  </code></pre>
+  <ul>
+    <li>The <dfn id="json-version"><code>version</code> field</dfn> shall always be the number 3 as an integer. The source map may be rejected if the field has any other value.</li>
+    <li>The <dfn id="json-file"><code>file</code> field</dfn> is an optional name of the generated code that this source map is associated with. It's not specified if this can be an URL, relative path name, or just a base name. Source map generators may choose the appropriate interpretation for their contexts of use.</li>
+    <li>The <dfn id="json-sourceRoot"><code>sourceRoot</code> field</dfn> is an optional source root string, used for relocating source files on a server or removing repeated values in the sources entry. This value is prepended to the individual entries in the sources field.</li>
+    <li>The <dfn id="json-sources"><code>sources</code> field</dfn> is a list of original sources used by the mappings field. Each entry is either a string that is a (potentially relative) URL or *null* if the source name is not known.</li>
+    <li>The <dfn id="json-sourcesContent"><code>sourcesContent</code> field</dfn> is an optional list of source content (i.e. the original source) strings, used when the source cannot be hosted. The contents are listed in the same order as in the sources field. Entries may be *null* if some <emu-xref href="#sec-terms-and-definitions-original-source">original sources</emu-xref> should be retrieved by name.</li>
+    <li>The <dfn id="json-names"><code>names</code> field</dfn> is an optional list of symbol names which may be used by the mappings field.</li>
+    <li>The <dfn id="json-mappings"><code>mappings</code> field</dfn> is a string with the encoded mapping data (see section <emu-xref href="#sec-mappings"></emu-xref>).</li>
+    <li>The <dfn id="json-ignoreList"><code>ignoreList</code> field</dfn> is an optional list of indices of files that should be considered third party code, such as framework code or bundler-<emu-not-ref>generated code</emu-not-ref>. This allows developer tools to avoid code that developers likely don't want to see or step through, without requiring developers to configure this beforehand. It refers to the sources field and lists the indices of all the known third-party sources in the source map. Some browsers may also use the deprecated `x_google_ignoreList` field if `ignoreList` is not present.</li>
+  </ul>
+
+  <emu-clause id="sec-decoding-source-maps">
+    <h1>Decoding source maps</h1>
+
+    <p>A <dfn id="decoded-source-map-record" variants="Decoded Source Map Records">Decoded Source Map Record</dfn> has the following fields:</p>
+    <emu-table id="table-decoded-source-map-fields" caption="Fields of Decoded Source Map Records">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              Field Name
+            </th>
+            <th>
+              Value Type
+            </th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[File]]</td>
+          <td>a String or *null*</td>
+        </tr>
+        <tr>
+          <td>[[Sources]]</td>
+          <td>a List of Decoded Source Records</td>
+        </tr>
+        <tr>
+          <td>[[Mappings]]</td>
+          <td>a List of Decoded Mapping Records</td>
+        </tr>
+      </table>
+    </emu-table>
+
+    <p>A <dfn id="decoded-source-record" variants="Decoded Source Records">Decoded Source Record</dfn> has the following fields:</p>
+    <emu-table id="table-decoded-source-fields" caption="Fields of Decoded Source Records">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              Field Name
+            </th>
+            <th>
+              Value Type
+            </th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[URL]]</td>
+          <td>a URL or *null*</td>
+        </tr>
+        <tr>
+          <td>[[Content]]</td>
+          <td>a String or *null*</td>
+        </tr>
+        <tr>
+          <td>[[Ignored]]</td>
+          <td>a Boolean</td>
+        </tr>
+      </table>
+    </emu-table>
+
+    <emu-clause id="sec-ParseSourceMap" type="abstract operation">
+      <h1>
+        ParseSourceMap (
+          _string_: a String,
+          _baseURL_: an URL,
+        ): a Decoded Source Map Record
+      </h1>
+      <dl class="header"></dl>
+      <emu-alg>
+        1. Let _json_ be ParseJSON(_string_).
+        1. If _json_ is not a JSON object, throw an error.
+        1. If JSONObjectGet(_json_, *"sections"*) is not ~missing~, then
+          1. Return DecodeIndexSourceMap(_json_, _baseURL_).
+        1. Return DecodeSourceMap(_json_, _baseURL_).
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-DecodeSourceMap" type="abstract operation">
+      <h1>
+        DecodeSourceMap (
+          _json_: a JSON object,
+          _baseURL_: an URL,
+        ): a Decoded Source Map Record
+      </h1>
+      <dl class="header"></dl>
+      <emu-alg>
+        1. If JSONObjectGet(_json_, *"version"*) is not *3*<sub>𝔽</sub>, optionally report an error.
+        1. Let _mappingsField_ be JSONObjectGet(_json_, *"mappings"*).
+        1. If _mappingsField_ is not a String, throw an error.
+        1. If JSONObjectGet(_json_, *"sources"*) is not a JSON array, throw an error.
+        1. Let _fileField_ be GetOptionalString(_json_, *"file"*).
+        1. Let _sourceRootField_ be GetOptionalString(_json_, *"sourceRoot"*).
+        1. Let _sourcesField_ be GetOptionalListOfOptionalStrings(_json_, *"sources"*).
+        1. Let _sourcesContentField_ be GetOptionalListOfOptionalStrings(_json_, *"sourcesContent"*).
+        1. Let _ignoreListField_ be GetOptionalListOfArrayIndexes(_json_, *"ignoreList"*).
+        1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
+        1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
+        1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
+        1. Let _sourceMap_ be the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
+      </emu-alg>
+
+      <emu-clause id="sec-GetOptionalString" type="abstract operation">
+        <h1>
+          GetOptionalString(
+            _object_: a JSON object,
+            _key_: a String,
+          ): a String or *null*
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _value_ be JSONObjectGet(_object_, _key_).
+          1. If _value_ is a String, return _value_.
+          1. If _value_ is not ~missing~, optionally report an error.
+          1. Return *null*.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-GetOptionalListOfStrings" type="abstract operation">
+        <h1>
+          GetOptionalListOfStrings(
+            _object_: a JSON object,
+            _key_: a String,
+          ): a List of Strings
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _list_ be a new empty List.
+          1. Let _values_ be JSONObjectGet(_object_, _key_).
+          1. If _values_ is ~missing~, return _list_.
+          1. If _values_ is not a JSON array, then
+            1. Optionally report an error.
+            1. Return _list_.
+          1. For each element _item_ of JSONArrayIterate(_values_),
+            1. If _item_ is a String, append _item_ to _list_.
+            1. Else,
+              1. Optionally report an error.
+              1. Append *""* to _list_.
+          1. Return _list_.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-GetOptionalListOfOptionalStrings" type="abstract operation">
+        <h1>
+          GetOptionalListOfOptionalStrings(
+            _object_: a JSON object,
+            _key_: a String,
+          ): a List of either Strings or *null*
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _list_ be a new empty List.
+          1. Let _values_ be JSONObjectGet(_object_, _key_).
+          1. If _values_ is ~missing~, return _list_.
+          1. If _values_ is not a JSON array, then
+            1. Optionally report an error.
+            1. Return _list_.
+          1. For each element _item_ of JSONArrayIterate(_values_),
+            1. If _item_ is a String, append _item_ to _list_.
+            1. Else,
+              1. If _item_ &ne; *null*, optionally report an error.
+              1. Append *null* to _list_.
+          1. Return _list_.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-GetOptionalListOfArrayIndexes" type="abstract operation">
+        <h1>
+          GetOptionalListOfArrayIndexes(
+            _object_: an Object,
+            _key_: a String,
+          ): a List of non-negative integers
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _list_ be a new empty List.
+          1. Let _values_ be JSONObjectGet(_object_, _key_).
+          1. If _values_ is ~missing~, return _list_.
+          1. If _values_ is not a JSON array, then
+            1. Optionally report an error.
+            1. Return _list_.
+          1. For each element _item_ of JSONArrayIterate(_values_),
+            1. If _item_ is an integral Number, _item_ &ne; *0*<sub>𝔽</sub>, and _item_ &ge; *0*<sub>𝔽</sub>, then
+              1. Append ℝ(_item_) to _list_.
+            1. Else,
+              1. If _item_ &ne; *null*, optionally report an error.
+              <!-- TODO: Should this step be removed, so that the list only contains numbers? -->
+              1. Append *null* to _list_.
+          1. Return _list_.
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-mappings">
+    <h1>Mappings structure</h1>
+
+    <p>The mappings field data is broken down as follows:</p>
+    <ul>
+      <li>each group representing a line in the generated file is separated by a semicolon (`;`)</li>
+      <li>each segment is separated by a comma (`,`)</li>
+      <li>each segment is made up of 1, 4, or 5 variable length fields.</li>
+    </ul>
+    <p>The fields in each segment are:</p>
+    <ol>
+      <li>The zero-based starting column of the line in the generated code that the segment represents. If this is the first field of the first segment, or the first segment following a new generated line (`;`), then this field holds the whole base64 VLQ. Otherwise, this field contains a base64 VLQ that is relative to the previous occurrence of this field. <em>Note that this is different from the subsequent fields below because the previous value is reset after every generated line.</em></li>
+      <li>If present, the zero-based index into the sources list. This field contains a base64 VLQ relative to the previous occurrence of this field, unless it is the first occurrence of this field, in which case the whole value is represented.</li>
+      <li>If present, the zero-based starting line in the original source. This field contains a base64 VLQ relative to the previous occurrence of this field, unless it is the first occurrence of this field, in which case the whole value is represented. Shall be present if there is a source field.</li>
+      <li>If present, the zero-based starting column of the line in the original source. This field contains a base64 VLQ relative to the previous occurrence of this field, unless it is the first occurrence of this field, in which case the whole value is represented. Shall be present if there is a source field.</li>
+      <li>If present, the zero-based index into the names list associated with this segment. This field contains a base64 VLQ relative to the previous occurrence of this field, unless it is the first occurrence of this field, in which case the whole value is represented.</li>
+    </ol>
+
+    <emu-note>The purpose of this encoding is to reduce the source map size. VLQ encoding reduced source maps by 50% relative to the Source Map Revision 2 Proposal in tests performed using Google Calendar.</emu-note>
+
+    <emu-note>Segments with one field are intended to represent generated code that is unmapped because there is no corresponding original source code, such as code that is generated by a compiler. Segments with four fields represent mapped code where a corresponding name does not exist. Segments with five fields represent mapped code that also has a mapped name.</emu-note>
+
+    <emu-note>Using <emu-not-ref>file</emu-not-ref> offsets was considered but rejected in favor of using line/<emu-not-ref>column</emu-not-ref> data to avoid becoming misaligned with the original due to platform-specific line endings.</emu-note>
+
+    <p>A <dfn id="decoded-mapping-record" variants="Decoded Mapping Records">Decoded Mapping Record</dfn> has the following fields:</p>
+    <emu-table id="table-decoded-mapping-fields" caption="Fields of Decoded Mapping Records">
+      <table>
+        <thead>
+          <tr>
+            <th>
+              Field Name
+            </th>
+            <th>
+              Value Type
+            </th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[GeneratedLine]]</td>
+          <td>a non-negative integer</td>
+        </tr>
+        <tr>
+          <td>[[GeneratedColumn]]</td>
+          <td>a non-negative integer</td>
+        </tr>
+        <tr>
+          <td>[[OriginalSource]]</td>
+          <td>a Decoded Source Record or *null*</td>
+        </tr>
+        <tr>
+          <td>[[OriginalLine]]</td>
+          <td>a non-negative integer or *null*</td>
+        </tr>
+        <tr>
+          <td>[[OriginalColumn]]</td>
+          <td>a non-negative integer or *null*</td>
+        </tr>
+        <tr>
+          <td>[[Name]]</td>
+          <td>a String or *null*</td>
+        </tr>
+      </table>
+    </emu-table>
+
+    <emu-clause id="sec-DecodeMappings" type="abstract operation">
+      <h1>
+        DecodeMappings (
+          _mappings_: a String,
+          _names_: a List of Strings,
+          _sources_: a List of Decoded Source Records,
+        ): a List of Decoded Mapping Record
+      </h1>
+      <dl class="header"></dl>
+      <emu-alg>
+        1. Perform ValidateBase64VLQGroupings(_mappings_).
+        1. Let _decodedMappings_ be a new empty List.
+        1. Let _groups_ be StringSplit(_mappings_, « *";"* »).
+        1. Let _generatedLine_ be 0.
+        1. Let _originalLine_ be 0.
+        1. Let _originalColumn_ be 0.
+        1. Let _sourceIndex_ be 0.
+        1. Let _nameIndex_ be 0.
+        1. Repeat, while _generatedLine_ is less than the number of elements of _groups_,
+          1. If _groups_[_generatedLine_] &ne; *""*, then
+            1. Let _segments_ be StringSplit(_groups_[_generatedLine_], « *","* »).
+            1. Let _generatedColumn_ be 0.
+            1. For each _segment_ of _segments_, do
+              1. Let _position_ be the Record { [[Value]]: 0 }.
+              1. Let _relativeGeneratedColumn_ be DecodeBase64VLQ(_segment_, _position_).
+              1. If _relativeGeneratedColumn_ = *null*, optionally report an error.
+              1. Else,
+                1. Set _generatedColumn_ to _generatedColumn_ + _relativeGeneratedColumn_.
+                1. If _generatedColumn_ &lt; 0, optionally report an error.
+                1. Else,
+                  1. Let _decodedMapping_ be the Decoded Mapping Record { [[GeneratedLine]]: _generatedLine_, [[GeneratedColumn]]: _generatedColumn_, [[OriginalSource]]: *null*, [[OriginalLine]]: *null*, [[OriginalColumn]]: *null*, [[Name]]: *null* }.
+                  1. Append _decodedMapping_ to _decodedMappings_.
+                  1. Let _relativeSourceIndex_ be DecodeBase64VLQ(_segment_, _position_).
+                  1. Let _relativeOriginalLine_ be DecodeBase64VLQ(_segment_, _position_).
+                  1. Let _relativeOriginalColumn_ be DecodeBase64VLQ(_segment_, _position_).
+                  1. If _relativeOriginalColumn_ = *null* and _relativeSourceIndex_ &ne; *null*, optionally report an error.
+                  1. Else if _relativeOriginalColumn_ &ne; *null*,
+                    1. Set _sourceIndex_ to _sourceIndex_ + _relativeSourceIndex_.
+                    1. Set _originalLine_ to _originalLine_ + _relativeOriginalLine_.
+                    1. Set _originalColumn_ to _originalColumn_ + _relativeOriginalColumn_.
+                    1. If _sourceIndex_ &lt; 0, _originalLine_ &lt; 0, _originalColumn_ &lt; 0, or _sourceIndex_ &ge; the number of elements of _source_, then
+                      1. Optionally report an error.
+                    1. Else,
+                      1. Set _decodedMapping_.[[OriginalSource]] to _sources_[_sourceIndex_].
+                      1. Set _decodedMapping_.[[OriginalLine]] to _originalLine_.
+                      1. Set _decodedMapping_.[[OriginalColumn]] to _originalColumn_.
+                    1. Let _relativeNameIndex_ be DecodeBase64VLQ(_segment_, _position_).
+                    1. If _relativeNameIndex_ &ne; *null*, then
+                      1. Set _nameIndex_ to _nameIndex_ + _relativeNameIndex_.
+                      1. If _nameIndex_ &lt; 0 or _nameIndex_ &ge; the number of elements of _names_, then
+                        1. Optionally report an error.
+                      1. Else,
+                        1. Set _decodedMapping_.[[Name]] to _names_[_nameIndex_].
+                    1. If _position_.[[Value]] &ne; length of _segment_, optionally report an error.
+          1. Set _generatedLine_ to _generatedLine_ + 1.
+        1. Return _decodedMappings_.
+      </emu-alg>
+
+      <emu-clause id="sec-ValidateBase64VLQGroupings" type="abstract operation">
+        <h1>
+          ValidateBase64VLQGroupings (
+            _groupings_: a String,
+          ): ~unused~
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. If _groupings_ contains any code unit other than:
+              <ul>
+                <li>U+002B (`+`), U+002C (`,`), U+002F (`/`), or U+003B (`;`);</li>
+                <li>U+0030 (`0`) to U+0039 (`9`);</li>
+                <li>U+0041 (`A`) to U+005A (`Z`);</li>
+                <li>U+0061 (`a`) to U+007A (`z`)</li>
+              </ul>
+              throw an error.
+          1. Return ~unused~.
+        </emu-alg>
+
+        <emu-note>These are the valid <emu-xref href="#sec-references-informative">base64</emu-xref> characters (excluding the padding character `=`), together with `,` and `;`.</emu-note>
+      </emu-clause>
+
+      <emu-clause id="sec-DecodeBase64VLQ" type="abstract operation">
+        <h1>
+          DecodeBase64VLQ (
+            _segment_: a String,
+            _position_: a Record with a non-negative integer [[Value]] field,
+          ): an integer or *null*
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _segmentLen_ be the length of _segment_.
+          1. If _position_.[[Value]] = _segmentLen_, return *null*.
+          1. Let _first_ be ConsumeBase64ValueAt(_segment_, _position_).
+          1. Assert: _first_ &lt; 64.
+          1. If _first_ modulo 2 is 0, let _sign_ be 1.
+          1. Else, let _sign_ be -1.
+          1. Let _value_ be min(floor(_first_ / 2), 2<sup>4</sup> - 1).
+          1. Let _nextShift_ be 16.
+          1. Let _currentByte_ be _first_.
+          1. Repeat, while floor(_currentByte_ / 2<sup>5</sup>) modulo 2 = 1,
+            1. If _position_.[[Value]] = _segmentLen_, throw an error.
+            1. Set _currentByte_ to ConsumeBase64ValueAt(_segment_, _position_).
+            1. Let _chunk_ be min(_currentByte_, 2<sup>5</sup> - 1).
+            1. Set _value_ to _value_ + _chunk_ × _nextShift_.
+            1. If _value_ &ge; 2<sup>31</sup>, throw an error.
+            1. Set _nextShift_ to _nextShift_ × 2<sup>5</sup>.
+          1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
+          1. Return _sign_ × _value_.
+        </emu-alg>
+
+        <emu-clause id="ConsumeBase64ValueAt" type="abstract operation">
+          <h1>
+            ConsumeBase64ValueAt (
+              _string_: a String,
+              _position_: a Record with a non-negative integer [[Value]] field,
+            ): a non-negative integer
+          </h1>
+          <dl class="header"></dl>
+          <emu-alg>
+            1. Assert: _position_.[[Value]] is a non-negative integer smaller than the length of _string_.
+            1. Let _char_ be the substring of _string_ from _position_ to _position_ + 1.
+            1. Assert: _char_ is a valid <emu-xref href="#sec-references-informative">base64</emu-xref> character as defined by IETF RFC 4648.
+            1. Set _position_.[[Value]] to _position_.[[Value]] + 1.
+            1. Return the integer corresponding to _char_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
+          </emu-alg>
+        </emu-clause>
+
+        <emu-note>In addition to returning the decoded value, these algorithms update the _position_ passed in by the caller.</emu-note>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-mappings-for-generated-javascript-code">
+      <h1>Mappings for generated JavaScript code</h1>
+
+      <p>Generated code positions that may have <emu-xref href="#decoded-mapping-record">mapping</emu-xref> entries are defined in terms of <em>input elements</em>, as per the <a href="https://tc39.es/ecma262/#sec-ecmascript-language-lexical-grammar">ECMAScript Lexical Grammar</a>. Mapping entries shall point to either:</p>
+      <ul>
+        <li>the first code point of the source text matched by |IdentifierName|, |PrivateIdentifier|, |Punctuator|, |DivPunctuator|, |RightBracePunctuator|, |NumericLiteral| and |RegularExpressionLiteral|.</li>
+        <li>any code point of the source text matched by |Comment|, |HashbangComment|, |StringLiteral|, |Template|, |TemplateSubstitutionTail|, |WhiteSpace| and |LineTerminator|.</li>
+      </ul>
+    </emu-clause>
+
+    <emu-clause id="sec-names-for-generated-javascript-code">
+      <h1>Names for generated JavaScript code</h1>
+
+      <p>Source map generators should create a <emu-xref href="#decoded-mapping-record">mapping</emu-xref> entry with a [[Name]] field for a JavaScript token, if:</p>
+      <ul>
+        <li>The original source language construct maps semantically to the generated JavaScript code.</li>
+        <li>The original source language construct has a name.</li>
+      </ul>
+      <p>Then the [[Name]] of the <emu-xref href="#decoded-mapping-record">mapping</emu-xref> entry should be the name of the original source language construct. A <emu-xref href="#decoded-mapping-record">mapping</emu-xref> with a non-null [[Name]] is called a <dfn variant="named mappings">named mapping</dfn>.</p>
+
+      <emu-note example>
+        A minifier renaming functions and variables or removing function names from immediately invoked function expressions.
+      </emu-note>
+
+      <p>The following enumeration lists productions of the <a href="https://tc39.es/ecma262/#sec-syntactic-grammar">ECMAScript Syntactic Grammar</a> and the respective token or non-terminal (on the right-hand side of the production) for which source map generators should emit a named mapping. The <emu-xref href="#decoded-mapping-record">mapping</emu-xref> entry created for such tokens shall follow section <emu-xref href="#sec-mappings-for-generated-javascript-code"></emu-xref>.</p>
+
+      <p>The enumeration should be understood as the "minimum". In general, source map generators are free to emit any additional named mappings.</p>
+
+      <emu-note>
+        The enumeration also lists tokens where generators "may" emit named mappings in addition to the tokens where they "should". These reflect the reality where existing tooling emits or expects named mappings. The duplicated named mapping is comparably cheap: Indices into names are encoded relative to each other so subsequent mappings to the same name are encoded as 0 (`A`).
+      </emu-note>
+
+      <ul>
+        <li>
+          <p>The |BindingIdentifier|(s) for |LexicalDeclaration|, |VariableStatement| and |ParameterList|.</p></li>
+        <li>
+          <p>The |BindingIdentifier| for |FunctionDeclaration|, |FunctionExpression|, |AsyncFunctionDeclaration|, |AsyncFunctionExpression|, |GeneratorDeclaration|, |GeneratorExpression|, |AsyncGeneratorDeclaration|, and |AsyncGeneratorExpression| if it exists, or the opening parenthesis `(` preceding the |FormalParameters| otherwise.</p>
+
+          <p>Source map generators may chose to emit a named mapping on the opening parenthesis regardless of
+          the presence of the |BindingIdentifier|.</p>
+        </li>
+        <li>
+          <p>For an |ArrowFunction| or |AsyncArrowFunction|:</p>
+          <ul>
+            <li>
+              <p>The `=>` token where |ArrowFunction| is produced with a single |BindingIdentifier| for |ArrowParameters| or |AsyncArrowFunction| is produced with an |AsyncArrowBindingIdentifier|.</p>
+              <emu-note>This describes the case of (async) arrow functions with a single parameter, where that single parameter is not wrapped in parenthesis.</emu-note>
+            </li>
+            <li>
+              <p>The opening parenthesis `(` where |ArrowFunction| or |AsyncArrowFunction| is produced with |ArrowFormalParameters|.</p>
+              <p>Source map generators may chose to additionally emit a named mapping on the `=>` token for consistency with the previous case.</p>
+            </li>
+          </ul>
+        </li>
+        <li>
+          <p>The |ClassElementName| for |MethodDefinition|. This includes generators, async methods, async generators and accessors. For |MethodDefinition| where |ClassElementName| is *"constructor"*, the [[Name]] should be the original class name if applicable.</p>
+          <p>Source map generators may chose to additionally emit a named mapping on the opening parenthesis `(`.</p>
+        </li>
+        <li>
+          <p>Source map generators may emit named mapping for |IdentifierReference|| in |Expression|.</p>
+        </li>
+      </ul>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-sources">
+    <h1>Resolving sources</h1>
+
+    <p>If the sources are not absolute URLs after prepending the sourceRoot, the sources are resolved relative to the source map (like resolving the script `src` attribute in an HTML document).</p>
+
+    <emu-clause id="sec-DecodeSourceMapSources" type="abstract operation">
+      <h1>
+        DecodeSourceMapSources (
+          _baseURL_: an URL,
+          _sourceRoot_: a String or *null*,
+          _sources_: a List of either Strings or *null*,
+          _sourcesContent_: a List of either Strings or *null*,
+          _ignoreList_: a List of non-negative integers,
+        ): a Decoded Source Record
+      </h1>
+      <dl class="header"></dl>
+      <emu-alg>
+        1. Let _decodedSources_ be a new empty List.
+        1. Let _sourcesContentCount_ be the the number of elements in _sourcesContent_.
+        1. Let _sourceUrlPrefix_ be *""*.
+        1. If _sourceRoot_ &ne; *null*, then
+          1. If _sourceRoot_ contains the code point U+002F (SOLIDUS), then
+            1. Let _idx_ be the index of the last occurrence of U+002F (SOLIDUS) in _sourceRoot_.
+            1. Set _sourceUrlPrefix_ to the substring of _sourceRoot_ from 0 to _idx_ + 1.
+          1. Else, set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
+        1. For each _source_ in _sources_ with index _index_, do
+          1. Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false* }.
+          1. If _source_ &ne; *null*, then
+            1. Set _source_ to the string-concatenation of _sourceUrlPrefix_ and _source_.
+            1. Let _sourceURL_ be the result of URL parsing _source_ with _baseURL_.
+            1. If _sourceURL_ is ~failure~, optionally report an error.
+            1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
+          1. If _ignoredSources_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
+          1. If _sourcesContentCount_ &ge; _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
+          1. Append _decodedSource_ to _decodedSources_.
+        1. Return _decodedSources_.
+      </emu-alg>
+
+      <emu-note>Implementations that support showing source contents but do not support showing multiple sources with the same URL and different content will arbitrarily choose one of the various contents corresponding to the given URL.</emu-note>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-extensions">
+    <h1>Extensions</h1>
+
+    <p>Source map consumers shall ignore any additional unrecognized properties, rather than causing the source map to be rejected, so that additional features can be added to this format without breaking existing users.</p>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-index-source-map">
+  <h1>Index source map</h1>
+
+  <p>To support concatenating generated code and other common post-processing, an alternate representation of a source map is supported:</p>
+
+  <pre><code class="json">
+  {
+    "version" : 3,
+    "file": "app.js",
+    "sections": [
+      {
+        "offset": {"line": 0, "column": 0},
+        "map": {
+          "version" : 3,
+          "file": "section.js",
+          "sources": ["foo.js", "bar.js"],
+          "names": ["src", "maps", "are", "fun"],
+          "mappings": "AAAA,E;;ABCDE"
+        }
+      },
+      {
+        "offset": {"line": 100, "column": 10},
+        "map": {
+          "version" : 3,
+          "file": "another_section.js",
+          "sources": ["more.js"],
+          "names": ["more", "is", "better"],
+          "mappings": "AAAA,E;AACA,C;ABCDE"
+        }
+      }
+    ]
+  }
+  </code></pre>
+
+  <p>The index map follows the form of the standard map. Like the regular source map, the file format is JSON with a top-level object. It shares the version and file field from the regular source map, but gains a new sections field.</p>
+
+  <p>The <dfn id="json-sections"><code>sections</code> field</dfn> is an array of objects with the following fields:</p>
+  <ul>
+    <li><dfn id="json-sections-offset"><code>offset</code> field</dfn> is an object with two fields, `line` and `column`, that represent the offset into generated code that the referenced source map represents.</li>
+    <li><dfn id="json-sections-map"><code>map</code> field</dfn> is an embedded complete source map object. An embedded map does not inherit any values from the containing index map.</li>
+  </ul>
+
+  <p>The sections shall be sorted by starting position and the represented sections shall not overlap.</p>
+
+  <emu-clause id="sec-DecodeIndexSourceMap" type="abstract operation">
+    <h1>
+      DecodeIndexSourceMap (
+        _json_: an Object,
+        _baseURL_: an URL,
+      ): a Decoded Source Map Record
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _sectionsField_ be JSONObjectGet(_json_, *"sections"*).
+      1. Assert: _sectionsField_ is not ~missing~.
+      1. If _sectionsField_ is not a JSON array, throw an error.
+      1. If JSONObjectGet(_json_, *"version"*) is not *3<sub>𝔽</sub>*, optionally report an error.
+      1. Let _fileField_ be GetOptionalString(_json_, *"file"*).
+      1. Let _sourceMap_ be the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]:  « », [[Mappings]]: « » }.
+      1. Let _previousOffset_ be *null*.
+      1. Let _previousLastMapping_ be *null*.
+      1. For each _section_ of JSONArrayIterate(_sectionsField_), do
+        1. If _section_ is not a JSON object, optionally report an error.
+        1. Else,
+          1. Let _offset_ be JSONObjectGet(_section_, *"offset"*).
+          1. If _offset_ is not a JSON object, throw an error.
+          1. Let _offsetLine_ be JSONObjectGet(_offset_, *"line"*).
+          1. Let _offsetColumn_ be JSONObjectGet(_offset_, *"column"*).
+          1. If _offsetLine_ is not an integral Number, then
+            1. Optionally report an error.
+            1. Set _offsetLine_ to *0*<sub>𝔽</sub>.
+          1. If _offsetColumn_ is not an integral Number, then
+            1. Optionally report an error.
+            1. Set _offsetColumn_ to *0*<sub>𝔽</sub>.
+          1. If _previousOffset_ &ne; *null*, then
+            1. If _offsetLine_ &lt; JSONObjectGet(_previousOffset_, *"line"*), optionally report an error.
+            1. Else if _offsetLine_ = JSONObjectGet(_previousOffset_, *"line"*) and _offsetColumn_ &lt; Get(_previousOffset_, *"column"*), optionally report an error.
+          1. If _previousLastMapping_ is not *null*, then
+            1. If _offsetLine_ &lt; _previousLastMapping_.[[GeneratedLine]], optionally report an error.
+            1. If _offsetLine_ = _previousLastMapping_.[[GeneratedLine]] and _offsetColumn_ &lt; _previousLastMapping_.[[GeneratedColumn]], optionally report an error.
+            1. NOTE: This part of the decoding algorithm checks that entries of the sections field of index source maps are ordered and do not overlap. While it is expected that generators should not produce index source maps with overlapping sections, source map consumers may, for example, only check the simpler condition that the section offsets are ordered.
+          1. Let _mapField_ be JSONObjectGet(_section_, *"map"*).
+          1. If _mapField_ is not a JSON object, throw an error.
+          1. Let _decodedSectionCompletion_ be Completion(DecodeSourceMap(_json_, _baseURL_)).
+          1. If _decodedSectionCompletion_ is a throw completion, then
+            1. Optionally report an error.
+          1. Else,
+            1. Let _decodedSection_ be _decodedSectionCompletion_.[[Value]].
+            1. For each Decoded Source Record _additionalSource_ of _decodedSection_.[[Sources]], do
+              1. If _sourceMap_.[[Sources]] does not contain _additionalSource_, then
+                1. Append _additionalSource_ to _sourceMap_.[[Sources]].
+            1. Let _offsetMappings_ be a new empty List.
+            1. For each Decoded Mapping Record _mapping_ of _decodedSection_.[[Mappings]], do
+              1. If _mapping_.[[GeneratedLine]] = 0, then
+                1. Set _mapping_.[[GeneratedColumn]] to _mapping_.[[GeneratedColumn]] + _offsetColumn_.
+              1. Set _mapping_.[[GeneratedLine]] to _mapping_.[[GeneratedLine]] + _offsetLine_.
+              1. Append _mapping_ to _offsetMappings_.
+            1. Set _sourceMap_.[[Mappings]] to the list-concatenation of _sourceMap_.[[Mappings]] and _offsetMappings_.
+            1. Set _previousOffset_ to _offset_.
+            1. Let _sortedMappings_ be a copy of _offsetMappings_, sorted in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if GeneratedPositionLessThan(_a_, _b_) is *true*.
+            1. If _sortedMappings_ is not empty, set _previousLastMapping_ to the last element of _sortedMappings_.
+        1. Return _sourceMap_.
+    </emu-alg>
+
+    <emu-note>
+      Implementations may choose to represent index source map sections without appending the mappings together, for example, by storing each section separately and conducting a binary search.
+    </emu-note>
+
+    <emu-clause id="sec-GeneratedPositionLessThan" type="abstract operation">
+      <h1>
+        GeneratedPositionLessThan (
+          _a_: a Decoded Mapping Record,
+          _b_: a Decoded Mapping Record,
+        ): a Boolean
+      </h1>
+      <dl class="header"></dl>
+      <emu-alg>
+        1. If _a_.[[GeneratedLine]] &lt; _b_.[[GeneratedLine]], return *true*.
+        1. If _a_.[[GeneratedLine]] = _b_.[[GeneratedLine]] and _a_.[[GeneratedColumn]] &lt; _b_.[[GeneratedColumn]], return *true*.
+        1. Return *false*.
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-retrieving-source-maps">
+  <h1>Retrieving source maps</h1>
+
+  <emu-clause id="sec-linking-generated-code">
+    <h1>Linking generated code to source maps</h1>
+
+    <p>While the source map format is intended to be language and platform agnostic, it is useful to define how to reference to them for the expected use-case of web server-hosted JavaScript.</p>
+    <p>There are two possible ways to link source maps to the output. The first requires server support in order to add an HTTP header and the second requires an annotation in the source.</p>
+    <p>Source maps are linked through URLs as defined in <emu-xref href="#sec-references-informative">WHATWG URL</emu-xref>; in particular, characters outside the set permitted to appear in URIs shall be percent-encoded and it may be a data URI. Using a data URI along with sourcesContent allows for a completely self-contained source map.</p>
+    <p>The HTTP `sourcemap` header has precedence over a source annotation, and if both are present, the header URL should be used to resolve the source map file.</p>
+    <p>Regardless of the method used to retrieve the source map URL the same process is used to resolve it, which is as follows.</p>
+    <p>When the source map URL is not absolute, then it is relative to the generated code's <dfn id="source-origin">source origin</dfn>. The source origin is determined by one of the following cases:</p>
+    <ul>
+      <li>
+        <p>If the generated source is not associated with a script element that has a `src` attribute and there exists a `//# sourceURL` comment in the generated code, that comment should be used to determine the source origin.</p>
+        <emu-note>
+          Previously, this was `//@ sourceURL`, as with `//@ sourceMappingURL`, it is reasonable to accept both but `//#` is preferred.
+        </emu-note>
+      </li>
+      <li>If the generated code is associated with a script element and the script element has a `src` attribute, the `src` attribute of the script element will be the source origin.</li>
+      <li>If the generated code is associated with a script element and the script element does not have a `src` attribute, then the source origin will be the page's origin.</li>
+      <li>If the generated code is being evaluated as a string with the `eval()` function or via `new Function()`, then the source origin will be the page's origin.</li>
+    </ul>
+
+    <emu-clause id="sec-linking-http-header">
+      <h1>Linking through HTTP headers</h1>
+
+      <p>If a file is served through HTTP(S) with a `sourcemap` header, the value of the header is the URL of the linked source map.</p>
+      <pre><code>sourcemap: &lt;url&gt;</code></pre>
+      <emu-note>
+        Previous revisions of this document recommended a header name of `x-sourcemap`. This is now deprecated; `sourcemap` is now expected.
+      </emu-note>
+    </emu-clause>
+
+    <emu-clause id="sec-linking-inline">
+      <h1>Linking through inline annotations</h1>
+
+      <p>The generated code should include a comment, or the equivalent construct depending on its language or format, named `sourceMappingURL` and that contains the URL of the source map. This specification defines how the comment should look like for JavaScript, CSS, and WebAssembly. Other languages should follow a similar convention.</p>
+
+      <p>For a given language there can be multiple ways of detecting the `sourceMappingURL` comment, to allow for different implementations to choose what is less complex for them. The generated code <dfn id="umambiguous-linking">unambiguously links to a source map</dfn> if the result of all the extraction methods is the same.</p>
+
+      <p>If a tool consumes one or more source files that unambiguously links to a source map and it produces an output file that links to a source map, it shall do so <emu-xref href="#umambiguous-linking">unambiguously</emu-xref>.</p>
+
+      <emu-note example>
+        <p>The following JavaScript code links to a source map, but it does not do so <emu-xref href="#umambiguous-linking">unambiguously</emu-xref>:</p>
+
+<pre><code class="javascript">let a = &#x60;
+&#x2F;&#x2F;# sourceMappingURL=foo.js.map
+&#x2F;&#x2F;&#x60;</code></pre>
+
+        <p>Extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> gives *null*, while <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives `foo.js.map`.</p>
+      </emu-note>
+
+      <emu-note issue>
+        <p>Having multiple ways to extract a source map URL, that can lead to different results, can have negative security and privacy implications. Implementations that need to detect which source maps are potentially going to be loaded are strongly encouraged to always apply both algorithms, rather than just assuming that they will give the same result.</p>
+
+        <p>A fix to this problem is being worked on, and is expected to be included in a future version of the standard. It will likely involve early returning from the below algorithms whenever there is a comment (or comment-like) that contains the characters U+0060 (&#x60;), U+0022 ("), or U+0027 ('), or the the sequence U+002A U+002F (*/).</p>
+      </emu-note>
+
+      <emu-clause id="sec-JavaScriptExtractSourceMapURL" type="abstract operation">
+        <h1>
+          JavaScriptExtractSourceMapURL (
+            _source_: a String,
+          ): a String or *null*
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It extracts a source map URL from a <strong>JavaScript</strong> source. It has two possible implementations: either <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> or without parsing.</dd>
+        </dl>
+
+        <p>To extract a source map URL <dfn id="sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</dfn>:</p>
+
+        <emu-alg>
+          1. Let _tokens_ be the List of tokens obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
+          1. For each _token_ in _tokens_, in reverse order, do:
+            1. If _token_ is not |SingleLineComment| or |MultiLineComment|, return *null*.
+            <!-- TODO: We need to define a SDO for this, to make explicit what the contents actually are -->
+            1. Let _comment_ be the content of _token_.
+            1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
+            1. If _sourceMapURL_ is a String, return _sourceMapURL_.
+          1. Return *null*.
+        </emu-alg>
+
+        <p>To extract a source map URL <dfn id="sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</dfn>:</p>
+
+        <emu-alg>
+          1. Let _lines_ be StringSplit(_mappings_, « *"\u000D\u000A"*, *"\u000A"*, *"\u000D"*, *"\u2028"*, *"\u2029"* »).
+          1. NOTE: The regular expression above matches the |LineTerminatorSequence| production.
+          1. Let _lastURL_ be *null*.
+          1. For each _lineStr_ in _lines_, do:
+            1. Let _line_ be StringToCodePoints(_lineStr_).
+            1. Let _position_ be 0.
+            1. Let _lineLength_ be the length of _line_.
+            1. While _position_ &lt; _lineLength_,
+              1. Let _first_ be _line_[_position_].
+              1. Set _position_ to _position_ + 1.
+              1. If _first_ is U+002F (SOLIDUS) and _position_ &lt; _lineLength_, then
+                1. Let _second_ be _line_[_position_].
+                1. Set _position_ to _position_ + 1.
+                1. If _second_ is U+002F (SOLIDUS), then
+                  1. Let _comment_ be the substring of _lineStr_ from _position_ to _lineLength_.
+                  1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
+                  1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
+                  1. Set _position_ to _lineLength_.
+                1. Else if _second_ is U+002A (ASTERISK), then
+                  1. Let _commentCp_ be a new empty List.
+                  1. While _position_ + 1 &lt; _lineLength_,
+                    1. Let _c1_ be _line_[_position_].
+                    1. Set _position_ to _position_ + 1.
+                    1. Let _c2_ be _line_[_position_].
+                    1. If _c1_ is U+002A (ASTERISK) and _c2_ is U+002F (SOLIDUS), then
+                      1. Set _position_ to _position_ + 1.
+                      1. Let _sourceMapURL_ be MatchSourceMapURL(CodePointsToString(_commentCp_)).
+                      1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
+                    1. Append _c1_ to _commentCp_.
+                1. Else, set _lastURL_ to *null*.
+              1. Else if _first_ is not an ECMAScript |WhiteSpace|, then
+                1. Set _lastURL_ to *null*.
+              1. NOTE: We reset _lastURL_ to *null* whenever we find a non-comment code character.
+          1. Return _lastURL_.
+        </emu-alg>
+        <emu-note>
+          The algorithm above has been designed so that the source lines can be iterated in reverse order, returning early after scanning through a line that contains a `sourceMappingURL` comment.
+        </emu-note>
+        <emu-note>
+          <p>The algorithm above is equivalent to the following JavaScript implementation:</p>
+
+          <pre><code class="javascript">const JS_NEWLINE = /^/m;
+
+// This RegExp will always match one of the following:
+// - single-line comments
+// - "single-line" multi-line comments
+// - unclosed multi-line comments
+// - just trailing whitespaces
+// - a code character
+// The loop below differentiates between all these cases.
+const JS_COMMENT =
+  /\s*(?:\/\/(?&lt;single&gt;.*)|\/\*(?&lt;multi&gt;.*?)\*\/|\/\*.*|$|(?&lt;code&gt;[^\/]+))/uym;
+
+const PATTERN = /^[@#]\s*sourceMappingURL=(\S*?)\s*$/;
+
+let lastURL = null;
+for (const line of source.split(JS_NEWLINE)) {
+  JS_COMMENT.lastIndex = 0;
+  while (JS_COMMENT.lastIndex &lt; line.length) {
+    let commentMatch = JS_COMMENT.exec(line).groups;
+    let comment = commentMatch.single ?? commentMatch.multi;
+    if (comment != null) {
+      let match = PATTERN.exec(comment);
+      if (match !== null) lastURL = match[1];
+    } else if (commentMatch.code != null) {
+      lastURL = null;
+    } else {
+      // We found either trailing whitespaces or an unclosed comment.
+      // Assert: JS_COMMENT.lastIndex === line.length
+    }
+  }
+}
+return lastURL;</code></pre>
+        </emu-note>
+
+        <emu-clause type="abstract operation" id="sec-MatchSourceMapURL">
+          <h1>
+            MatchSourceMapURL (
+              _comment_: a String,
+            ): either ~NONE~ or a String
+          </h1>
+          <dl class="header"></dl>
+          <emu-alg>
+            1. Let _pattern_ be RegExpCreate(*"^[@#]\\s\*sourceMappingURL=(\\S\*?)\\s\*$"*, *""*).
+            1. Let _match_ be RegExpExec(_pattern_, _comment_).
+            1. If _match_ is not *null*, return Get(_match_, *"1"*).
+            1. Return ~NONE~.
+          </emu-alg>
+
+          <emu-note>The prefix for this annotation was initially `//@`, however this conflicts with Internet Explorer's Conditional Compilation and was changed to `//#`.</emu-note>
+
+          <p>Source map generators shall only emit `//#`, while source map consumers shall accept both `//@` and `//#`.</p>
+        </emu-clause>
+      </emu-clause>
+
+      <emu-clause id="sec-CSSExtractSourceMapURL" type="abstract operation">
+        <h1>
+          CSSExtractSourceMapURL (
+            _source_: a String,
+          ): a String or *null*
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It extracts a source map URL from a <strong>CSS</strong> source.</dd>
+        </dl>
+        <p>Extracting <span>source map URL</span>s from CSS is similar to JavaScript, with the exception that CSS only supports `/* ... */`-style comments.</p>
+      </emu-clause>
+
+      <emu-clause id="sec-WebAssemblyExtractSourceMapURL" type="abstract operation">
+        <h1>
+          WebAssemblyExtractSourceMapURL (
+            _bytes_: a Data Block,
+          ): a String or *null*
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It extracts a source map URL from a <strong>WebAssembly</strong> binary source.</dd>
+        </dl>
+      </emu-clause>
+      <emu-alg>
+        1. Let _module_ be module_decode(_bytes_).
+        1. If _module_ is WebAssembly error, return *null*.
+        1. For each custom section _customSection_ of _module_,
+          1. Let _name_ be the `name` of _customSection_.
+          1. If CodePointsToString(_name_) is *"sourceMappingURL"*, then
+            1. Let _value_ be the `bytes` of _customSection_.
+            1. Return CodePointsToString(_value_).
+        1. Return *null*.
+      </emu-alg>
+
+      <p>Since WebAssembly is not a textual format and it does not support comments, it supports a single unambiguous extraction method. The URL is encoded as a WebAssembly name, and it's placed as the content of the custom section. It is invalid for tools that generate WebAssembly code to generate two or more custom sections with the `sourceMappingURL` name.</p>
+    </emu-clause>
+  </emu-clause>
+
+  <emu-clause id="sec-fetching-source-maps">
+    <h1>Fetching source maps</h1>
+
+    <emu-clause id="sec-FetchSourceMap" type="abstract operation">
+      <h1>
+        FetchSourceMap (
+          _url_: an URL,
+        ): a Promise
+      </h1>
+      <dl class="header"></dl>
+      <emu-alg>
+        1. Let _promiseCapability_ be NewPromiseCapability(%Promise%).
+        1. Let _request_ be a new request whose request URL is _url_.
+        1. Let _processResponseConsumeBody_ be a new Abstract Closure with parameters (_response_, _bodyBytes_) that performs the following steps when called:
+          1. If _bodyBytes_ is *null* or ~failure~, then
+            1. Perform Call(_promiseCapability_.[[Reject]], *undefined*, « a new *TypeError* »).
+            1. Return.
+          1. If _url_'s scheme is an HTTP(S) scheme and the byte sequence \``)]}'`\` is a byte-sequence-prefix of _bodyBytes_, then
+            1. While _bodyBytes_'s _length_ &ne; 0 and _bodyBytes_[0] is not an HTTP newline byte, remove the 0th element from _bodyBytes_.
+          1. Let _bodyString_ be Completion(UTF-8 decode of _bodyBytes_).
+          1. IfAbruptRejectPromise(_bodyString_, _promiseCapability_).
+          1. Let _jsonValue_ be Completion(ParseJSON(_bodyString_)).
+          1. IfAbruptRejectPromise(_jsonValue_, _promiseCapability_).
+          1. Perform Call(_promiseCapability_.[[Resolve]], *undefined*, « _jsonValue_ »).
+        1. Perform fetch _request_ with processResponseConsumeBody set to _processResponseConsumeBody_.
+        1. Return _promise_.[[Promise]].
+      </emu-alg>
+
+      <emu-note>
+        <p>For historic reasons, when delivering source maps over HTTP(S), servers may prepend a line starting with the string `)]}'` to the source map.</p>
+
+        <pre><code class="json">)]}'garbage here
+{"version": 3, ...}</code></pre>
+
+        <p>is interpreted as</p>
+
+        <pre><code class="json">{"version": 3, ...}</code></pre>
+      </emu-note>
+    </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-annex id="sec-conventions">
+  <h1>Conventions</h1>
+
+  <p>The following conventions should be followed when working with source maps or when generating them.</p>
+
+  <emu-annex id="sec-source-map-naming">
+    <h1>Source map naming</h1>
+
+    <p>Commonly, a source map will have the same name as the generated file but with a `.map` extension. For example, for `page.js` a source map named `page.js.map` would be generated.</p>
+  </emu-annex>
+
+  <emu-annex id="sec-linking-eval">
+    <h1>Linking eval'd code to named generated code</h1>
+
+    <p>There is an existing convention that should be supported for the use of source maps with eval'd code, it has the following form:</p>
+    <pre><code class="javascript">//# sourceURL=foo.js</code></pre>
+
+    <p>It is described in Give your eval a name with //@ sourceURL.</p>
+  </emu-annex>
+</emu-annex>
+
+<emu-annex id="sec-notes">
+  <h1>Notes</h1>
+
+  <emu-annex id="sec-language-neutral-mapping">
+    <h1>Language neutral stack mapping</h1>
+
+    <p>Stack tracing mapping without knowledge of the source language is not <emu-not-ref>covered</emu-not-ref> by this document.</p>
+  </emu-annex>
+
+  <emu-annex id="sec-multi-level-mapping">
+    <h1>Multi-level mapping</h1>
+
+    <p>It is getting more common to have tools generate sources from some DSL (templates) or compile TypeScript &rightarrow; JavaScript &rightarrow; minified JavaScript, resulting in multiple translations before the final source map is created. This problem can be handled in one of two ways. The easy but lossy way is to ignore the intermediate steps in the process for the purposes of debugging, the source location information from the translation is either ignored (the intermediate translation is considered the “Original Source”) or the source location information is carried through (the intermediate translation hidden). The more complete way is to support multiple levels of mapping: if the Original Source also has a source map reference, the user is given the choice of using that as well.</p>
+
+    <p>However, it is unclear what a "source map reference" looks like in anything other than JavaScript. More specifically, what a source map reference looks like in a language that doesn't support JavaScript-style single-line comments.</p>
+  </emu-annex>
+</emu-annex>
+
+<emu-annex id="sec-external-definitions">
+  <h1>Terms defined in other specifications</h1>
+
+  <p>This section lists all terms and algorithms used by this document defined by external specifications other than ECMA-262.</p>
+
+  <!-- All specifications references here should be also listed in the "References" section at the beginning of the document -->
+
+  <dl>
+    <dt>WebAssembly Core Specification &lt;<a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>&gt;</dt>
+    <dd>
+      <a href="https://www.w3.org/TR/wasm-core-2/#custom-section%E2%91%A0"><dfn id="external-webassembly-custom-section" variants="custom sections">custom section</dfn></a>,
+      <a href="https://www.w3.org/TR/wasm-core-2/#modules%E2%91%A0%E2%91%A4"><dfn id="external-webassembly-module_decode">module_decode</dfn></a>,
+      <a href="https://www.w3.org/TR/wasm-core-2/#embed-error"><dfn id="external-webassembly-error">WebAssembly error</dfn></a>,
+      <a href="https://www.w3.org/TR/wasm-core-2/#names%E2%91%A2"><dfn id="external-webassembly-names" variants="WebAssembly name">WebAssembly names</dfn></a>
+    </dd>
+    <dt>WHATWG Encoding &lt;<a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>&gt;</dt>
+    <dd>
+      <a href="https://encoding.spec.whatwg.org/#utf-8-decode"><dfn id="external-whatwg-encoding-utf-8-decode">UTF-8 decode</dfn></a>
+    </dd>
+    <dt>WHATWG <emu-not-ref>Fetch</emu-not-ref> &lt;<a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>&gt;</dt>
+    <dd>
+      <a href="https://fetch.spec.whatwg.org/#concept-fetch"><dfn id="external-whatwg-fetch">fetch</dfn></a>,
+      <a href="https://fetch.spec.whatwg.org/#http-newline-byte"><dfn id="external-whatwg-fetch-http-newline-byte">HTTP newline byte</dfn></a>,
+      <a href="https://fetch.spec.whatwg.org/#process-response-end-of-body"><dfn id="external-whatwg-fetch-processResponseConsumeBody">processResponseConsumeBody</dfn></a>,
+      <a href="https://fetch.spec.whatwg.org/#concept-request"><dfn id="external-whatwg-fetch-request">request</dfn></a>,
+      <a href="https://fetch.spec.whatwg.org/#concept-request-url"><dfn id="external-whatwg-fetch-request-url">request URL</dfn></a>
+    </dd>
+    <dt>WHATWG Infra &lt;<a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>&gt;</dt>
+    <dd>
+      <a href="https://infra.spec.whatwg.org/#byte-sequence"><dfn id="external-whatwg-infra-byte-sequence">byte sequence</dfn></a>,
+      <a href="https://infra.spec.whatwg.org/#byte-sequence-prefix"><dfn id="external-whatwg-infra-byte-sequence-prefix">byte-sequence-prefix</dfn></a>
+    </dd>
+    <dt>WHATWG <emu-not-ref>URL</emu-not-ref> &lt;<a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>&gt;</dt>
+    <dd>
+      <a href="https://fetch.spec.whatwg.org/#http-scheme"><dfn id="external-whatwg-url-http-s-scheme">HTTP(S) scheme</dfn></a>,
+      <a href="https://url.spec.whatwg.org/#concept-url-scheme"><dfn id="external-whatwg-url-scheme">scheme</dfn></a>,
+      <a href="https://url.spec.whatwg.org/#concept-url"><dfn id="external-whatwg-url">URL</dfn></a>,
+      <a href="https://url.spec.whatwg.org/#url-parsing"><dfn id="external-whatwg-url-parsing">URL parsing</dfn></a>
+    </dd>
+  </dl>
+</emu-annex>
+
+<emu-annex id="sec-bibliography">
+  <h1>Bibliography</h1>
+  <ol>
+    <li>
+      IETF RFC 4648, <i>The Base16, Base32, and Base64 Data Encodings</i>, available at &lt;<a href="https://datatracker.ietf.org/doc/html/rfc4648">https://datatracker.ietf.org/doc/html/rfc4648</a>&gt;
+    </li>
+    <li>
+      ECMA-262, <i>ECMAScript® Language Specification</i>, available at &lt;<a href="https://tc39.es/ecma262/">https://tc39.es/ecma262/</a>&gt;
+    </li>
+    <li>
+      ECMA-404, <i>The JSON Data Interchange Format</i>, available at &lt;<a href="https://www.ecma-international.org/publications-and-standards/standards/ecma-404/">https://www.ecma-international.org/publications-and-standards/standards/ecma-404/</a>&gt;
+    </li>
+    <li>
+      <i>WebAssembly Core Specification</i>, available at &lt;<a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>&gt;
+    </li>
+    <li>
+      WHATWG <i>Encoding</i>, available at &lt;<a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>&gt;
+    </li>
+    <li>
+      WHATWG <emu-not-ref><i>Fetch</i></emu-not-ref>, available at &lt;<a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>&gt;
+    </li>
+    <li>
+      WHATWG <i>Infra</i>, available at &lt;<a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>&gt;
+    </li>
+    <li>
+      WHATWG <emu-not-ref><i>URL</i></emu-not-ref>, available at &lt;<a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>&gt;
+    </li>
+    <li>
+      <dfn id="biblio-give-your-eval-a-name">Give your eval a name with //@ sourceURL</dfn>, Firebug (2009), available at &lt;<a href="https://web.archive.org/web/20120814122523/http://blog.getfirebug.com/2009/08/11/give-your-eval-a-name-with-sourceurl/">http://blog.getfirebug.com/2009/08/11/give-your-eval-a-name-with-sourceurl/</a>&gt;
+    </li>
+    <li>
+      <dfn id="biblio-source-map-v2">Source Map Revision 2 Proposal</dfn>, John Lenz (2010), available at &lt;<a href="https://docs.google.com/document/d/1xi12LrcqjqIHTtZzrzZKmQ3lbTv9mKrN076UB-j3UZQ/">https://docs.google.com/document/d/1xi12LrcqjqIHTtZzrzZKmQ3lbTv9mKrN076UB-j3UZQ/</a>&gt;
+    </li>
+    <li>
+      <dfn id="biblio-vlq" variants="variable-length quantity">Variable-length quantity</dfn>, Wikipedia, available at &lt;<a href="https://en.wikipedia.org/wiki/Variable-length_quantity">https://en.wikipedia.org/wiki/Variable-length_quantity</a>&gt;
+    </li>
+  </ol>
+</emu-annex>
+
+<emu-annex id="sec-colophon">
+  <h1>Colophon</h1>
+  <p>This specification is authored on <a href="https://github.com/tc39/ecma426">GitHub</a> in a plaintext source format called <a href="https://github.com/bterlson/ecmarkup">Ecmarkup</a>. Ecmarkup is an HTML and Markdown dialect that provides a framework and toolset for authoring ECMAScript specifications in plaintext and processing the specification into a full-featured HTML rendering that follows the editorial conventions for this document. Ecmarkup builds on and integrates a number of other formats and technologies including <a href="https://github.com/rbuckton/grammarkdown">Grammarkdown</a> for defining syntax and <a href="https://github.com/domenic/ecmarkdown">Ecmarkdown</a> for authoring algorithm steps. PDF renderings of this specification are produced by printing the HTML rendering to a PDF.</p>
+  <p>The first edition of this specification was authored using <a href="https://speced.github.io/bikeshed/">Bikeshed</a>, a different plaintext source format based on HTML and Markdown.</p>
+  <p>Pre-standard versions of this document were authored using Google Docs.</p>
+</emu-annex>
