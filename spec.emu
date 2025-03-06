@@ -1355,34 +1355,34 @@ return lastURL;</code></pre>
   <dl>
     <dt>WebAssembly Core Specification &lt;<a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>&gt;</dt>
     <dd>
-      <a href="https://www.w3.org/TR/wasm-core-2/#custom-section%E2%91%A0"><dfn id="external-webassembly-custom-section" variants="custom sections">custom section</dfn></a>,
-      <a href="https://www.w3.org/TR/wasm-core-2/#modules%E2%91%A0%E2%91%A4"><dfn id="external-webassembly-module_decode">module_decode</dfn></a>,
-      <a href="https://www.w3.org/TR/wasm-core-2/#embed-error"><dfn id="external-webassembly-error">WebAssembly error</dfn></a>,
-      <a href="https://www.w3.org/TR/wasm-core-2/#names%E2%91%A2"><dfn id="external-webassembly-names" variants="WebAssembly name">WebAssembly names</dfn></a>
+      <dfn id="external-webassembly-custom-section" variants="custom sections"><a href="https://www.w3.org/TR/wasm-core-2/#custom-section%E2%91%A0">custom section</a></dfn>,
+      <dfn id="external-webassembly-module_decode"><a href="https://www.w3.org/TR/wasm-core-2/#modules%E2%91%A0%E2%91%A4">module_decode</a></dfn>,
+      <dfn id="external-webassembly-error"><a href="https://www.w3.org/TR/wasm-core-2/#embed-error">WebAssembly error</a></dfn>,
+      <dfn id="external-webassembly-names" variants="WebAssembly name"><a href="https://www.w3.org/TR/wasm-core-2/#names%E2%91%A2">WebAssembly names</a></dfn>
     </dd>
     <dt>WHATWG Encoding &lt;<a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>&gt;</dt>
     <dd>
-      <a href="https://encoding.spec.whatwg.org/#utf-8-decode"><dfn id="external-whatwg-encoding-utf-8-decode">UTF-8 decode</dfn></a>
+      <dfn id="external-whatwg-encoding-utf-8-decode"><a href="https://encoding.spec.whatwg.org/#utf-8-decode">UTF-8 decode</a></dfn>
     </dd>
     <dt>WHATWG <emu-not-ref>Fetch</emu-not-ref> &lt;<a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>&gt;</dt>
     <dd>
-      <a href="https://fetch.spec.whatwg.org/#concept-fetch"><dfn id="external-whatwg-fetch">fetch</dfn></a>,
-      <a href="https://fetch.spec.whatwg.org/#http-newline-byte"><dfn id="external-whatwg-fetch-http-newline-byte">HTTP newline byte</dfn></a>,
-      <a href="https://fetch.spec.whatwg.org/#process-response-end-of-body"><dfn id="external-whatwg-fetch-processResponseConsumeBody">processResponseConsumeBody</dfn></a>,
-      <a href="https://fetch.spec.whatwg.org/#concept-request"><dfn id="external-whatwg-fetch-request">request</dfn></a>,
-      <a href="https://fetch.spec.whatwg.org/#concept-request-url"><dfn id="external-whatwg-fetch-request-url">request URL</dfn></a>
+      <dfn id="external-whatwg-fetch"><a href="https://fetch.spec.whatwg.org/#concept-fetch">fetch</a></dfn>,
+      <dfn id="external-whatwg-fetch-http-newline-byte"><a href="https://fetch.spec.whatwg.org/#http-newline-byte">HTTP newline byte</a></dfn>,
+      <dfn id="external-whatwg-fetch-processResponseConsumeBody"><a href="https://fetch.spec.whatwg.org/#process-response-end-of-body">processResponseConsumeBody</a></dfn>,
+      <dfn id="external-whatwg-fetch-request"><a href="https://fetch.spec.whatwg.org/#concept-request">request</a></dfn>,
+      <dfn id="external-whatwg-fetch-request-url"><a href="https://fetch.spec.whatwg.org/#concept-request-url">request URL</a></dfn>
     </dd>
     <dt>WHATWG Infra &lt;<a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>&gt;</dt>
     <dd>
-      <a href="https://infra.spec.whatwg.org/#byte-sequence"><dfn id="external-whatwg-infra-byte-sequence">byte sequence</dfn></a>,
-      <a href="https://infra.spec.whatwg.org/#byte-sequence-prefix"><dfn id="external-whatwg-infra-byte-sequence-prefix">byte-sequence-prefix</dfn></a>
+      <dfn id="external-whatwg-infra-byte-sequence"><a href="https://infra.spec.whatwg.org/#byte-sequence">byte sequence</a></dfn>,
+      <dfn id="external-whatwg-infra-byte-sequence-prefix"><a href="https://infra.spec.whatwg.org/#byte-sequence-prefix">byte-sequence-prefix</a></dfn>
     </dd>
     <dt>WHATWG <emu-not-ref>URL</emu-not-ref> &lt;<a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>&gt;</dt>
     <dd>
-      <a href="https://fetch.spec.whatwg.org/#http-scheme"><dfn id="external-whatwg-url-http-s-scheme">HTTP(S) scheme</dfn></a>,
-      <a href="https://url.spec.whatwg.org/#concept-url-scheme"><dfn id="external-whatwg-url-scheme">scheme</dfn></a>,
-      <a href="https://url.spec.whatwg.org/#concept-url"><dfn id="external-whatwg-url">URL</dfn></a>,
-      <a href="https://url.spec.whatwg.org/#url-parsing"><dfn id="external-whatwg-url-parsing">URL parsing</dfn></a>
+      <dfn id="external-whatwg-url-http-s-scheme"><a href="https://fetch.spec.whatwg.org/#http-scheme">HTTP(S) scheme</a></dfn>,
+      <dfn id="external-whatwg-url-scheme"><a href="https://url.spec.whatwg.org/#concept-url-scheme">scheme</a></dfn>,
+      <dfn id="external-whatwg-url"><a href="https://url.spec.whatwg.org/#concept-url">URL</a></dfn>,
+      <dfn id="external-whatwg-url-parsing"><a href="https://url.spec.whatwg.org/#url-parsing">URL parsing</a></dfn>
     </dd>
   </dl>
 </emu-annex>
