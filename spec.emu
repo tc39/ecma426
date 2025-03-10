@@ -771,13 +771,13 @@
           1. Assert: _first_ &lt; 64.
           1. If _first_ modulo 2 is 0, let _sign_ be 1.
           1. Else, let _sign_ be -1.
-          1. Let _value_ be min(floor(_first_ / 2), 2<sup>4</sup> - 1).
+          1. Let _value_ be floor((_first_ modulo 2<sup>5</sup>) / 2).
           1. Let _nextShift_ be 16.
           1. Let _currentByte_ be _first_.
-          1. Repeat, while floor(_currentByte_ / 2<sup>5</sup>) modulo 2 = 1,
+          1. Repeat, while floor(_currentByte_ / 2<sup>5</sup>) = 1,
             1. If _position_.[[Value]] = _segmentLen_, throw an error.
             1. Set _currentByte_ to ConsumeBase64ValueAt(_segment_, _position_).
-            1. Let _chunk_ be min(_currentByte_, 2<sup>5</sup> - 1).
+            1. Let _chunk_ be _currentByte_ modulo 2<sup>5</sup>.
             1. Set _value_ to _value_ + _chunk_ × _nextShift_.
             1. If _value_ ≥ 2<sup>31</sup>, throw an error.
             1. Set _nextShift_ to _nextShift_ × 2<sup>5</sup>.
