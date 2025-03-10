@@ -108,7 +108,7 @@
   <p>The source map format does not have version numbers anymore, and it is instead hard-coded to always be "3".</p>
   <p>In 2023-2024, the source map format was developed into a more precise Ecma standard, with significant contributions from many people. Further iteration on the source map format is expected to come from TC39-TG4.</p>
   <p>
-    Asumu Takikawa, Nicolò Ribaudo, Jon Kuperman<br/>
+    Asumu Takikawa, Nicolò Ribaudo, Jon Kuperman<br>
     ECMA-426, 1<sup>st</sup> edition, Project Editors
   </p>
 </emu-intro>
@@ -188,6 +188,7 @@
       <p>All abstract operations declared in this specification are implicitly assumed to either return a normal completion containing the algorithm's declared return type, or a throw completion. For example, an abstract operation declared as</p>
 
       <blockquote>
+
         <emu-clause id="example-get-the-answer" type="abstract operation" example>
           <h1>
             GetTheAnswer (
@@ -199,6 +200,7 @@
       </blockquote>
       <p>is equivalent to:</p>
       <blockquote>
+
         <emu-clause id="example-get-the-answer-2" type="abstract operation" example>
           <h1>
             GetTheAnswer2 (
@@ -219,7 +221,6 @@
         1. Let _result_ be ReturnIfAbrupt(GetTheAnswer(_value_)).
         1. Let _second_ be Completion(GetTheAnswer(_value_)).
       </emu-alg>
-
     </emu-clause>
 
     <emu-clause id="sec-optional-errors">
@@ -280,7 +281,7 @@
 <emu-clause id="sec-json-values-utilities">
   <h1>JSON values utilities</h1>
 
-  <p>While this specification's algorithms are defined on top of ECMA-262 internals, it is meant to be easily implementable by non-JavaScript platforms. This section contains utilities for working with JSON values, abstracting away ECMA-262  details from the rest of the document.</p>
+  <p>While this specification's algorithms are defined on top of ECMA-262 internals, it is meant to be easily implementable by non-JavaScript platforms. This section contains utilities for working with JSON values, abstracting away ECMA-262 details from the rest of the document.</p>
 
   <p>A <dfn id="type-json-value" variants="JSON values">JSON value</dfn> is either a JSON object, a JSON array, a <emu-xref href="#sec-ecmascript-language-types-string-type">String</emu-xref>, a <emu-xref href="#sec-ecmascript-language-types-number-type">Number</emu-xref>, a <emu-xref href="#sec-ecmascript-language-types-boolean-type">Boolean</emu-xref>, or <emu-xref href="#sec-ecmascript-language-types-null-type">*null*</emu-xref>.</p>
 
@@ -361,7 +362,7 @@
     <h1>
       StringSplit (
         _string_: a String,
-        _separators_: a List of String
+        _separators_: a List of String,
       ): a List of Strings
     </h1>
     <dl class="header">
@@ -521,7 +522,7 @@
 
       <emu-clause id="sec-GetOptionalString" type="abstract operation">
         <h1>
-          GetOptionalString(
+          GetOptionalString (
             _object_: a JSON object,
             _key_: a String,
           ): a String or *null*
@@ -537,7 +538,7 @@
 
       <emu-clause id="sec-GetOptionalListOfStrings" type="abstract operation">
         <h1>
-          GetOptionalListOfStrings(
+          GetOptionalListOfStrings (
             _object_: a JSON object,
             _key_: a String,
           ): a List of Strings
@@ -561,7 +562,7 @@
 
       <emu-clause id="sec-GetOptionalListOfOptionalStrings" type="abstract operation">
         <h1>
-          GetOptionalListOfOptionalStrings(
+          GetOptionalListOfOptionalStrings (
             _object_: a JSON object,
             _key_: a String,
           ): a List of either Strings or *null*
@@ -577,7 +578,7 @@
           1. For each element _item_ of JSONArrayIterate(_values_),
             1. If _item_ is a String, append _item_ to _list_.
             1. Else,
-              1. If _item_ &ne; *null*, optionally report an error.
+              1. If _item_ ≠ *null*, optionally report an error.
               1. Append *null* to _list_.
           1. Return _list_.
         </emu-alg>
@@ -585,7 +586,7 @@
 
       <emu-clause id="sec-GetOptionalListOfArrayIndexes" type="abstract operation">
         <h1>
-          GetOptionalListOfArrayIndexes(
+          GetOptionalListOfArrayIndexes (
             _object_: an Object,
             _key_: a String,
           ): a List of non-negative integers
@@ -599,11 +600,11 @@
             1. Optionally report an error.
             1. Return _list_.
           1. For each element _item_ of JSONArrayIterate(_values_),
-            1. If _item_ is an integral Number, _item_ &ne; *0*<sub>𝔽</sub>, and _item_ &ge; *0*<sub>𝔽</sub>, then
+            1. If _item_ is an integral Number, _item_ ≠ *0*<sub>𝔽</sub>, and _item_ ≥ *0*<sub>𝔽</sub>, then
               1. Append ℝ(_item_) to _list_.
             1. Else,
-              1. If _item_ &ne; *null*, optionally report an error.
-              <!-- TODO: Should this step be removed, so that the list only contains numbers? -->
+              1. If _item_ ≠ *null*, optionally report an error.
+                <!-- TODO: Should this step be removed, so that the list only contains numbers? -->
               1. Append *null* to _list_.
           1. Return _list_.
         </emu-alg>
@@ -694,7 +695,7 @@
         1. Let _sourceIndex_ be 0.
         1. Let _nameIndex_ be 0.
         1. Repeat, while _generatedLine_ is less than the number of elements of _groups_,
-          1. If _groups_[_generatedLine_] &ne; *""*, then
+          1. If _groups_[_generatedLine_] ≠ *""*, then
             1. Let _segments_ be StringSplit(_groups_[_generatedLine_], « *","* »).
             1. Let _generatedColumn_ be 0.
             1. For each _segment_ of _segments_, do
@@ -710,25 +711,25 @@
                   1. Let _relativeSourceIndex_ be DecodeBase64VLQ(_segment_, _position_).
                   1. Let _relativeOriginalLine_ be DecodeBase64VLQ(_segment_, _position_).
                   1. Let _relativeOriginalColumn_ be DecodeBase64VLQ(_segment_, _position_).
-                  1. If _relativeOriginalColumn_ = *null* and _relativeSourceIndex_ &ne; *null*, optionally report an error.
-                  1. Else if _relativeOriginalColumn_ &ne; *null*,
+                  1. If _relativeOriginalColumn_ = *null* and _relativeSourceIndex_ ≠ *null*, optionally report an error.
+                  1. Else if _relativeOriginalColumn_ ≠ *null*,
                     1. Set _sourceIndex_ to _sourceIndex_ + _relativeSourceIndex_.
                     1. Set _originalLine_ to _originalLine_ + _relativeOriginalLine_.
                     1. Set _originalColumn_ to _originalColumn_ + _relativeOriginalColumn_.
-                    1. If _sourceIndex_ &lt; 0, _originalLine_ &lt; 0, _originalColumn_ &lt; 0, or _sourceIndex_ &ge; the number of elements of _source_, then
+                    1. If _sourceIndex_ &lt; 0, _originalLine_ &lt; 0, _originalColumn_ &lt; 0, or _sourceIndex_ ≥ the number of elements of _source_, then
                       1. Optionally report an error.
                     1. Else,
                       1. Set _decodedMapping_.[[OriginalSource]] to _sources_[_sourceIndex_].
                       1. Set _decodedMapping_.[[OriginalLine]] to _originalLine_.
                       1. Set _decodedMapping_.[[OriginalColumn]] to _originalColumn_.
                     1. Let _relativeNameIndex_ be DecodeBase64VLQ(_segment_, _position_).
-                    1. If _relativeNameIndex_ &ne; *null*, then
+                    1. If _relativeNameIndex_ ≠ *null*, then
                       1. Set _nameIndex_ to _nameIndex_ + _relativeNameIndex_.
-                      1. If _nameIndex_ &lt; 0 or _nameIndex_ &ge; the number of elements of _names_, then
+                      1. If _nameIndex_ &lt; 0 or _nameIndex_ ≥ the number of elements of _names_, then
                         1. Optionally report an error.
                       1. Else,
                         1. Set _decodedMapping_.[[Name]] to _names_[_nameIndex_].
-                    1. If _position_.[[Value]] &ne; length of _segment_, optionally report an error.
+                    1. If _position_.[[Value]] ≠ length of _segment_, optionally report an error.
           1. Set _generatedLine_ to _generatedLine_ + 1.
         1. Return _decodedMappings_.
       </emu-alg>
@@ -742,13 +743,13 @@
         <dl class="header"></dl>
         <emu-alg>
           1. If _groupings_ contains any code unit other than:
-              <ul>
-                <li>U+002B (`+`), U+002C (`,`), U+002F (`/`), or U+003B (`;`);</li>
-                <li>U+0030 (`0`) to U+0039 (`9`);</li>
-                <li>U+0041 (`A`) to U+005A (`Z`);</li>
-                <li>U+0061 (`a`) to U+007A (`z`)</li>
-              </ul>
-              throw an error.
+            <ul>
+              <li>U+002B (`+`), U+002C (`,`), U+002F (`/`), or U+003B (`;`);</li>
+              <li>U+0030 (`0`) to U+0039 (`9`);</li>
+              <li>U+0041 (`A`) to U+005A (`Z`);</li>
+              <li>U+0061 (`a`) to U+007A (`z`)</li>
+            </ul>
+            throw an error.
           1. Return ~unused~.
         </emu-alg>
 
@@ -778,7 +779,7 @@
             1. Set _currentByte_ to ConsumeBase64ValueAt(_segment_, _position_).
             1. Let _chunk_ be min(_currentByte_, 2<sup>5</sup> - 1).
             1. Set _value_ to _value_ + _chunk_ × _nextShift_.
-            1. If _value_ &ge; 2<sup>31</sup>, throw an error.
+            1. If _value_ ≥ 2<sup>31</sup>, throw an error.
             1. Set _nextShift_ to _nextShift_ × 2<sup>5</sup>.
           1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
           1. Return _sign_ × _value_.
@@ -839,12 +840,15 @@
 
       <ul>
         <li>
-          <p>The |BindingIdentifier|(s) for |LexicalDeclaration|, |VariableStatement| and |ParameterList|.</p></li>
+          <p>The |BindingIdentifier|(s) for |LexicalDeclaration|, |VariableStatement| and |ParameterList|.</p>
+        </li>
         <li>
           <p>The |BindingIdentifier| for |FunctionDeclaration|, |FunctionExpression|, |AsyncFunctionDeclaration|, |AsyncFunctionExpression|, |GeneratorDeclaration|, |GeneratorExpression|, |AsyncGeneratorDeclaration|, and |AsyncGeneratorExpression| if it exists, or the opening parenthesis `(` preceding the |FormalParameters| otherwise.</p>
 
-          <p>Source map generators may chose to emit a named mapping on the opening parenthesis regardless of
-          the presence of the |BindingIdentifier|.</p>
+          <p>
+            Source map generators may chose to emit a named mapping on the opening parenthesis regardless of
+            the presence of the |BindingIdentifier|.
+          </p>
         </li>
         <li>
           <p>For an |ArrowFunction| or |AsyncArrowFunction|:</p>
@@ -890,20 +894,20 @@
         1. Let _decodedSources_ be a new empty List.
         1. Let _sourcesContentCount_ be the the number of elements in _sourcesContent_.
         1. Let _sourceUrlPrefix_ be *""*.
-        1. If _sourceRoot_ &ne; *null*, then
+        1. If _sourceRoot_ ≠ *null*, then
           1. If _sourceRoot_ contains the code point U+002F (SOLIDUS), then
             1. Let _idx_ be the index of the last occurrence of U+002F (SOLIDUS) in _sourceRoot_.
             1. Set _sourceUrlPrefix_ to the substring of _sourceRoot_ from 0 to _idx_ + 1.
           1. Else, set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
         1. For each _source_ in _sources_ with index _index_, do
           1. Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false* }.
-          1. If _source_ &ne; *null*, then
+          1. If _source_ ≠ *null*, then
             1. Set _source_ to the string-concatenation of _sourceUrlPrefix_ and _source_.
             1. Let _sourceURL_ be the result of URL parsing _source_ with _baseURL_.
             1. If _sourceURL_ is ~failure~, optionally report an error.
             1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
           1. If _ignoredSources_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
-          1. If _sourcesContentCount_ &ge; _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
+          1. If _sourcesContentCount_ ≥ _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
           1. Append _decodedSource_ to _decodedSources_.
         1. Return _decodedSources_.
       </emu-alg>
@@ -977,7 +981,7 @@
       1. If _sectionsField_ is not a JSON array, throw an error.
       1. If JSONObjectGet(_json_, *"version"*) is not *3<sub>𝔽</sub>*, optionally report an error.
       1. Let _fileField_ be GetOptionalString(_json_, *"file"*).
-      1. Let _sourceMap_ be the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]:  « », [[Mappings]]: « » }.
+      1. Let _sourceMap_ be the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: « », [[Mappings]]: « » }.
       1. Let _previousOffset_ be *null*.
       1. Let _previousLastMapping_ be *null*.
       1. For each _section_ of JSONArrayIterate(_sectionsField_), do
@@ -993,7 +997,7 @@
           1. If _offsetColumn_ is not an integral Number, then
             1. Optionally report an error.
             1. Set _offsetColumn_ to *0*<sub>𝔽</sub>.
-          1. If _previousOffset_ &ne; *null*, then
+          1. If _previousOffset_ ≠ *null*, then
             1. If _offsetLine_ &lt; JSONObjectGet(_previousOffset_, *"line"*), optionally report an error.
             1. Else if _offsetLine_ = JSONObjectGet(_previousOffset_, *"line"*) and _offsetColumn_ &lt; Get(_previousOffset_, *"column"*), optionally report an error.
           1. If _previousLastMapping_ is not *null*, then
@@ -1090,7 +1094,7 @@
       <emu-note example>
         <p>The following JavaScript code links to a source map, but it does not do so <emu-xref href="#umambiguous-linking">unambiguously</emu-xref>:</p>
 
-<pre><code class="javascript">let a = &#x60;
+        <pre><code class="javascript">let a = &#x60;
 &#x2F;&#x2F;# sourceMappingURL=foo.js.map
 &#x2F;&#x2F;&#x60;</code></pre>
 
@@ -1100,7 +1104,7 @@
       <emu-note issue>
         <p>Having multiple ways to extract a source map URL, that can lead to different results, can have negative security and privacy implications. Implementations that need to detect which source maps are potentially going to be loaded are strongly encouraged to always apply both algorithms, rather than just assuming that they will give the same result.</p>
 
-        <p>A fix to this problem is being worked on, and is expected to be included in a future version of the standard. It will likely involve early returning from the below algorithms whenever there is a comment (or comment-like) that contains the characters U+0060 (&#x60;), U+0022 ("), or U+0027 ('), or the the sequence U+002A U+002F (*/).</p>
+        <p>A fix to this problem is being worked on, and is expected to be included in a future version of the standard. It will likely involve early returning from the below algorithms whenever there is a comment (or comment-like) that contains the characters U+0060 (`), U+0022 ("), or U+0027 ('), or the the sequence U+002A U+002F (*/).</p>
       </emu-note>
 
       <emu-clause id="sec-JavaScriptExtractSourceMapURL" type="abstract operation">
@@ -1120,7 +1124,7 @@
           1. Let _tokens_ be the List of tokens obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
           1. For each _token_ in _tokens_, in reverse order, do:
             1. If _token_ is not |SingleLineComment| or |MultiLineComment|, return *null*.
-            <!-- TODO: We need to define a SDO for this, to make explicit what the contents actually are -->
+              <!-- TODO: We need to define a SDO for this, to make explicit what the contents actually are -->
             1. Let _comment_ be the content of _token_.
             1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
             1. If _sourceMapURL_ is a String, return _sourceMapURL_.
@@ -1282,7 +1286,7 @@ return lastURL;</code></pre>
             1. Perform Call(_promiseCapability_.[[Reject]], *undefined*, « a new *TypeError* »).
             1. Return.
           1. If _url_'s scheme is an HTTP(S) scheme and the byte sequence \``)]}'`\` is a byte-sequence-prefix of _bodyBytes_, then
-            1. While _bodyBytes_'s _length_ &ne; 0 and _bodyBytes_[0] is not an HTTP newline byte, remove the 0th element from _bodyBytes_.
+            1. While _bodyBytes_'s _length_ ≠ 0 and _bodyBytes_[0] is not an HTTP newline byte, remove the 0th element from _bodyBytes_.
           1. Let _bodyString_ be Completion(UTF-8 decode of _bodyBytes_).
           1. IfAbruptRejectPromise(_bodyString_, _promiseCapability_).
           1. Let _jsonValue_ be Completion(ParseJSON(_bodyString_)).
@@ -1339,7 +1343,7 @@ return lastURL;</code></pre>
   <emu-annex id="sec-multi-level-mapping">
     <h1>Multi-level mapping</h1>
 
-    <p>It is getting more common to have tools generate sources from some DSL (templates) or compile TypeScript &rightarrow; JavaScript &rightarrow; minified JavaScript, resulting in multiple translations before the final source map is created. This problem can be handled in one of two ways. The easy but lossy way is to ignore the intermediate steps in the process for the purposes of debugging, the source location information from the translation is either ignored (the intermediate translation is considered the “Original Source”) or the source location information is carried through (the intermediate translation hidden). The more complete way is to support multiple levels of mapping: if the Original Source also has a source map reference, the user is given the choice of using that as well.</p>
+    <p>It is getting more common to have tools generate sources from some DSL (templates) or compile TypeScript → JavaScript → minified JavaScript, resulting in multiple translations before the final source map is created. This problem can be handled in one of two ways. The easy but lossy way is to ignore the intermediate steps in the process for the purposes of debugging, the source location information from the translation is either ignored (the intermediate translation is considered the “Original Source”) or the source location information is carried through (the intermediate translation hidden). The more complete way is to support multiple levels of mapping: if the Original Source also has a source map reference, the user is given the choice of using that as well.</p>
 
     <p>However, it is unclear what a "source map reference" looks like in anything other than JavaScript. More specifically, what a source map reference looks like in a language that doesn't support JavaScript-style single-line comments.</p>
   </emu-annex>
@@ -1353,18 +1357,18 @@ return lastURL;</code></pre>
   <!-- All specifications references here should be also listed in the "References" section at the beginning of the document -->
 
   <dl>
-    <dt>WebAssembly Core Specification &lt;<a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>&gt;</dt>
+    <dt>WebAssembly Core Specification &lt;<a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>></dt>
     <dd>
       <dfn id="external-webassembly-custom-section" variants="custom sections"><a href="https://www.w3.org/TR/wasm-core-2/#custom-section%E2%91%A0">custom section</a></dfn>,
       <dfn id="external-webassembly-module_decode"><a href="https://www.w3.org/TR/wasm-core-2/#modules%E2%91%A0%E2%91%A4">module_decode</a></dfn>,
       <dfn id="external-webassembly-error"><a href="https://www.w3.org/TR/wasm-core-2/#embed-error">WebAssembly error</a></dfn>,
       <dfn id="external-webassembly-names" variants="WebAssembly name"><a href="https://www.w3.org/TR/wasm-core-2/#names%E2%91%A2">WebAssembly names</a></dfn>
     </dd>
-    <dt>WHATWG Encoding &lt;<a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>&gt;</dt>
+    <dt>WHATWG Encoding &lt;<a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>></dt>
     <dd>
       <dfn id="external-whatwg-encoding-utf-8-decode"><a href="https://encoding.spec.whatwg.org/#utf-8-decode">UTF-8 decode</a></dfn>
     </dd>
-    <dt>WHATWG <emu-not-ref>Fetch</emu-not-ref> &lt;<a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>&gt;</dt>
+    <dt>WHATWG <emu-not-ref>Fetch</emu-not-ref> &lt;<a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>></dt>
     <dd>
       <dfn id="external-whatwg-fetch"><a href="https://fetch.spec.whatwg.org/#concept-fetch">fetch</a></dfn>,
       <dfn id="external-whatwg-fetch-http-newline-byte"><a href="https://fetch.spec.whatwg.org/#http-newline-byte">HTTP newline byte</a></dfn>,
@@ -1372,12 +1376,12 @@ return lastURL;</code></pre>
       <dfn id="external-whatwg-fetch-request"><a href="https://fetch.spec.whatwg.org/#concept-request">request</a></dfn>,
       <dfn id="external-whatwg-fetch-request-url"><a href="https://fetch.spec.whatwg.org/#concept-request-url">request URL</a></dfn>
     </dd>
-    <dt>WHATWG Infra &lt;<a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>&gt;</dt>
+    <dt>WHATWG Infra &lt;<a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>></dt>
     <dd>
       <dfn id="external-whatwg-infra-byte-sequence"><a href="https://infra.spec.whatwg.org/#byte-sequence">byte sequence</a></dfn>,
       <dfn id="external-whatwg-infra-byte-sequence-prefix"><a href="https://infra.spec.whatwg.org/#byte-sequence-prefix">byte-sequence-prefix</a></dfn>
     </dd>
-    <dt>WHATWG <emu-not-ref>URL</emu-not-ref> &lt;<a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>&gt;</dt>
+    <dt>WHATWG <emu-not-ref>URL</emu-not-ref> &lt;<a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>></dt>
     <dd>
       <dfn id="external-whatwg-url-http-s-scheme"><a href="https://fetch.spec.whatwg.org/#http-scheme">HTTP(S) scheme</a></dfn>,
       <dfn id="external-whatwg-url-scheme"><a href="https://url.spec.whatwg.org/#concept-url-scheme">scheme</a></dfn>,
@@ -1391,37 +1395,37 @@ return lastURL;</code></pre>
   <h1>Bibliography</h1>
   <ol>
     <li>
-      IETF RFC 4648, <i>The Base16, Base32, and Base64 Data Encodings</i>, available at &lt;<a href="https://datatracker.ietf.org/doc/html/rfc4648">https://datatracker.ietf.org/doc/html/rfc4648</a>&gt;
+      IETF RFC 4648, <i>The Base16, Base32, and Base64 Data Encodings</i>, available at &lt;<a href="https://datatracker.ietf.org/doc/html/rfc4648">https://datatracker.ietf.org/doc/html/rfc4648</a>>
     </li>
     <li>
-      ECMA-262, <i>ECMAScript® Language Specification</i>, available at &lt;<a href="https://tc39.es/ecma262/">https://tc39.es/ecma262/</a>&gt;
+      ECMA-262, <i>ECMAScript® Language Specification</i>, available at &lt;<a href="https://tc39.es/ecma262/">https://tc39.es/ecma262/</a>>
     </li>
     <li>
-      ECMA-404, <i>The JSON Data Interchange Format</i>, available at &lt;<a href="https://www.ecma-international.org/publications-and-standards/standards/ecma-404/">https://www.ecma-international.org/publications-and-standards/standards/ecma-404/</a>&gt;
+      ECMA-404, <i>The JSON Data Interchange Format</i>, available at &lt;<a href="https://www.ecma-international.org/publications-and-standards/standards/ecma-404/">https://www.ecma-international.org/publications-and-standards/standards/ecma-404/</a>>
     </li>
     <li>
-      <i>WebAssembly Core Specification</i>, available at &lt;<a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>&gt;
+      <i>WebAssembly Core Specification</i>, available at &lt;<a href="https://www.w3.org/TR/wasm-core-2/">https://www.w3.org/TR/wasm-core-2/</a>>
     </li>
     <li>
-      WHATWG <i>Encoding</i>, available at &lt;<a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>&gt;
+      WHATWG <i>Encoding</i>, available at &lt;<a href="https://encoding.spec.whatwg.org/">https://encoding.spec.whatwg.org/</a>>
     </li>
     <li>
-      WHATWG <emu-not-ref><i>Fetch</i></emu-not-ref>, available at &lt;<a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>&gt;
+      WHATWG <emu-not-ref><i>Fetch</i></emu-not-ref>, available at &lt;<a href="https://fetch.spec.whatwg.org/">https://fetch.spec.whatwg.org/</a>>
     </li>
     <li>
-      WHATWG <i>Infra</i>, available at &lt;<a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>&gt;
+      WHATWG <i>Infra</i>, available at &lt;<a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>>
     </li>
     <li>
-      WHATWG <emu-not-ref><i>URL</i></emu-not-ref>, available at &lt;<a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>&gt;
+      WHATWG <emu-not-ref><i>URL</i></emu-not-ref>, available at &lt;<a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>>
     </li>
     <li>
-      <dfn id="biblio-give-your-eval-a-name">Give your eval a name with //@ sourceURL</dfn>, Firebug (2009), available at &lt;<a href="https://web.archive.org/web/20120814122523/http://blog.getfirebug.com/2009/08/11/give-your-eval-a-name-with-sourceurl/">http://blog.getfirebug.com/2009/08/11/give-your-eval-a-name-with-sourceurl/</a>&gt;
+      <dfn id="biblio-give-your-eval-a-name">Give your eval a name with //@ sourceURL</dfn>, Firebug (2009), available at &lt;<a href="https://web.archive.org/web/20120814122523/http://blog.getfirebug.com/2009/08/11/give-your-eval-a-name-with-sourceurl/">http://blog.getfirebug.com/2009/08/11/give-your-eval-a-name-with-sourceurl/</a>>
     </li>
     <li>
-      <dfn id="biblio-source-map-v2">Source Map Revision 2 Proposal</dfn>, John Lenz (2010), available at &lt;<a href="https://docs.google.com/document/d/1xi12LrcqjqIHTtZzrzZKmQ3lbTv9mKrN076UB-j3UZQ/">https://docs.google.com/document/d/1xi12LrcqjqIHTtZzrzZKmQ3lbTv9mKrN076UB-j3UZQ/</a>&gt;
+      <dfn id="biblio-source-map-v2">Source Map Revision 2 Proposal</dfn>, John Lenz (2010), available at &lt;<a href="https://docs.google.com/document/d/1xi12LrcqjqIHTtZzrzZKmQ3lbTv9mKrN076UB-j3UZQ/">https://docs.google.com/document/d/1xi12LrcqjqIHTtZzrzZKmQ3lbTv9mKrN076UB-j3UZQ/</a>>
     </li>
     <li>
-      <dfn id="biblio-vlq" variants="variable-length quantity">Variable-length quantity</dfn>, Wikipedia, available at &lt;<a href="https://en.wikipedia.org/wiki/Variable-length_quantity">https://en.wikipedia.org/wiki/Variable-length_quantity</a>&gt;
+      <dfn id="biblio-vlq" variants="variable-length quantity">Variable-length quantity</dfn>, Wikipedia, available at &lt;<a href="https://en.wikipedia.org/wiki/Variable-length_quantity">https://en.wikipedia.org/wiki/Variable-length_quantity</a>>
     </li>
   </ol>
 </emu-annex>
