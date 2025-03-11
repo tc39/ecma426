@@ -212,35 +212,53 @@ The format of "scopes" is presented in an EBNF-like grammar, with:
 The start symbol is `scopes`:
 
 ```
-scopes := original_scope_list generated_range_list
+scopes :=
+    original_scope_tree_list
+  | top_level_item_list
+  | original_scope_tree_list ',' top_level_item_list
 
-original_scope_list :=
+original_scope_tree_list :=
     original_scope_tree
   | ε
   | original_scope_list ',' original_scope_tree
   | original_scope_list ',' ε
 
-generated_range_list :=
+top_level_item_list :=
+    top_level_item
+    top_level_item_list ',' top_level_item
+
+top_level_item :=
     generated_range_tree
-  | generated_range_list ',' generated_range_tree
+  | unknown_item
 ```
 
 Only one top-level `original_scope_tree` per `sources` file is allowed. The n-th top-level `original_scope_tree` describes the scope tree for `sources[n]`. To signify that a certain `sources[m]` authored file doesn't have scopes information available, an empty item must be used.
 Multiple top-level `generated_range_tree`s are allowed, this is especially useful when multiple bundles are straight-up concatenated.
 
+`unknown_item`s are items that start with any tag other then the ones explicitly specified here and may contain an arbitrary number of VLQs following the unknown tag.
+
+```
+unknown_item :=
+  uTAG     // Must not be 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', or 'I'.
+  (uVLQ | sVLQ)*
+```
+
 #### Original Scope Trees
 
 ```
 original_scope_tree :=
-  original_scope_start
-  original_scope_variables?
-  original_scope_source_index?
-  original_scope_tree?
-  original_scope_end
+  original_scope_start ',' original_scope_item_list? original_scope_end
+
+original_scope_item_list :=
+  original_scope_item ','
+  original_scope_item ',' original_scope_item_list
+
+original_scope_item :=
+    original_scope_variables
+  | original_scope_tree
 ```
 
-A scope is delineated by a `original_scope_start` and a `original_scope_end` item. The `original_scope_variables` and `original_scope_source_index`
-item always describe the immediately "surrounding" start/end pair.
+A scope is delineated by a `original_scope_start` and a `original_scope_end` item. The `original_scope_variables` item always describes the immediately surrounding" start/end pair.
 
 ```
 original_scope_start :=
@@ -284,12 +302,17 @@ Each top-level `original_scope_tree` resets the "relative state". That is, each 
 
 ```
 generated_range_tree :=
-  generated_range_start
-  generated_range_callsite?
-  generated_range_bindings?
-  generated_range_subrange_binding?
-  generated_range_tree?
-  generated_range_end
+  generated_range_start ',' generated_range_item_list? generated_range_end
+
+generated_range_item_list :=
+  generated_range_item ','
+  generated_range_item ',' generated_range_item_list
+
+generated_range_item :=
+    generated_range_callsite
+  | generated_range_bindings
+  | generated_range_subrange_binding
+  | generated_range_tree
 ```
 
 Similar to "original scopes", a generated range is delineated by a `generated_range_start` and `generated_range_end`. Any other item describes the range
