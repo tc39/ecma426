@@ -890,10 +890,10 @@
           1. Perform DecodeMappingsSdo of |OriginalSource| with arguments _state_, _mappings_, _names_ and _sources_.
           1. Perform DecodeMappingsSdo of |OriginalLine| with arguments _state_, _mappings_, _names_ and _sources_.
           1. Perform DecodeMappingsSdo of |OriginalColumn| with arguments _state_, _mappings_, _names_ and _sources_.
-          1. Let _source_ be _sources_.[_state_.[[SourceIndex]]].
+          1. Let _source_ be _sources_[_state_.[[SourceIndex]]].
           1. If |Name| is present, then
             1. Perform DecodeMappingsSdo of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
-            1. Let _name_ be _names_.[_state_.[[NameIndex]]].
+            1. Let _name_ be _names_[_state_.[[NameIndex]]].
           1. Else, let _name_ be *null*.
           1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: _source_, [[OriginalLine]]: _state_.[[OriginalLine]], [[OriginalColumn]]: _state_.[[OriginalColumn]], [[Name]]: _name_ }.
           1. Append _decodedMapping_ to _mappings_.
