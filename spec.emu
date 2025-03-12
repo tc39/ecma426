@@ -1072,7 +1072,7 @@
             1. If _sourceURL_ is ~failure~, optionally report an error.
             1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
           1. If _ignoredSources_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
-          1. If _sourcesContentCount_ ≥ _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
+          1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
           1. Append _decodedSource_ to _decodedSources_.
         1. Return _decodedSources_.
       </emu-alg>
