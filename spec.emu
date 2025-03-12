@@ -770,20 +770,19 @@
       <p>The mappings String must adhere to the following grammar:</p>
 
       <emu-grammar type="definition">
-        Mappings :
-          SemicolonList? Segment SemicolonList?
+        MappingsField :
+          SegmentList
+
+        SegmentList :
+          Segment
+          Segment `;` SegmentList
 
         Segment :
-          MappingList
-          MappingList SemicolonList Segment
+          MappingList?
 
         MappingList :
           Mapping
-          MappingList `,` Mapping
-
-        SemicolonList :
-          `;`
-          SemicolonList `;`
+          Mapping `,` MappingList
 
         Mapping :
           GeneratedColumn
@@ -845,9 +844,9 @@
         </table>
       </emu-table>
 
-      <emu-clause id="sec-DecodeMappingsSdo" type="sdo">
+      <emu-clause id="sec-DecodeMappingsField" type="sdo">
         <h1>
-          DecodeMappingsSdo (
+          DecodeMappingsField (
             _state_: a Decode Mapping State Record,
             _mappings_: a List of Decoded Mapping Records,
             _names_: a List of Strings,
@@ -856,28 +855,33 @@
         </h1>
         <dl class="header"></dl>
         <emu-grammar>
-          Mappings :
-            SemicolonList? Segment SemicolonList?
-
-          Segment :
-            MappingList
-            MappingList SemicolonList Segment
+          SegmentList :
+            Segment `;` SegmentList
 
           MappingList :
-            Mapping
-            MappingList `,` Mapping
+            Mapping `,` MappingList
         </emu-grammar>
         <emu-alg>
           1. For each child node _child_ of this Parse Node, do
             1. If _child_ is an instance of a nonterminal, then
-              1. Perform DecodeMappingsSdo of _child_ with arguments _state_, _mappings_, _names_ and _sources_.
+              1. Perform DecodeMappingsField of _child_ with arguments _state_, _mappings_, _names_ and _sources_.
+        </emu-alg>
+        <emu-grammar>
+          Segment :
+            MappingList?
+        </emu-grammar>
+        <emu-alg>
+          1. Set _state_.[[GeneratedLine]] to _state_.[[GeneratedLine]] + 1.
+          1. Set _state_.[[GeneratedColumn]] to 0.
+          1. If |MappingList| is present, then
+            1. Perform DecodeMappingsField on |MappingList| with arguments _state_, _mappings_, _names_ and _sources_.
         </emu-alg>
         <emu-grammar>
           Mapping :
             GeneratedColumn
         </emu-grammar>
         <emu-alg>
-          1. Perform DecodeMappingsSdo of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
           1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: *null*, [[OriginalLine]]: *null*, [[OriginalColumn]]: *null*, [[Name]]: *null* }.
           1. Append _decodedMapping_ to _mappings_.
         </emu-alg>
@@ -886,28 +890,17 @@
             GeneratedColumn OriginalSource OriginalLine OriginalColumn Name?
         </emu-grammar>
         <emu-alg>
-          1. Perform DecodeMappingsSdo of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
-          1. Perform DecodeMappingsSdo of |OriginalSource| with arguments _state_, _mappings_, _names_ and _sources_.
-          1. Perform DecodeMappingsSdo of |OriginalLine| with arguments _state_, _mappings_, _names_ and _sources_.
-          1. Perform DecodeMappingsSdo of |OriginalColumn| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |OriginalSource| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |OriginalLine| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |OriginalColumn| with arguments _state_, _mappings_, _names_ and _sources_.
           1. Let _source_ be _sources_[_state_.[[SourceIndex]]].
           1. If |Name| is present, then
-            1. Perform DecodeMappingsSdo of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
+            1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
             1. Let _name_ be _names_[_state_.[[NameIndex]]].
           1. Else, let _name_ be *null*.
           1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: _source_, [[OriginalLine]]: _state_.[[OriginalLine]], [[OriginalColumn]]: _state_.[[OriginalColumn]], [[Name]]: _name_ }.
           1. Append _decodedMapping_ to _mappings_.
-        </emu-alg>
-        <emu-grammar>
-          SemicolonList :
-            `;`
-            SemicolonList `;`
-        </emu-grammar>
-        <emu-alg>
-          1. Set _state_.[[GeneratedLine]] to _state_.[[GeneratedLine]] + 1.
-          1. Set _state_.[[GeneratedColumn]] to 0.
-          1. If |SemicolonList| is present, then
-            1. Perform DecodeMappingsSdo on |SemicolonList| with arguments _state_, _mappings_, _names_ and _sources_.
         </emu-alg>
         <emu-grammar>
           GeneratedColumn :
@@ -968,12 +961,12 @@
       <dl class="header"></dl>
       <emu-alg>
         1. Let _mappings_ be a new empty List.
-        1. Let _mappingsNode_ be the root Parse Node when parsing _rawMappings_ using |Mappings| as the goal symbol.
+        1. Let _mappingsNode_ be the root Parse Node when parsing _rawMappings_ using |MappingsField| as the goal symbol.
         1. If parsing failed, then
           1. Optionally report an error.
           1. Return _mappings_.
         1. Let _state_ be a new Decode Mapping State Record with all fields set to 0.
-        1. Perform DecodeMappingsSdo of _mappingsNode_ with arguments _state_, _mappings_, _names_ and _sources_.
+        1. Perform DecodeMappingsField of _mappingsNode_ with arguments _state_, _mappings_, _names_ and _sources_.
         1. Return _mappings_.
       </emu-alg>
     </emu-clause>
