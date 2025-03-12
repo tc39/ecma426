@@ -286,80 +286,78 @@
         VlqDigitList
 
       VlqDigitList ::
-        DigitWithoutContinuationBit
-        DigitWithContinuationBit VlqDigitList
+        TerminalDigit
+        ContinuationDigit VlqDigitList
 
-      DigitWithoutContinuationBit :: one of
+      TerminalDigit ::
+        OneOfTerminalDigit
+
+      ContinuationDigit ::
+        OneOfContinuationDigit
+
+      OneOfTerminalDigit :: one of
         `A` `B` `C` `D` `E` `F` `G` `H` `I` `J` `K` `L` `M` `N` `O` `P` `Q` `R`
         `S` `T` `U` `V` `W` `X` `Y` `Z` `a` `b` `c` `d` `e` `f`
 
-      DigitWithContinuationBit :: one of
+      OneOfContinuationDigit :: one of
         `g` `h` `i` `j` `k` `l` `m` `n` `o` `p` `q` `r` `s` `t` `u` `v` `w` `x`
         `y` `z` `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` `+` `/`
     </emu-grammar>
 
-    <emu-clause id="sec-DecodeSignedBase64VLQ" type="abstract operation">
-      <h1>
-        DecodeSignedBase64VLQ (
-          _vlq_: a |Vlq| Parse Node,
-        ): an integer
-      </h1>
+    <emu-note>
+      |OneOfTerminalDigit| and |OneOfContinuationDigit| will go away and are only present in the preview draft. They are here because ecmarkup currently does not support *one of* productions in SDOs.
+    </emu-note>
+
+    <emu-clause id="sec-VLQSignedValue" type="sdo">
+      <h1>VLQSignedValue ( ): an integer</h1>
       <dl class="header"></dl>
+      <emu-grammar>
+        Vlq :: VlqDigitList
+      </emu-grammar>
       <emu-alg>
-        1. Let _accumulator_ be a new record { [[Value]]: 0, [[Shift]]: 0 }.
-        1. Perform DecodeBase64VLQ of _vlq_ with arguments _accumulator_.
-        1. If _accumulator_.[[Value]] modulo 2 = 1, let _sign_ be -1.
+        1. Let _unsigned_ be the VLQUnsignedValue of |VlqDigitList|.
+        1. If _unsigned_ modulo 2 = 1, let _sign_ be -1.
         1. Else, let _sign_ be 1.
-        1. Let _result_ to _accumulator_.[[Value]] / 2.
-        1. Return _result_ * _sign_.
+        1. Return _sign_ × floor(_unsigned_ / 2).
       </emu-alg>
     </emu-clause>
 
-    <emu-clause id="sec-DecodeBase64VLQ" type="sdo">
-      <h1>
-        DecodeBase64VLQ (
-          _accumulator_: a Record with an integer [[Value]] field and a non-negative integer [[Shift]] field,
-        )
-      </h1>
+    <emu-clause id="sec-VLQUnsignedValue" type="sdo">
+      <h1>VLQUnsignedValue ( ): an non-negative integer</h1>
       <dl class="header"></dl>
       <emu-grammar>
         VlqDigitList ::
-          DigitWithoutContinuationBit
+          TerminalDigit
       </emu-grammar>
       <emu-alg>
-        1. Let _byte_ be DecodeBase64Digit(|DigitWithoutContinuationBit|).
-        1. Assert: _byte_ &lt; 32.
-        1. Set _accumulator_.[[Value]] to _accumulator_.[[Value]] + _byte_ × 2<sup>_accumulator_.[[Shift]]</sup>.
-        1. If _accumulator_.[[Value]] ≥ 2<sup>31</sup>, throw an error.
-        1. Set _accumulator_.[[Shift]] to _accumulator_.[[Shift]] × 2<sup>5</sup>.
+        1. Return VLQUnsignedValue of |TerminalDigit|.
       </emu-alg>
       <emu-grammar>
         VlqDigitList ::
-          DigitWithContinuationBit VlqDigitList
+          ContinuationDigit VlqDigitList
       </emu-grammar>
       <emu-alg>
-        1. Let _byte_ be DecodeBase64Digit(|DigitWithContinuationBit|).
-        1. Assert: _byte_ ≥ 32 and _byte_ &lt; 64.
-        1. Set _byte_ to floor(_byte_ / 32).
-        1. Set _accumulator_.[[Value]] to _accumulator_.[[Value]] + _byte_ × 2<sup>_accumulator_.[[Shift]]</sup>.
-        1. If _accumulator_.[[Value]] ≥ 2<sup>31</sup>, throw an error.
-        1. Set _accumulator_.[[Shift]] to _accumulator_.[[Shift]] × 2<sup>5</sup>.
-        1. Perform DecodeBase64VLQ of |VlqDigitList| with argument _accumulator_.
+        1. Let _left_ be the VLQUnsignedValue of |ContinuationDigit|.
+        1. Let _right_ be the VLQUnsignedValue of |VlqDigitList|.
+        1. Return _left_ + _right_ × 2<sup>5</sup>.
       </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-DecodeBase64Digit" type="abstract operation">
-      <h1>
-        DecodeBase64Digit (
-          _digit_: a |DigitWithoutContinuationBit| or a |DigitWithContinuationBit| Parse Node,
-        ): an integer
-      </h1>
-      <dl class="header"></dl>
+      <emu-grammar>
+        TerminalDigit :: OneOfTerminalDigit
+      </emu-grammar>
       <emu-alg>
-        1. Assert: The source text matched by _digit_ is a valid <emu-xref href="#sec-references-informative">base64</emu-xref> character as defined by IETF RFC 4648.
-        1. Let _value_ be the integer corresponding to the source text matched by _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
-        1. Assert: _value_ &lt; 2<sup>6</sup>.
+        1. Let _digit_ be the character matched by this production.
+        1. Let _value_ be the integer corresponding to _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
+        1. Assert: _value_ &lt; 32.
         1. Return _value_.
+      </emu-alg>
+      <emu-grammar>
+        ContinuationDigit :: OneOfContinuationDigit
+      </emu-grammar>
+      <emu-alg>
+        1. Let _digit_ be the character matched by this production.
+        1. Let _value_ be the integer corresponding to _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
+        1. Assert: 32 ≤ _value_ &lt; 64.
+        1. Return _value_ - 32.
       </emu-alg>
     </emu-clause>
   </emu-clause>
@@ -912,7 +910,7 @@
             Vlq
         </emu-grammar>
         <emu-alg>
-          1. Let _relativeColumn_ be DecodeBase64VLQ(|Vlq|).
+          1. Let _relativeColumn_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[GeneratedColumn]] to _state_.[[GeneratedColumn]] + _relativeColumn_.
           1. If _state_.[[GeneratedColumn]] &lt; 0, optionally report an error.
         </emu-alg>
@@ -921,7 +919,7 @@
             Vlq
         </emu-grammar>
         <emu-alg>
-          1. Let _relativeSourceIndex_ be DecodeBase64VLQ(|Vlq|).
+          1. Let _relativeSourceIndex_ the VLQSignedValue of |Vlq|.
           1. Set _state_.[[SourceIndex]] to _state_.[[SourceIndex]] + _relativeSourceIndex_.
           1. If _state_.[[SourceIndex]] &lt; 0 or _state.[[SourceIndex]] ≥ the number of elements of _sources_, optionally report an error.
         </emu-alg>
@@ -930,7 +928,7 @@
             Vlq
         </emu-grammar>
         <emu-alg>
-          1. Let _relativeLine_ be DecodeBase64VLQ(|Vlq|).
+          1. Let _relativeLine_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[OriginalLine]] to _state_.[[OriginalLine]] + _relativeLine_.
           1. If _state_.[[OriginalLine]] &lt; 0, optionally report an error.
         </emu-alg>
@@ -939,7 +937,7 @@
             Vlq
         </emu-grammar>
         <emu-alg>
-          1. Let _relativeColumn_ be DecodeBase64VLQ(|Vlq|).
+          1. Let _relativeColumn_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[OriginalColumn]] to _state_.[[OriginalColumn]] + _relativeColumn_.
           1. If _state_.[[OriginalColumn]] &lt; 0, optionally report an error.
         </emu-alg>
@@ -948,7 +946,7 @@
             Vlq
         </emu-grammar>
         <emu-alg>
-          1. Let _relativeName_ be DecodeBase64VLQ(|Vlq|).
+          1. Let _relativeName_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[NameIndex]] to _state_.[[NameIndex]] + _relativeName_.
           1. If _state_.[[NameIndex]] &lt; 0 or _state_[[NameIndex]] ≥ the number of elements of _sources_, optionally report an error.
         </emu-alg>
