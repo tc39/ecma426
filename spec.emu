@@ -304,7 +304,7 @@
         `y` `z` `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` `+` `/`
     </emu-grammar>
 
-    <emu-note>
+    <emu-note type="editor">
       |OneOfTerminalDigit| and |OneOfContinuationDigit| will go away and are only present in the preview draft. They are here because ecmarkup currently does not support *one of* productions in SDOs.
     </emu-note>
 
@@ -318,7 +318,10 @@
         1. Let _unsigned_ be the VLQUnsignedValue of |VlqDigitList|.
         1. If _unsigned_ modulo 2 = 1, let _sign_ be -1.
         1. Else, let _sign_ be 1.
-        1. Return _sign_ × floor(_unsigned_ / 2).
+        1. Let _value_ be floor(_unsigned_ / 2).
+        1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
+        1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
+        1. Return _sign_ × _value_.
       </emu-alg>
     </emu-clause>
 
@@ -326,11 +329,12 @@
       <h1>VLQUnsignedValue ( ): an non-negative integer</h1>
       <dl class="header"></dl>
       <emu-grammar>
-        VlqDigitList ::
-          TerminalDigit
+        Vlq :: VlqDigitList
       </emu-grammar>
       <emu-alg>
-        1. Return VLQUnsignedValue of |TerminalDigit|.
+        1. Let _value_ be the VLQUnsignedValue of |VlqDigitList|.
+        1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
+        1. Return _value_.
       </emu-alg>
       <emu-grammar>
         VlqDigitList ::
