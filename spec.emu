@@ -276,6 +276,95 @@
       <emu-note>That means that "A" (`LATIN CAPITAL LETTER A`) measures as 1 code unit, and "🔥" (`FIRE`) measures as 2 code units. Source maps for other content types may diverge from this.</emu-note>
     </dd>
   </dl>
+
+  <emu-clause id="sec-vlq-grammar">
+    <h1>base64 VLQ grammar</h1>
+    <p>A base64-encoded variable-length quantity adheres to the following lexical grammar:</p>
+
+    <emu-grammar type="definition">
+      Vlq ::
+        VlqDigitList
+
+      VlqDigitList ::
+        TerminalDigit
+        ContinuationDigit VlqDigitList
+
+      TerminalDigit ::
+        OneOfTerminalDigit
+
+      ContinuationDigit ::
+        OneOfContinuationDigit
+
+      OneOfTerminalDigit :: one of
+        `A` `B` `C` `D` `E` `F` `G` `H` `I` `J` `K` `L` `M` `N` `O` `P` `Q` `R`
+        `S` `T` `U` `V` `W` `X` `Y` `Z` `a` `b` `c` `d` `e` `f`
+
+      OneOfContinuationDigit :: one of
+        `g` `h` `i` `j` `k` `l` `m` `n` `o` `p` `q` `r` `s` `t` `u` `v` `w` `x`
+        `y` `z` `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` `+` `/`
+    </emu-grammar>
+
+    <emu-note type="editor">
+      |OneOfTerminalDigit| and |OneOfContinuationDigit| will go away and are only present in the preview draft. They are here because ecmarkup currently does not support *one of* productions in SDOs.
+    </emu-note>
+
+    <emu-clause id="sec-VLQSignedValue" type="sdo">
+      <h1>VLQSignedValue ( ): an integer</h1>
+      <dl class="header"></dl>
+      <emu-grammar>
+        Vlq :: VlqDigitList
+      </emu-grammar>
+      <emu-alg>
+        1. Let _unsigned_ be the VLQUnsignedValue of |VlqDigitList|.
+        1. If _unsigned_ modulo 2 = 1, let _sign_ be -1.
+        1. Else, let _sign_ be 1.
+        1. Let _value_ be floor(_unsigned_ / 2).
+        1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
+        1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
+        1. Return _sign_ × _value_.
+      </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-VLQUnsignedValue" type="sdo">
+      <h1>VLQUnsignedValue ( ): an non-negative integer</h1>
+      <dl class="header"></dl>
+      <emu-grammar>
+        Vlq :: VlqDigitList
+      </emu-grammar>
+      <emu-alg>
+        1. Let _value_ be the VLQUnsignedValue of |VlqDigitList|.
+        1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
+        1. Return _value_.
+      </emu-alg>
+      <emu-grammar>
+        VlqDigitList ::
+          ContinuationDigit VlqDigitList
+      </emu-grammar>
+      <emu-alg>
+        1. Let _left_ be the VLQUnsignedValue of |ContinuationDigit|.
+        1. Let _right_ be the VLQUnsignedValue of |VlqDigitList|.
+        1. Return _left_ + _right_ × 2<sup>5</sup>.
+      </emu-alg>
+      <emu-grammar>
+        TerminalDigit :: OneOfTerminalDigit
+      </emu-grammar>
+      <emu-alg>
+        1. Let _digit_ be the character matched by this production.
+        1. Let _value_ be the integer corresponding to _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
+        1. Assert: _value_ &lt; 32.
+        1. Return _value_.
+      </emu-alg>
+      <emu-grammar>
+        ContinuationDigit :: OneOfContinuationDigit
+      </emu-grammar>
+      <emu-alg>
+        1. Let _digit_ be the character matched by this production.
+        1. Let _value_ be the integer corresponding to _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
+        1. Assert: 32 ≤ _value_ &lt; 64.
+        1. Return _value_ - 32.
+      </emu-alg>
+    </emu-clause>
+  </emu-clause>
 </emu-clause>
 
 <emu-clause id="sec-json-values-utilities">
@@ -676,134 +765,210 @@
       </table>
     </emu-table>
 
+    <emu-clause id="sec-mappings-grammar">
+      <h1>Mappings grammar</h1>
+      <p>The mappings String must adhere to the following grammar:</p>
+
+      <emu-grammar type="definition">
+        MappingsField :
+          SegmentList
+
+        SegmentList :
+          Segment
+          Segment `;` SegmentList
+
+        Segment :
+          MappingList?
+
+        MappingList :
+          Mapping
+          Mapping `,` MappingList
+
+        Mapping :
+          GeneratedColumn
+          GeneratedColumn OriginalSource OriginalLine OriginalColumn Name?
+
+        GeneratedColumn :
+          Vlq
+
+        OriginalSource :
+          Vlq
+
+        OriginalLine :
+          Vlq
+
+        OriginalColumn :
+          Vlq
+
+        Name :
+          Vlq
+      </emu-grammar>
+
+      <p>A <dfn id="decode-mapping-state-record" variants="Decode Mapping State Records">Decoded Mapping State Record</dfn> has the following fields:</p>
+      <emu-table id="table-decode-mapping-state-fields" caption="Fields of Decode Mapping State Records">
+        <table>
+          <thead>
+            <tr>
+              <th>
+                Field Name
+              </th>
+              <th>
+                Value Type
+              </th>
+            </tr>
+          </thead>
+          <tr>
+            <td>[[GeneratedLine]]</td>
+            <td>a non-negative integer</td>
+          </tr>
+          <tr>
+            <td>[[GeneratedColumn]]</td>
+            <td>a non-negative integer</td>
+          </tr>
+          <tr>
+            <td>[[SourceIndex]]</td>
+            <td>a non-negative integer</td>
+          </tr>
+          <tr>
+            <td>[[OriginalLine]]</td>
+            <td>a non-negative integer</td>
+          </tr>
+          <tr>
+            <td>[[OriginalColumn]]</td>
+            <td>a non-negative integer</td>
+          </tr>
+          <tr>
+            <td>[[NameIndex]]</td>
+            <td>a non-negative integer</td>
+          </tr>
+        </table>
+      </emu-table>
+
+      <emu-clause id="sec-DecodeMappingsField" type="sdo">
+        <h1>
+          DecodeMappingsField (
+            _state_: a Decode Mapping State Record,
+            _mappings_: a List of Decoded Mapping Records,
+            _names_: a List of Strings,
+            _sources_: a List of Decoded Source Records,
+          )
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar>
+          SegmentList :
+            Segment `;` SegmentList
+
+          MappingList :
+            Mapping `,` MappingList
+        </emu-grammar>
+        <emu-alg>
+          1. For each child node _child_ of this Parse Node, do
+            1. If _child_ is an instance of a nonterminal, then
+              1. Perform DecodeMappingsField of _child_ with arguments _state_, _mappings_, _names_ and _sources_.
+        </emu-alg>
+        <emu-grammar>
+          Segment :
+            MappingList?
+        </emu-grammar>
+        <emu-alg>
+          1. Set _state_.[[GeneratedLine]] to _state_.[[GeneratedLine]] + 1.
+          1. Set _state_.[[GeneratedColumn]] to 0.
+          1. If |MappingList| is present, then
+            1. Perform DecodeMappingsField on |MappingList| with arguments _state_, _mappings_, _names_ and _sources_.
+        </emu-alg>
+        <emu-grammar>
+          Mapping :
+            GeneratedColumn
+        </emu-grammar>
+        <emu-alg>
+          1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: *null*, [[OriginalLine]]: *null*, [[OriginalColumn]]: *null*, [[Name]]: *null* }.
+          1. Append _decodedMapping_ to _mappings_.
+        </emu-alg>
+        <emu-grammar>
+          Mapping :
+            GeneratedColumn OriginalSource OriginalLine OriginalColumn Name?
+        </emu-grammar>
+        <emu-alg>
+          1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |OriginalSource| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |OriginalLine| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |OriginalColumn| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Let _source_ be _sources_[_state_.[[SourceIndex]]].
+          1. If |Name| is present, then
+            1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
+            1. Let _name_ be _names_[_state_.[[NameIndex]]].
+          1. Else, let _name_ be *null*.
+          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: _source_, [[OriginalLine]]: _state_.[[OriginalLine]], [[OriginalColumn]]: _state_.[[OriginalColumn]], [[Name]]: _name_ }.
+          1. Append _decodedMapping_ to _mappings_.
+        </emu-alg>
+        <emu-grammar>
+          GeneratedColumn :
+            Vlq
+        </emu-grammar>
+        <emu-alg>
+          1. Let _relativeColumn_ be the VLQSignedValue of |Vlq|.
+          1. Set _state_.[[GeneratedColumn]] to _state_.[[GeneratedColumn]] + _relativeColumn_.
+          1. If _state_.[[GeneratedColumn]] &lt; 0, optionally report an error.
+        </emu-alg>
+        <emu-grammar>
+          OriginalSource :
+            Vlq
+        </emu-grammar>
+        <emu-alg>
+          1. Let _relativeSourceIndex_ the VLQSignedValue of |Vlq|.
+          1. Set _state_.[[SourceIndex]] to _state_.[[SourceIndex]] + _relativeSourceIndex_.
+          1. If _state_.[[SourceIndex]] &lt; 0 or _state.[[SourceIndex]] ≥ the number of elements of _sources_, optionally report an error.
+        </emu-alg>
+        <emu-grammar>
+          OriginalLine :
+            Vlq
+        </emu-grammar>
+        <emu-alg>
+          1. Let _relativeLine_ be the VLQSignedValue of |Vlq|.
+          1. Set _state_.[[OriginalLine]] to _state_.[[OriginalLine]] + _relativeLine_.
+          1. If _state_.[[OriginalLine]] &lt; 0, optionally report an error.
+        </emu-alg>
+        <emu-grammar>
+          OriginalColumn :
+            Vlq
+        </emu-grammar>
+        <emu-alg>
+          1. Let _relativeColumn_ be the VLQSignedValue of |Vlq|.
+          1. Set _state_.[[OriginalColumn]] to _state_.[[OriginalColumn]] + _relativeColumn_.
+          1. If _state_.[[OriginalColumn]] &lt; 0, optionally report an error.
+        </emu-alg>
+        <emu-grammar>
+          Name :
+            Vlq
+        </emu-grammar>
+        <emu-alg>
+          1. Let _relativeName_ be the VLQSignedValue of |Vlq|.
+          1. Set _state_.[[NameIndex]] to _state_.[[NameIndex]] + _relativeName_.
+          1. If _state_.[[NameIndex]] &lt; 0 or _state_[[NameIndex]] ≥ the number of elements of _sources_, optionally report an error.
+        </emu-alg>
+      </emu-clause>
+    </emu-clause>
+
     <emu-clause id="sec-DecodeMappings" type="abstract operation">
       <h1>
         DecodeMappings (
-          _mappings_: a String,
+          _rawMappings_: a String,
           _names_: a List of Strings,
           _sources_: a List of Decoded Source Records,
         ): a List of Decoded Mapping Record
       </h1>
       <dl class="header"></dl>
       <emu-alg>
-        1. Perform ValidateBase64VLQGroupings(_mappings_).
-        1. Let _decodedMappings_ be a new empty List.
-        1. Let _groups_ be StringSplit(_mappings_, « *";"* »).
-        1. Let _generatedLine_ be 0.
-        1. Let _originalLine_ be 0.
-        1. Let _originalColumn_ be 0.
-        1. Let _sourceIndex_ be 0.
-        1. Let _nameIndex_ be 0.
-        1. Repeat, while _generatedLine_ is less than the number of elements of _groups_,
-          1. If _groups_[_generatedLine_] ≠ *""*, then
-            1. Let _segments_ be StringSplit(_groups_[_generatedLine_], « *","* »).
-            1. Let _generatedColumn_ be 0.
-            1. For each _segment_ of _segments_, do
-              1. Let _position_ be the Record { [[Value]]: 0 }.
-              1. Let _relativeGeneratedColumn_ be DecodeBase64VLQ(_segment_, _position_).
-              1. If _relativeGeneratedColumn_ = *null*, optionally report an error.
-              1. Else,
-                1. Set _generatedColumn_ to _generatedColumn_ + _relativeGeneratedColumn_.
-                1. If _generatedColumn_ &lt; 0, optionally report an error.
-                1. Else,
-                  1. Let _decodedMapping_ be the Decoded Mapping Record { [[GeneratedLine]]: _generatedLine_, [[GeneratedColumn]]: _generatedColumn_, [[OriginalSource]]: *null*, [[OriginalLine]]: *null*, [[OriginalColumn]]: *null*, [[Name]]: *null* }.
-                  1. Append _decodedMapping_ to _decodedMappings_.
-                  1. Let _relativeSourceIndex_ be DecodeBase64VLQ(_segment_, _position_).
-                  1. Let _relativeOriginalLine_ be DecodeBase64VLQ(_segment_, _position_).
-                  1. Let _relativeOriginalColumn_ be DecodeBase64VLQ(_segment_, _position_).
-                  1. If _relativeOriginalColumn_ = *null* and _relativeSourceIndex_ ≠ *null*, optionally report an error.
-                  1. Else if _relativeOriginalColumn_ ≠ *null*,
-                    1. Set _sourceIndex_ to _sourceIndex_ + _relativeSourceIndex_.
-                    1. Set _originalLine_ to _originalLine_ + _relativeOriginalLine_.
-                    1. Set _originalColumn_ to _originalColumn_ + _relativeOriginalColumn_.
-                    1. If _sourceIndex_ &lt; 0, _originalLine_ &lt; 0, _originalColumn_ &lt; 0, or _sourceIndex_ ≥ the number of elements of _source_, then
-                      1. Optionally report an error.
-                    1. Else,
-                      1. Set _decodedMapping_.[[OriginalSource]] to _sources_[_sourceIndex_].
-                      1. Set _decodedMapping_.[[OriginalLine]] to _originalLine_.
-                      1. Set _decodedMapping_.[[OriginalColumn]] to _originalColumn_.
-                    1. Let _relativeNameIndex_ be DecodeBase64VLQ(_segment_, _position_).
-                    1. If _relativeNameIndex_ ≠ *null*, then
-                      1. Set _nameIndex_ to _nameIndex_ + _relativeNameIndex_.
-                      1. If _nameIndex_ &lt; 0 or _nameIndex_ ≥ the number of elements of _names_, then
-                        1. Optionally report an error.
-                      1. Else,
-                        1. Set _decodedMapping_.[[Name]] to _names_[_nameIndex_].
-                    1. If _position_.[[Value]] ≠ length of _segment_, optionally report an error.
-          1. Set _generatedLine_ to _generatedLine_ + 1.
-        1. Return _decodedMappings_.
+        1. Let _mappings_ be a new empty List.
+        1. Let _mappingsNode_ be the root Parse Node when parsing _rawMappings_ using |MappingsField| as the goal symbol.
+        1. If parsing failed, then
+          1. Optionally report an error.
+          1. Return _mappings_.
+        1. Let _state_ be a new Decode Mapping State Record with all fields set to 0.
+        1. Perform DecodeMappingsField of _mappingsNode_ with arguments _state_, _mappings_, _names_ and _sources_.
+        1. Return _mappings_.
       </emu-alg>
-
-      <emu-clause id="sec-ValidateBase64VLQGroupings" type="abstract operation">
-        <h1>
-          ValidateBase64VLQGroupings (
-            _groupings_: a String,
-          ): ~unused~
-        </h1>
-        <dl class="header"></dl>
-        <emu-alg>
-          1. If _groupings_ contains any code unit other than:
-            <ul>
-              <li>U+002B (`+`), U+002C (`,`), U+002F (`/`), or U+003B (`;`);</li>
-              <li>U+0030 (`0`) to U+0039 (`9`);</li>
-              <li>U+0041 (`A`) to U+005A (`Z`);</li>
-              <li>U+0061 (`a`) to U+007A (`z`)</li>
-            </ul>
-            throw an error.
-          1. Return ~unused~.
-        </emu-alg>
-
-        <emu-note>These are the valid <emu-xref href="#sec-references-informative">base64</emu-xref> characters (excluding the padding character `=`), together with `,` and `;`.</emu-note>
-      </emu-clause>
-
-      <emu-clause id="sec-DecodeBase64VLQ" type="abstract operation">
-        <h1>
-          DecodeBase64VLQ (
-            _segment_: a String,
-            _position_: a Record with a non-negative integer [[Value]] field,
-          ): an integer or *null*
-        </h1>
-        <dl class="header"></dl>
-        <emu-alg>
-          1. Let _segmentLen_ be the length of _segment_.
-          1. If _position_.[[Value]] = _segmentLen_, return *null*.
-          1. Let _first_ be ConsumeBase64ValueAt(_segment_, _position_).
-          1. Assert: _first_ &lt; 64.
-          1. If _first_ modulo 2 is 0, let _sign_ be 1.
-          1. Else, let _sign_ be -1.
-          1. Let _value_ be min(floor(_first_ / 2), 2<sup>4</sup> - 1).
-          1. Let _nextShift_ be 16.
-          1. Let _currentByte_ be _first_.
-          1. Repeat, while floor(_currentByte_ / 2<sup>5</sup>) modulo 2 = 1,
-            1. If _position_.[[Value]] = _segmentLen_, throw an error.
-            1. Set _currentByte_ to ConsumeBase64ValueAt(_segment_, _position_).
-            1. Let _chunk_ be min(_currentByte_, 2<sup>5</sup> - 1).
-            1. Set _value_ to _value_ + _chunk_ × _nextShift_.
-            1. If _value_ ≥ 2<sup>31</sup>, throw an error.
-            1. Set _nextShift_ to _nextShift_ × 2<sup>5</sup>.
-          1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
-          1. Return _sign_ × _value_.
-        </emu-alg>
-
-        <emu-clause id="ConsumeBase64ValueAt" type="abstract operation">
-          <h1>
-            ConsumeBase64ValueAt (
-              _string_: a String,
-              _position_: a Record with a non-negative integer [[Value]] field,
-            ): a non-negative integer
-          </h1>
-          <dl class="header"></dl>
-          <emu-alg>
-            1. Assert: _position_.[[Value]] is a non-negative integer smaller than the length of _string_.
-            1. Let _char_ be the substring of _string_ from _position_ to _position_ + 1.
-            1. Assert: _char_ is a valid <emu-xref href="#sec-references-informative">base64</emu-xref> character as defined by IETF RFC 4648.
-            1. Set _position_.[[Value]] to _position_.[[Value]] + 1.
-            1. Return the integer corresponding to _char_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
-          </emu-alg>
-        </emu-clause>
-
-        <emu-note>In addition to returning the decoded value, these algorithms update the _position_ passed in by the caller.</emu-note>
-      </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-mappings-for-generated-javascript-code">
@@ -1436,3 +1601,4 @@ return lastURL;</code></pre>
   <p>The first edition of this specification was authored using <a href="https://speced.github.io/bikeshed/">Bikeshed</a>, a different plaintext source format based on HTML and Markdown.</p>
   <p>Pre-standard versions of this document were authored using Google Docs.</p>
 </emu-annex>
+</emu-clause>
