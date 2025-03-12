@@ -332,7 +332,7 @@ generated_range_end :=
   uCOLUMN
 ```
 
-Since bundles tend to consist of a single line (or very few lines), `generated_range_start` and `generated_range_end` omit the line by default.
+Since bundles tend to consist of a single line (or very few lines), `generated_range_start` and `generated_range_end` omit the line if it is `0`.
 
 The `uFLAGS` field in `generated_range_start` is a bit field defined as follows:
   * 0x1: has line
@@ -389,7 +389,7 @@ A variable might not be available through the full generated range, or a differe
 
   * `uVARIABLE_INDEX` is an index into the corresponding original scopes' variables list. It is encoded relative inside a generated range.
   * `binding_from` are the sub-ranges. The initial value expression for a variable is provided by the `generated_range_bindings` item. The generated position in `binding_from` is the start from which the expression `sBINDING` from `binding_from` needs to be used to retrieve the variables value instead.
-  * `sBINDING` is an index into the `"expressions"` field in the source map JSON. It is relative to previous occurrences (also relative to the last `sBINDING+` in `generated_range_bindings`)
+  * `sBINDING` is an index into the `"names"` field in the source map JSON. It is relative to previous occurrences (also relative to the last `sBINDING+` in `generated_range_bindings`)
   * `uLINE` is relative to the generated range's start line for the first `generated_range_subrange_binding` for a specific variable. Or relative to the previous subrange `uLINE` of the same variable.
   * `uCOLUMN` is relative to the `binding_from`/`generated_range_start` `uCOLUMN` if the line of this subrange is the same as the line of the preceding `binding_from`/`generated_range_start` or absolute otherwise.
 
