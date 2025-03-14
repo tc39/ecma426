@@ -1080,9 +1080,8 @@
         1. Let _sourcesContentCount_ be the the number of elements in _sourcesContent_.
         1. Let _sourceUrlPrefix_ be *""*.
         1. If _sourceRoot_ ≠ *null*, then
-          1. If _sourceRoot_ contains the code point U+002F (SOLIDUS), then
-            1. Let _idx_ be the index of the last occurrence of U+002F (SOLIDUS) in _sourceRoot_.
-            1. Set _sourceUrlPrefix_ to the substring of _sourceRoot_ from 0 to _idx_ + 1.
+          1. If _sourceRoot_ ends with the code point U+002F (SOLIDUS), then
+            1. Set _sourceUrlPrefix_ to _sourceRoot_.
           1. Else,
             1. Set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
         1. Let _index_ be 0.
