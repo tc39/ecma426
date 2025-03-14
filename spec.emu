@@ -804,7 +804,7 @@
           Vlq
       </emu-grammar>
 
-      <p>A <dfn id="decode-mapping-state-record" variants="Decode Mapping State Records">Decoded Mapping State Record</dfn> has the following fields:</p>
+      <p>A <dfn id="decode-mapping-state-record" variants="Decode Mapping State Records">Decode Mapping State Record</dfn> has the following fields:</p>
       <emu-table id="table-decode-mapping-state-fields" caption="Fields of Decode Mapping State Records">
         <table>
           <thead>
@@ -918,7 +918,7 @@
         <emu-alg>
           1. Let _relativeSourceIndex_ the VLQSignedValue of |Vlq|.
           1. Set _state_.[[SourceIndex]] to _state_.[[SourceIndex]] + _relativeSourceIndex_.
-          1. If _state_.[[SourceIndex]] &lt; 0 or _state.[[SourceIndex]] ≥ the number of elements of _sources_, optionally report an error.
+          1. If _state_.[[SourceIndex]] &lt; 0 or _state_.[[SourceIndex]] ≥ the number of elements of _sources_, optionally report an error.
         </emu-alg>
         <emu-grammar>
           OriginalLine :
