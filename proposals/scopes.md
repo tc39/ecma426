@@ -220,8 +220,8 @@ scopes :=
 original_scope_tree_list :=
     original_scope_tree
   | ε
-  | original_scope_list ',' original_scope_tree
-  | original_scope_list ',' ε
+  | original_scope_tree_list ',' original_scope_tree
+  | original_scope_tree_list ',' ε
 
 top_level_item_list :=
     top_level_item
@@ -332,7 +332,7 @@ generated_range_end :=
   uCOLUMN
 ```
 
-Since bundles tend to consist of a single line (or very few lines), `generated_range_start` and `generated_range_end` omit the line if it is `0`.
+Since bundles tend to consist of a single line (or very few lines), `generated_range_start` and `generated_range_end` omit the line if it is `0`. For `generated_range_start`, `uFLAGS` indicates whether `uLINE` is present. For `generated_range_end` decoders have to count the number of VLQs: 2 (including tag) means `uLINE` is not present. 3 (including tag) means `uLINE` is present. The motivation for this is that we want `generated_range_start` to allow for future extension, why we don't want this for `generated_range_end`.
 
 The `uFLAGS` field in `generated_range_start` is a bit field defined as follows:
   * 0x1: has line
@@ -473,7 +473,7 @@ Start Generated Range C16 { // B
 Bindings [message -> _m, y -> _y]
 End Generated Range C1 // B
 Start Generated Range C0 { // C
-  field flags: has definition, has callsite
+  field flags: has definition
   definition: scope start 1
 }
 Bindings [message -> "Hello World", y -> 2]
