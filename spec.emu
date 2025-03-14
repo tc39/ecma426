@@ -945,7 +945,7 @@
         <emu-alg>
           1. Let _relativeName_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[NameIndex]] to _state_.[[NameIndex]] + _relativeName_.
-          1. If _state_.[[NameIndex]] &lt; 0 or _state_[[NameIndex]] ≥ the number of elements of _sources_, optionally report an error.
+          1. If _state_.[[NameIndex]] &lt; 0 or _state_.[[NameIndex]] ≥ the number of elements of _sources_, optionally report an error.
         </emu-alg>
       </emu-clause>
     </emu-clause>
