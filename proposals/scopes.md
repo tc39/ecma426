@@ -49,7 +49,7 @@ orzo();
 throw Error()
 ```
 With the encoded environment it becomes possible to:
-- Reconstruct the stack trace with the original function names for the `Error` 
+- Reconstruct the stack trace with the original function names for the `Error`
 - Have `Step Over` and `Step Out` actions during the debugging for the inlined functions
 
 2. Debugging folded or erased variables
@@ -196,106 +196,202 @@ interface OriginalPosition {
 
 ### Encoding
 
-We introduce two new fields "originalScopes" and "generatedRanges" respectively:
+We introduce a new field "scopes" to the source map JSON: "scopes" is a string. It contains a list of comma-separated items. Each item is prefixed with a unique "tag". The items themselves build a tree structure that describe "original scope" and "generated range" trees.
 
-  * "originalScopes" is an array of original scope tree descriptors (a string). Each element in the array describes the scope tree of the corresponding "sources" entry.
-  * "generatedRanges" is a single generated range tree descriptor (a string) of the generated file.
+The format of "scopes" is presented in an EBNF-like grammar, with:
 
-Like the "mappings" field, the data in a "generated range tree descriptor" is grouped by line and lines are separated by `;`. Within a line, items are separated by `,`. A "original scope tree descriptor" is NOT grouped by line, but items are separated by `,`.
+  * Three terminals: Signed, unsigned VLQ and comma '`,`'. VLQ terminals are labelled and we denote them with UPPERCASE.
+    We prefix the terminal with `u` or `s` to signify an unsigned or signed VLQ respectively. E.g. the terminal `uLINE` signifies
+    an unsigned VLQ labelled `LINE`.
 
-There are two different kinds of items that will appear in a "original scope descriptor": "Start Original Scope" and "End Original Scope".
-There are two different kinds of items that will appear in the "generated range descriptor": "Start Generated Range" and "End Generated Range".
+  * Non-terminals are denoted with `snake_case`.
 
-The kind of an item can be determined by looking at how many VLQ-encoded numbers it contains: "End" items contain one number, "Start" items contain two or more numbers.
+  * `symbol?` means zero or one `symbol`.
+  * `symbol+` means one or more `symbol`.
 
-Note: Each DATA represents one VLQ number.
+The start symbol is `scopes`:
 
-#### Start Original Scope
+```
+scopes :=
+    original_scope_tree_list
+  | top_level_item_list
+  | original_scope_tree_list ',' top_level_item_list
 
-* DATA line in the original code
-  * Note: this is the point in the original code where the scope starts. `line` is relative to the `line` of the preceding "start/end original scope" item.
-* DATA column in the original code
-  * Note: Column is always absolute.
-* DATA flags
-  * Note: binary flags that specify if a field is used for this scope.
-  * Note: Unknown flags would skip the whole scope.
+original_scope_tree_list :=
+    original_scope_tree
+  | ε
+  | original_scope_tree_list ',' original_scope_tree
+  | original_scope_tree_list ',' ε
+
+top_level_item_list :=
+    top_level_item
+    top_level_item_list ',' top_level_item
+
+top_level_item :=
+    generated_range_tree
+  | unknown_item
+```
+
+Only one top-level `original_scope_tree` per `sources` file is allowed. The n-th top-level `original_scope_tree` describes the scope tree for `sources[n]`. To signify that a certain `sources[m]` authored file doesn't have scopes information available, an empty item must be used.
+Multiple top-level `generated_range_tree`s are allowed, this is especially useful when multiple bundles are straight-up concatenated.
+
+`unknown_item`s are items that start with any tag other then the ones explicitly specified here and may contain an arbitrary number of VLQs following the unknown tag.
+
+```
+unknown_item :=
+  uTAG     // Must not be 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', or 'I'.
+  (uVLQ | sVLQ)*
+```
+
+#### Original Scope Trees
+
+```
+original_scope_tree :=
+  original_scope_start ',' original_scope_item_list? original_scope_end
+
+original_scope_item_list :=
+  original_scope_item ','
+  original_scope_item ',' original_scope_item_list
+
+original_scope_item :=
+    original_scope_variables
+  | original_scope_tree
+```
+
+A scope is delineated by a `original_scope_start` and a `original_scope_end` item. The `original_scope_variables` item always describes the immediately surrounding" start/end pair.
+
+```
+original_scope_start :=
+  'B'     // Tag: 0x1 unsigned
+  uFLAGS
+  uLINE
+  uCOLUMN
+  sNAME?  // Present if FLAGS<0> is set.
+  sKIND?  // Present if FLAGS<1> is set.
+
+original_scope_variables :=
+  'D'        // Tag: 0x3 unsigned
+  sVARIABLE+
+
+original_scope_end :=
+  'C'     // Tag: 0x2 unsigned
+  uLINE
+  uCOLUMN
+```
+
+The `uFLAGS` field in `original_scope_start` is a bit field defined as follows:
   * 0x1 has name
   * 0x2 has kind
   * 0x4 is stack frame
-* name: (only exists if `has name` flag is set)
-  * DATA offset into `names` field
-  * Note: This name should be shown as function name in the stack trace for function scopes.
-* kind: (only exists if `has kind` flag is set)
-  * DATA offset into `names` field
-  * Note: This offset is relative to the offset of the last `kind` or absolute if this is the first `kind`.
-  * Note: This is type of the scope.
-  * Note: JavaScript implementations should use `'global'`, `'class'`, `'function'`, and `'block'`.
-* variables:
-  * for each variable:
-    * DATA offset into `names` field for the original symbol name defined in this scope
 
-#### End Original Scope
+`original_scope_variables` is a list of indices into the `names` array of the source map JSON. The list describes the original names
+of the scope's variables.
 
-* DATA line in the original code
-  * Note: `line` is relative to the `line` of the preceding "start/end original scope" item.
-* DATA column in the original code
-  * Note: Column is always absolute.
+To reduce the number of bytes required to encode the "scopes" information, we use relative values where possible:
 
-#### Start Generated Range
+  * `sNAME` in `original_scope_start` is relative to the previous occurrence of `sNAME` (or absolute for the first).
+  * `sKIND` in `original_scope_start` is relative to the previous occurrence of `sKIND` (or absolute for the first).
+  * `uLINE` in `original_scope_start` and `original_scope_end` are relative to the previous occurrence (or absolute for the first).
+    This means a `uLINE` of a `original_scope_start` is relative to either its parents' start line or its preceding siblings' end line.
+  * `sVARIABLE` in `original_scope_variables` is relative to the previous occurrence of `sVARIABLE` (or absolute for the first).
 
-* DATA column in the generated code
-  * Note: This is the point in generated code where the range starts. The line is the number of `;` preceding this item plus one.
-  * Note: The column is relative to the column of the previous item on the same line or absolute if there is no such item.
-* DATA field flags
-  * Note: binary flags that specify if a field is used for this range and if the range is a scope in the generated source.
-  * Note: Unknown flags would skip the whole scope.
-  * 0x1 has definition
-  * 0x2 has callsite
-  * 0x4 is stack frame
-  * 0x8 is hidden
-* definition: (only existing if `has definition` flag is set)
-  * DATA offset into `sources`
-    * Note: This offset is relative to the offset of the last definition or absolute if this is the first definition
-  * DATA scope offset into `originalScopes[offset]`
-    * Note: This is an offset to the "Start Original Scope" item of the corresponding original scope tree. This offset is relative to the  `scope offset` of the previous definition if the definition is in the same source, otherwise it is absolute.
-* callsite: (only existing if `has callsite` flag is set)
-  * DATA relative offset into `sources`
-  * DATA line
-    * Note: This is relative to the line of the last callsite if it had the same offset into `sources` or absolute otherwise
-  * DATA column
-    * Note: This is relative to the start column of the last callsite if it had the same offset into `sources` and the same line or absolute otherwise
-  * Note: When this field is set, it's an inlined function, called from that expression.
-* bindings:
-  * Note: the number of bindings must match the number of variables in the definition scope
-  * for each binding:
-    * Note: The value expression for the current variable either for the whole generated range (if M == 1), or for the sub-range that starts at the beginning of this generated range.
-    * Note: Use -1 to indicate that the current variable is unavailable (e.g. due to shadowing) in this range.
-    * DATA M either an index into `names` field (if M is >= -1), or the number of sub-ranges for the current variable in this generated range (where the expression differs on how to obtain the current variable’s value)
-    * If M == -1, then
-        * Do nothing.
-        * Note: The variable is not accessible within this generated range.
-    * Else if M >= 0, then
-        * M is used as an index into `names` field
-        * Note: The variable is accessible by evaluating the value expression for the entirety of this generated range.
-    * Else,
-      * Note: there are at least 2 sub-ranges.
-      * DATA offset into `names` field or -1
-        * Note: The variable is accessible using this value expression starting from the beginning of the generated range until the start of the next sub-range.
-        * Note: Use -1 to indicate that the current variable is unavailable (e.g. due to shadowing) in this sub-range.
-      * (M - 1) times
-        * DATA line in the generated code
-          * Note: The line is relative to the previous sub-range line or the start of the current generated range item if it’s the first for this loop.
-        * DATA column in the generated code
-          * Note: The column is relative to the column of the previous sub-range if it’s on the same line or absolute if it’s on a new line.
-        * DATA offset into `names` field or -1
-          * Note: The expression to obtain the current variable’s value in the sub-range that starts at line/column and ends at either the next sub-range start or this generated range’s end.
-          * Note: Use -1 to indicate that the current variable is unavailable (e.g. due to shadowing) in this sub-range.
+Each top-level `original_scope_tree` resets the "relative state". That is, each top-level `original_scope_tree` is decoded as if its the first.
 
-#### End Generated Range
 
-* DATA column in the generated code `**`
-  * Note: This is the point in generated code where the range ends. The line is the number of `;` preceding this item plus one.
-  * Note: The column is relative to the column of the previous item on the same line or absolute if there is no such item.
+#### Generated Range Trees
+
+```
+generated_range_tree :=
+  generated_range_start ',' generated_range_item_list? generated_range_end
+
+generated_range_item_list :=
+  generated_range_item ','
+  generated_range_item ',' generated_range_item_list
+
+generated_range_item :=
+    generated_range_callsite
+  | generated_range_bindings
+  | generated_range_subrange_binding
+  | generated_range_tree
+```
+
+Similar to "original scopes", a generated range is delineated by a `generated_range_start` and `generated_range_end`. Any other item describes the range
+corresponding to the immediately surrounding start/end pair.
+
+```
+generated_range_start :=
+  'F'          // Tag: 0x5 unsigned
+  uFLAGS
+  uLINE?       // Present if FLAGS<0> is set.
+  uCOLUMN
+  sDEFINITION? // Present if FLAGS<1> is set.
+
+generated_range_end :=
+  'G'    // Tag: 0x6 unsigned
+  uLINE?
+  uCOLUMN
+```
+
+Since bundles tend to consist of a single line (or very few lines), `generated_range_start` and `generated_range_end` omit the line if it is `0`. For `generated_range_start`, `uFLAGS` indicates whether `uLINE` is present. For `generated_range_end` decoders have to count the number of VLQs: 2 (including tag) means `uLINE` is not present. 3 (including tag) means `uLINE` is present. The motivation for this is that we want `generated_range_start` to allow for future extension, why we don't want this for `generated_range_end`.
+
+The `uFLAGS` field in `generated_range_start` is a bit field defined as follows:
+  * 0x1: has line
+  * 0x2: has definition
+  * 0x4: is stack frame
+  * 0x8: is hidden
+
+Similar to "original scopes", we use relative numbers to reduce the bytes required:
+
+  * `uLINE` in `generated_range_start` and `generated_range_end` are relative to the previous occurrence (or absolute for the first).
+  * `uCOLUMN` in `generated_range_start` and `generated_range_end` are relative to the previous occurrence, if the previous start/end item is on the same line. Absolute otherwise.
+  * `sDEFINITION` in `generated_range_start` is relative to the previous occurrence (or absolute for the first).
+
+`sDEFINITION` is an index into the list of `original_scope_start` items. If `definitionIdx` is the resolved value, then the corresponding `original_scope_start` could
+be found with the pseudo code `const scopeStart = scopes.filter(item => item.tag === 'B')[definition]`.
+
+```
+generated_range_callsite :=
+  'J'         // Tag: 0x9 unsigned
+  sSOURCE_IDX
+  sLINE
+  sCOLUMN
+```
+
+If a "generated range" contains a callsite, then the range describes an inlined function body. The inlined function was called at the original position described by this `generated_range_callsite`.
+
+  * `sSOURCE_IDX` in `generated_range_callsite` is relative to the previous occurrence (or absolute for the first).
+  * `sLINE` in `generated_range_callsite` is relative to the previous occurrence, if the previous `generated_range_callsite` was in the same source file. Absolute otherwise.
+  * `SCOLUMN` in `generated_range_callsite` is relative to the previous occurrence, if the previous `generated_range_callsite` was on the same line in the same file. Absolute otherwise.
+
+```
+generated_range_bindings :=
+  'H'       // Tag: 0x7 unsigned
+  sBINDING+
+```
+
+`generated_range_bindings` are only valid for generated ranges that have a `sDEFINITION`. The bindings list must be equal in length as the variable list of the original scope the `sDEFINITION` references. `sBINDING+` is a list of indices into the `"names"` field of the source map JSON. Each binding is a JavaScript expression that, when evaluated, produces the **value** of the corresponding variable.
+
+`sBINDING+` indices are encoded absolute. To signify that a variable is unavailable, use the index `-1`.
+
+```
+generated_range_subrange_binding :=
+  'I'             // Tag: 0x8 unsigned
+  uVARIABLE_INDEX
+  binding_from+
+
+binding_from :=
+  sBINDING
+  uLINE
+  uCOLUMN
+```
+
+A variable might not be available through the full generated range, or a different expression is required for parts of the generated range to retrieve a variables value. In this case a generator can use `generated_range_subrange_binding` to encode this.
+
+  * `uVARIABLE_INDEX` is an index into the corresponding original scopes' variables list. It is encoded relative inside a generated range.
+  * `binding_from` are the sub-ranges. The initial value expression for a variable is provided by the `generated_range_bindings` item. The generated position in `binding_from` is the start from which the expression `sBINDING` from `binding_from` needs to be used to retrieve the variables value instead.
+  * `sBINDING` is an index into the `"names"` field in the source map JSON. It is relative to previous occurrences (also relative to the last `sBINDING+` in `generated_range_bindings`)
+  * `uLINE` is relative to the generated range's start line for the first `generated_range_subrange_binding` for a specific variable. Or relative to the previous subrange `uLINE` of the same variable.
+  * `uCOLUMN` is relative to the `binding_from`/`generated_range_start` `uCOLUMN` if the line of this subrange is the same as the line of the preceding `binding_from`/`generated_range_start` or absolute otherwise.
 
 ### Example
 
@@ -337,16 +433,16 @@ A|   var x = 1;
 ```
 Start Original Scope L0 C0 { // A
   kind: global
-  field flags: none
+  field flags: has kind
   name: none
-  variables: x, z
 }
+Variables [x, z]
 Start Original Scope L1 C10 { // B
   kind: function
-  field flags: has name
+  field flags: has name, has kind, is stack frame
   name: z
-  variables: message, y
 }
+Variables [message, y]
 End Original Scope L4 C1  // B
 End Original Scope L5 C17 // A
 ```
@@ -366,36 +462,24 @@ A|    var _x = 1;
 
 ```
 Start Generated Range C0 { // A
-  field flags: has definition, is scope
-  definition: file.js, scope offset 0
-  callsite: none
-  bindings: x -> _x, z -> _z
+  field flags: has definition
+  definition: scope start 0
 }
-;
+Bindings [x -> _x, z -> _z]
 Start Generated Range C16 { // B
-  field flags: has definition, is scope
-  definition: file.js, scope offset 1
-  callsite: none
-  bindings: message -> _m, y -> _y
+  field flags: has definition, is stack frame
+  definition: scope start 1
 }
-;
-;
-;
+Bindings [message -> _m, y -> _y]
 End Generated Range C1 // B
-;
 Start Generated Range C0 { // C
-  field flags: has definition, has callsite
-  definition: file.js, scope offset 1
-  callsite: file.js L5 C0
-  bindings: message -> "Hello World", y -> 2
+  field flags: has definition
+  definition: scope start 1
 }
+Bindings [message -> "Hello World", y -> 2]
+Callsite file.js L5 C0
 End Scope C28 // C
 End Scope C28 // A
-```
-
-`XXXX` stands for a "Start Generated Range" item, `X` for an "End Generated Range" item
-```
-XXXX;XXXX;;;X;XXXX,X,X
 ```
 
 ## Questions
