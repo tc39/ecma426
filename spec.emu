@@ -882,6 +882,9 @@
         </emu-grammar>
         <emu-alg>
           1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. If _state_.[[GeneratedColumn]] &lt; 0, then
+            1. Optionally report an error.
+            1. Return.
           1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: *null*, [[OriginalLine]]: *null*, [[OriginalColumn]]: *null*, [[Name]]: *null* }.
           1. Append _decodedMapping_ to _mappings_.
         </emu-alg>
@@ -891,15 +894,30 @@
         </emu-grammar>
         <emu-alg>
           1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. If _state_.[[GeneratedColumn]] &lt; 0, then
+            1. Optionally report an error.
+            1. Return.
           1. Perform DecodeMappingsField of |OriginalSource| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. If _state_.[[SourceIndex]] &lt; 0 or _state_.[[SourceIndex]] ≥ the number of elements of _sources_, then
+            1. Optionally report an error.
+            1. Let _source_ be *null*.
+          1. Else, let _source_ be _sources_[_state_.[[SourceIndex]]].
           1. Perform DecodeMappingsField of |OriginalLine| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. If _state_.[[OriginalLine]] &lt; 0, then
+            1. Optionally report an error.
+            1. Let _originalLine_ be *null*.
+          1. Else, let _originalLine_ be _state_.[[OriginalLine]].
           1. Perform DecodeMappingsField of |OriginalColumn| with arguments _state_, _mappings_, _names_ and _sources_.
-          1. Let _source_ be _sources_[_state_.[[SourceIndex]]].
+          1. If _state_.[[OriginalColumn]] &lt; 0, then
+            1. Optionally report an error.
+            1. Let _originalColumn_ be *null*.
+          1. Else, let _originalColumn_ be _state_.[[OriginalColumn]].
+          1. Let _name_ be *null*.
           1. If |Name| is present, then
             1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
-            1. Let _name_ be _names_[_state_.[[NameIndex]]].
-          1. Else, let _name_ be *null*.
-          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: _source_, [[OriginalLine]]: _state_.[[OriginalLine]], [[OriginalColumn]]: _state_.[[OriginalColumn]], [[Name]]: _name_ }.
+            1. If _state_.[[NameIndex]] &lt; 0 or _state_.[[NameIndex]] ≥ the number of elements of _sources_, optionally report an error.
+            1. Else, set _name_ to _names_[_state_.[[NameIndex]]].
+          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: _source_, [[OriginalLine]]: _originalLine_, [[OriginalColumn]]: _originalColumn_, [[Name]]: _name_ }.
           1. Append _decodedMapping_ to _mappings_.
         </emu-alg>
         <emu-grammar>
@@ -909,7 +927,6 @@
         <emu-alg>
           1. Let _relativeColumn_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[GeneratedColumn]] to _state_.[[GeneratedColumn]] + _relativeColumn_.
-          1. If _state_.[[GeneratedColumn]] &lt; 0, optionally report an error.
         </emu-alg>
         <emu-grammar>
           OriginalSource :
@@ -918,7 +935,6 @@
         <emu-alg>
           1. Let _relativeSourceIndex_ the VLQSignedValue of |Vlq|.
           1. Set _state_.[[SourceIndex]] to _state_.[[SourceIndex]] + _relativeSourceIndex_.
-          1. If _state_.[[SourceIndex]] &lt; 0 or _state_.[[SourceIndex]] ≥ the number of elements of _sources_, optionally report an error.
         </emu-alg>
         <emu-grammar>
           OriginalLine :
@@ -927,7 +943,6 @@
         <emu-alg>
           1. Let _relativeLine_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[OriginalLine]] to _state_.[[OriginalLine]] + _relativeLine_.
-          1. If _state_.[[OriginalLine]] &lt; 0, optionally report an error.
         </emu-alg>
         <emu-grammar>
           OriginalColumn :
@@ -936,7 +951,6 @@
         <emu-alg>
           1. Let _relativeColumn_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[OriginalColumn]] to _state_.[[OriginalColumn]] + _relativeColumn_.
-          1. If _state_.[[OriginalColumn]] &lt; 0, optionally report an error.
         </emu-alg>
         <emu-grammar>
           Name :
@@ -945,7 +959,6 @@
         <emu-alg>
           1. Let _relativeName_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[NameIndex]] to _state_.[[NameIndex]] + _relativeName_.
-          1. If _state_.[[NameIndex]] &lt; 0 or _state_.[[NameIndex]] ≥ the number of elements of _sources_, optionally report an error.
         </emu-alg>
       </emu-clause>
     </emu-clause>
