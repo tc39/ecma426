@@ -333,7 +333,7 @@
       </emu-grammar>
       <emu-alg>
         1. Let _value_ be the VLQUnsignedValue of |VlqDigitList|.
-        1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
+        1. If _value_ is ≥ 2<sup>32</sup>, throw an error.
         1. Return _value_.
       </emu-alg>
       <emu-grammar>
