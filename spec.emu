@@ -765,13 +765,13 @@
 
       <emu-grammar type="definition">
         MappingsField :
-          SegmentList
+          LineList
 
-        SegmentList :
-          Segment
-          Segment `;` SegmentList
+        LineList :
+          Line
+          Line `;` LineList
 
-        Segment :
+        Line :
           MappingList?
 
         MappingList :
@@ -849,26 +849,22 @@
         </h1>
         <dl class="header"></dl>
         <emu-grammar>
-          SegmentList :
-            Segment `;` SegmentList
-
+          LineList :
+            Line `;` LineList
+        </emu-grammar>
+        <emu-alg>
+          1. Perform DecodeMappingsField of |Line| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Set _state_.[[GeneratedLine]] to _state_.[[GeneratedLine]] + 1.
+          1. Set _state_.[[GeneratedColumn]] to 0.
+          1. Perform DecodeMappingsField of |LineList| with arguments _state_, _mappings_, _names_ and _sources_.
+        </emu-alg>
+        <emu-grammar>
           MappingList :
             Mapping `,` MappingList
         </emu-grammar>
         <emu-alg>
-          1. For each child node _child_ of this Parse Node, do
-            1. If _child_ is an instance of a nonterminal, then
-              1. Perform DecodeMappingsField of _child_ with arguments _state_, _mappings_, _names_ and _sources_.
-        </emu-alg>
-        <emu-grammar>
-          Segment :
-            MappingList?
-        </emu-grammar>
-        <emu-alg>
-          1. Set _state_.[[GeneratedLine]] to _state_.[[GeneratedLine]] + 1.
-          1. Set _state_.[[GeneratedColumn]] to 0.
-          1. If |MappingList| is present, then
-            1. Perform DecodeMappingsField on |MappingList| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |Mapping| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |MappingList| with arguments _state_, _mappings_, _names_ and _sources_.
         </emu-alg>
         <emu-grammar>
           Mapping :
