@@ -290,23 +290,13 @@
         ContinuationDigit VlqDigitList
 
       TerminalDigit ::
-        OneOfTerminalDigit
-
-      ContinuationDigit ::
-        OneOfContinuationDigit
-
-      OneOfTerminalDigit :: one of
         `A` `B` `C` `D` `E` `F` `G` `H` `I` `J` `K` `L` `M` `N` `O` `P` `Q` `R`
         `S` `T` `U` `V` `W` `X` `Y` `Z` `a` `b` `c` `d` `e` `f`
 
-      OneOfContinuationDigit :: one of
+      ContinuationDigit ::
         `g` `h` `i` `j` `k` `l` `m` `n` `o` `p` `q` `r` `s` `t` `u` `v` `w` `x`
         `y` `z` `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` `+` `/`
     </emu-grammar>
-
-    <emu-note type="editor">
-      |OneOfTerminalDigit| and |OneOfContinuationDigit| will go away and are only present in the preview draft. They are here because ecmarkup currently does not support *one of* productions in SDOs.
-    </emu-note>
 
     <emu-clause id="sec-VLQSignedValue" type="sdo">
       <h1>VLQSignedValue ( ): an integer</h1>
@@ -346,7 +336,9 @@
         1. Return _left_ + _right_ × 2<sup>5</sup>.
       </emu-alg>
       <emu-grammar>
-        TerminalDigit :: OneOfTerminalDigit
+        TerminalDigit ::
+          `A` `B` `C` `D` `E` `F` `G` `H` `I` `J` `K` `L` `M` `N` `O` `P` `Q` `R`
+          `S` `T` `U` `V` `W` `X` `Y` `Z` `a` `b` `c` `d` `e` `f`
       </emu-grammar>
       <emu-alg>
         1. Let _digit_ be the character matched by this production.
@@ -355,7 +347,9 @@
         1. Return _value_.
       </emu-alg>
       <emu-grammar>
-        ContinuationDigit :: OneOfContinuationDigit
+        ContinuationDigit ::
+          `g` `h` `i` `j` `k` `l` `m` `n` `o` `p` `q` `r` `s` `t` `u` `v` `w` `x`
+          `y` `z` `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` `+` `/`
       </emu-grammar>
       <emu-alg>
         1. Let _digit_ be the character matched by this production.
