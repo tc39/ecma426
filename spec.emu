@@ -253,18 +253,6 @@
       <p>source code which has not been passed through a compiler or transpiler.</p>
     </dd>
 
-    <dt><dfn id="sec-terms-and-definitions-base64-vlq">base64 VLQ</dfn></dt>
-    <dd>
-      <p>a <emu-xref href="#sec-references-informative">base64</emu-xref>-encoded variable-length quantity, where the most significant bit (the 6th bit) is used as the continuation bit, and the "digits" are encoded into the string least significant first, and where the least significant bit of the first digit is used as the sign bit.</p>
-      <emu-note>The values that can be represented by the base64 VLQ encoding are limited to 32-bit quantities until some use case for larger values is presented. This means that values exceeding 32-bits are invalid and implementations may reject them. The sign bit is counted towards the limit, but the continuation bits are not.</emu-note>
-      <emu-note example>
-        The string `"iB"` represents a base64 VLQ with two digits. The first digit `"i"` encodes the bit pattern `0x100010`, which has a continuation bit of `1` (the VLQ continues), a sign bit of `0` (non-negative), and the value bits `0x0001`. The second digit `B` encodes the bit pattern `0x000001`, which has a continuation bit of `0`, no sign bit, and value bits `0x00001`. The decoding of this VLQ string is the number 17.
-      </emu-note>
-      <emu-note example>
-        The string `"V"` represents a base64 VLQ with one digit. The digit `"V"` encodes the bit pattern `0x010101`, which has a continuation bit of `0` (no continuation), a sign bit of `1` (negative), and the value bits `0x1010`. The decoding of this VLQ string is the number -10.
-      </emu-note>
-    </dd>
-
     <dt><dfn id="sec-terms-and-definitions-source-mapping-url">source map URL</dfn></dt>
     <dd>
       <p>URL referencing the location of a source map from the generated code.</p>
@@ -276,91 +264,99 @@
       <emu-note>That means that "A" (`LATIN CAPITAL LETTER A`) measures as 1 code unit, and "🔥" (`FIRE`) measures as 2 code units. Source maps for other content types may diverge from this.</emu-note>
     </dd>
   </dl>
+</emu-clause>
 
-  <emu-clause id="sec-vlq-grammar">
-    <h1>base64 VLQ grammar</h1>
-    <p>A base64-encoded variable-length quantity adheres to the following lexical grammar:</p>
+<emu-clause id="sec-base64-vlq">
+  <h1>base64 VLQ</h1>
+  <p>A <dfn id="sec-base64-vlq">base64 VLQ</dfn> is a <emu-xref href="#sec-references-informative">base64</emu-xref>-encoded variable-length quantity, where the most significant bit (the 6th bit) is used as the continuation bit, and the "digits" are encoded into the string least significant first, and where the least significant bit of the first digit is used as the sign bit.</p>
+  <emu-note>The values that can be represented by the base64 VLQ encoding are limited to 32-bit quantities until some use case for larger values is presented. This means that values exceeding 32-bits are invalid and implementations may reject them. The sign bit is counted towards the limit, but the continuation bits are not.</emu-note>
+  <emu-note example>
+    The string `"iB"` represents a base64 VLQ with two digits. The first digit `"i"` encodes the bit pattern `0x100010`, which has a continuation bit of `1` (the VLQ continues), a sign bit of `0` (non-negative), and the value bits `0x0001`. The second digit `B` encodes the bit pattern `0x000001`, which has a continuation bit of `0`, no sign bit, and value bits `0x00001`. The decoding of this VLQ string is the number 17.
+  </emu-note>
+  <emu-note example>
+    The string `"V"` represents a base64 VLQ with one digit. The digit `"V"` encodes the bit pattern `0x010101`, which has a continuation bit of `0` (no continuation), a sign bit of `1` (negative), and the value bits `0x1010`. The decoding of this VLQ string is the number -10.
+  </emu-note>
+  <p>A base64 VLQ adheres to the following lexical grammar:</p>
 
-    <emu-grammar type="definition">
-      Vlq ::
-        VlqDigitList
+  <emu-grammar type="definition">
+    Vlq ::
+      VlqDigitList
 
+    VlqDigitList ::
+      TerminalDigit
+      ContinuationDigit VlqDigitList
+
+    TerminalDigit ::
+      `A` `B` `C` `D` `E` `F` `G` `H` `I` `J` `K` `L` `M` `N` `O` `P` `Q` `R`
+      `S` `T` `U` `V` `W` `X` `Y` `Z` `a` `b` `c` `d` `e` `f`
+
+    ContinuationDigit ::
+      `g` `h` `i` `j` `k` `l` `m` `n` `o` `p` `q` `r` `s` `t` `u` `v` `w` `x`
+      `y` `z` `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` `+` `/`
+  </emu-grammar>
+
+  <emu-clause id="sec-VLQSignedValue" type="sdo">
+    <h1>VLQSignedValue ( ): an integer</h1>
+    <dl class="header"></dl>
+    <emu-grammar>
+      Vlq :: VlqDigitList
+    </emu-grammar>
+    <emu-alg>
+      1. Let _unsigned_ be the VLQUnsignedValue of |VlqDigitList|.
+      1. If _unsigned_ modulo 2 = 1, let _sign_ be -1.
+      1. Else, let _sign_ be 1.
+      1. Let _value_ be floor(_unsigned_ / 2).
+      1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
+      1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
+        <emu-note>
+          The check is required here as _unsigned_ is the VLQUnsignedValue of |VlqDigitList|, not of |Vlq|.
+        </emu-note>
+      1. Return _sign_ × _value_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-VLQUnsignedValue" type="sdo">
+    <h1>VLQUnsignedValue ( ): an non-negative integer</h1>
+    <dl class="header"></dl>
+    <emu-grammar>
+      Vlq :: VlqDigitList
+    </emu-grammar>
+    <emu-alg>
+      1. Let _value_ be the VLQUnsignedValue of |VlqDigitList|.
+      1. If _value_ is ≥ 2<sup>32</sup>, throw an error.
+      1. Return _value_.
+    </emu-alg>
+    <emu-grammar>
       VlqDigitList ::
-        TerminalDigit
         ContinuationDigit VlqDigitList
-
+    </emu-grammar>
+    <emu-alg>
+      1. Let _left_ be the VLQUnsignedValue of |ContinuationDigit|.
+      1. Let _right_ be the VLQUnsignedValue of |VlqDigitList|.
+      1. Return _left_ + _right_ × 2<sup>5</sup>.
+    </emu-alg>
+    <emu-grammar>
       TerminalDigit ::
         `A` `B` `C` `D` `E` `F` `G` `H` `I` `J` `K` `L` `M` `N` `O` `P` `Q` `R`
         `S` `T` `U` `V` `W` `X` `Y` `Z` `a` `b` `c` `d` `e` `f`
-
+    </emu-grammar>
+    <emu-alg>
+      1. Let _digit_ be the character matched by this production.
+      1. Let _value_ be the integer corresponding to _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
+      1. Assert: _value_ &lt; 32.
+      1. Return _value_.
+    </emu-alg>
+    <emu-grammar>
       ContinuationDigit ::
         `g` `h` `i` `j` `k` `l` `m` `n` `o` `p` `q` `r` `s` `t` `u` `v` `w` `x`
         `y` `z` `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` `+` `/`
     </emu-grammar>
-
-    <emu-clause id="sec-VLQSignedValue" type="sdo">
-      <h1>VLQSignedValue ( ): an integer</h1>
-      <dl class="header"></dl>
-      <emu-grammar>
-        Vlq :: VlqDigitList
-      </emu-grammar>
-      <emu-alg>
-        1. Let _unsigned_ be the VLQUnsignedValue of |VlqDigitList|.
-        1. If _unsigned_ modulo 2 = 1, let _sign_ be -1.
-        1. Else, let _sign_ be 1.
-        1. Let _value_ be floor(_unsigned_ / 2).
-        1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
-        1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
-          <emu-note>
-            The check is required here as _unsigned_ is the VLQUnsignedValue of |VlqDigitList|, not of |Vlq|.
-          </emu-note>
-        1. Return _sign_ × _value_.
-      </emu-alg>
-    </emu-clause>
-
-    <emu-clause id="sec-VLQUnsignedValue" type="sdo">
-      <h1>VLQUnsignedValue ( ): an non-negative integer</h1>
-      <dl class="header"></dl>
-      <emu-grammar>
-        Vlq :: VlqDigitList
-      </emu-grammar>
-      <emu-alg>
-        1. Let _value_ be the VLQUnsignedValue of |VlqDigitList|.
-        1. If _value_ is ≥ 2<sup>32</sup>, throw an error.
-        1. Return _value_.
-      </emu-alg>
-      <emu-grammar>
-        VlqDigitList ::
-          ContinuationDigit VlqDigitList
-      </emu-grammar>
-      <emu-alg>
-        1. Let _left_ be the VLQUnsignedValue of |ContinuationDigit|.
-        1. Let _right_ be the VLQUnsignedValue of |VlqDigitList|.
-        1. Return _left_ + _right_ × 2<sup>5</sup>.
-      </emu-alg>
-      <emu-grammar>
-        TerminalDigit ::
-          `A` `B` `C` `D` `E` `F` `G` `H` `I` `J` `K` `L` `M` `N` `O` `P` `Q` `R`
-          `S` `T` `U` `V` `W` `X` `Y` `Z` `a` `b` `c` `d` `e` `f`
-      </emu-grammar>
-      <emu-alg>
-        1. Let _digit_ be the character matched by this production.
-        1. Let _value_ be the integer corresponding to _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
-        1. Assert: _value_ &lt; 32.
-        1. Return _value_.
-      </emu-alg>
-      <emu-grammar>
-        ContinuationDigit ::
-          `g` `h` `i` `j` `k` `l` `m` `n` `o` `p` `q` `r` `s` `t` `u` `v` `w` `x`
-          `y` `z` `0` `1` `2` `3` `4` `5` `6` `7` `8` `9` `+` `/`
-      </emu-grammar>
-      <emu-alg>
-        1. Let _digit_ be the character matched by this production.
-        1. Let _value_ be the integer corresponding to _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
-        1. Assert: 32 ≤ _value_ &lt; 64.
-        1. Return _value_ - 32.
-      </emu-alg>
-    </emu-clause>
+    <emu-alg>
+      1. Let _digit_ be the character matched by this production.
+      1. Let _value_ be the integer corresponding to _digit_, according to the <emu-xref href="#sec-references-informative">base64</emu-xref> encoding as defined by IETF RFC 4648.
+      1. Assert: 32 ≤ _value_ &lt; 64.
+      1. Return _value_ - 32.
+    </emu-alg>
   </emu-clause>
 </emu-clause>
 
