@@ -293,10 +293,10 @@ To reduce the number of bytes required to encode the "scopes" information, we us
   * `sKIND` in `original_scope_start` is relative to the previous occurrence of `sKIND` (or absolute for the first).
   * `uLINE` in `original_scope_start` and `original_scope_end` are relative to the previous occurrence (or absolute for the first).
     This means a `uLINE` of a `original_scope_start` is relative to either its parents' start line or its preceding siblings' end line.
+  * `uCOLUMN` in `original_scope_start` and `original_scope_end` are relative to the previous occurrence if (and only if) the `uLINE` of this item is 0. That is, columns are encoded relative to each other if the pervious `original_scope_*` item is on the same line, absolute otherwise.
   * `sVARIABLE` in `original_scope_variables` is relative to the previous occurrence of `sVARIABLE` (or absolute for the first).
 
-Each top-level `original_scope_tree` resets the "relative state". That is, each top-level `original_scope_tree` is decoded as if its the first.
-
+Each top-level `original_scope_tree` resets the "relative state" of `uLINE` and `uCOLUMN`. That is, each top-level `original_scope_start` decodes `uLINE` and `uCOLUMN` as if the previous occurrence was (0, 0). In contrast, `sNAME`, `sKIND` and `sVARIABLE` are relative to each other even across top-level `original_scope_tree`s.
 
 #### Generated Range Trees
 
@@ -351,17 +351,14 @@ be found with the pseudo code `const scopeStart = scopes.filter(item => item.tag
 
 ```
 generated_range_callsite :=
-  'J'         // Tag: 0x9 unsigned
-  sSOURCE_IDX
-  sLINE
-  sCOLUMN
+  'I'         // Tag: 0x8 unsigned
+  uSOURCE_IDX
+  uLINE
+  uCOLUMN
 ```
 
 If a "generated range" contains a callsite, then the range describes an inlined function body. The inlined function was called at the original position described by this `generated_range_callsite`.
-
-  * `sSOURCE_IDX` in `generated_range_callsite` is relative to the previous occurrence (or absolute for the first).
-  * `sLINE` in `generated_range_callsite` is relative to the previous occurrence, if the previous `generated_range_callsite` was in the same source file. Absolute otherwise.
-  * `SCOLUMN` in `generated_range_callsite` is relative to the previous occurrence, if the previous `generated_range_callsite` was on the same line in the same file. Absolute otherwise.
+`uSOURCE_IDX`, `uLINE` and `uCOLUMN` of the `generated_range_callsite` are always encoded absolute.
 
 ```
 generated_range_bindings :=
