@@ -311,6 +311,9 @@
         1. Let _value_ be floor(_unsigned_ / 2).
         1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
         1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
+          <emu-note>
+            The check is required here as _unsigned_ is the VLQUnsignedValue of |VlqDigitList|, not of |Vlq|.
+          </emu-note>
         1. Return _sign_ × _value_.
       </emu-alg>
     </emu-clause>
