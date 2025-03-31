@@ -320,14 +320,14 @@ corresponding to the immediately surrounding start/end pair.
 
 ```
 generated_range_start :=
-  'F'          // Tag: 0x5 unsigned
+  'E'          // Tag: 0x4 unsigned
   uFLAGS
   uLINE?       // Present if FLAGS<0> is set.
   uCOLUMN
   sDEFINITION? // Present if FLAGS<1> is set.
 
 generated_range_end :=
-  'G'    // Tag: 0x6 unsigned
+  'F'    // Tag: 0x5 unsigned
   uLINE?
   uCOLUMN
 ```
@@ -351,7 +351,7 @@ be found with the pseudo code `const scopeStart = scopes.filter(item => item.tag
 
 ```
 generated_range_callsite :=
-  'J'         // Tag: 0x9 unsigned
+  'I'         // Tag: 0x8 unsigned
   sSOURCE_IDX
   sLINE
   sCOLUMN
@@ -365,7 +365,7 @@ If a "generated range" contains a callsite, then the range describes an inlined 
 
 ```
 generated_range_bindings :=
-  'H'       // Tag: 0x7 unsigned
+  'G'       // Tag: 0x6 unsigned
   sBINDING+
 ```
 
@@ -375,7 +375,7 @@ generated_range_bindings :=
 
 ```
 generated_range_subrange_binding :=
-  'I'             // Tag: 0x8 unsigned
+  'H'             // Tag: 0x7 unsigned
   uVARIABLE_INDEX
   binding_from+
 
