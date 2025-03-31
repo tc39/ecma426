@@ -13,6 +13,19 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v3
       - run: npm ci
+      # SECURITY: We only checkout spec.emu and img/ from the PR because
+      # we need to make sure that a PR cannot steal the GITHUB_TOKEN
+      # by modifying scripts that run during the various npm commands.
+      # Given that we are using `pull_request_target`, GITHUB_TOKEN will
+      # have write permissions to the repo.
+      # With `pull_request_target`, the code in the PR should be considered
+      # to be pure "data" to process, rather than runnable code. See
+      # https://securitylab.github.com/resources/github-actions-preventing-pwn-requests/
+      - name: Checkout spec from PR
+        if: github.event_name != 'push'
+        run: |
+          git fetch origin +refs/pull/${{ github.event.pull_request.number }}/head
+          git checkout FETCH_HEAD -- spec.emu img/
       - run: npm run build
       - run: npx emu-format --check spec.emu
       - uses: actions/upload-artifact@v4
