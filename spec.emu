@@ -241,7 +241,7 @@
     <h1>Grammar Notation</h1>
     <p>This specification follows the same grammar notation convention as defined by <a href="https://tc39.es/ecma262/#sec-grammar-notation">ECMA-262 (Grammar Notation)</a>, with the following caveats:</p>
     <ul>
-      <li>The terminal symbols of grammars defined in this specification are individual code points. This is similar to ECMA-262's <a href="https://tc39.es/ecma262/#sec-lexical-and-regexp-grammars>lexical grammar</a>, rather than to ECMA-262's <a href="https://tc39.es/ecma262/#sec-syntactic-grammar">syntactic grammar</a>.</li>
+      <li>The terminal symbols of grammars defined in this specification are individual code points. This is similar to ECMA-262's <a href="https://tc39.es/ecma262/#sec-lexical-and-regexp-grammars">lexical grammar</a>, rather than to ECMA-262's <a href="https://tc39.es/ecma262/#sec-syntactic-grammar">syntactic grammar</a>.</li>
       <li>This specification does not use <a href="https://tc39.es/ecma262/#sec-grammatical-parameters">grammatical parameters</a> or <a href="https://tc39.es/ecma262/#sec-lookahead-restrictions">lookahead restrictions</a>, to reduce the grammar definitions complexity.</li>
     </ul>
   </emu-clause>
