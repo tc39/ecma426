@@ -96,14 +96,9 @@
   <p>Refer to the <emu-xref href="#sec-colophon">colophon</emu-xref> for more information on how this document is created.</p>
 </div>
 
-Hello!
-
-
-A linting error
-
 <emu-intro id="sec-intro">
   <h1>Introduction</h1>
-  <p>This Ecma Standard defines the Source map format, used for mapping transpiled source code back to the original sources.</p>
+  <p>HELLO!!! This Ecma Standard defines the Source map format, used for mapping transpiled source code back to the original sources.</p>
   <p>The source map format has the following goals:</p>
   <ul>
     <li>Support source-level debugging allowing bidirectional mapping</li>
