@@ -268,7 +268,7 @@
 
     <dt><dfn id="sec-terms-and-definitions-colun">column</dfn></dt>
     <dd>
-      <p>zero-based indexed offset within a line of the generated code, computed as UTF-16 code units for JavaScript and CSS source maps, and as byte indeces in the binary content (represented as a single line) for WebAssembly source maps.</p>
+      <p>zero-based indexed offset within a line of the generated code, computed as UTF-16 code units for JavaScript and CSS source maps, and as byte indices in the binary content (represented as a single line) for WebAssembly source maps.</p>
       <emu-note>That means that "A" (`LATIN CAPITAL LETTER A`) measures as 1 code unit, and "🔥" (`FIRE`) measures as 2 code units. Source maps for other content types may diverge from this.</emu-note>
     </dd>
   </dl>
