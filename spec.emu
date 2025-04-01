@@ -21,7 +21,6 @@
     width: 500px;
   }
 
-
   /* TODO: Get proper Ecmarkup support for examples */
   emu-note[example] {
     --note-type: example;
@@ -212,12 +211,12 @@
       </blockquote>
 
       <p>All calls to abstract operations that return completion records are implicitly assumed to be wrapped by a ReturnIfAbrupt macro, unless they are explicitly wrapped by an explicit Completion call. For example:</p>
-      <emu-alg>
+      <emu-alg example>
         1. Let _result_ be GetTheAnswer(_value_).
         1. Let _second_ be Completion(GetTheAnswer(_value_)).
       </emu-alg>
       <p>is equivalent to:</p>
-      <emu-alg>
+      <emu-alg example>
         1. Let _result_ be ReturnIfAbrupt(GetTheAnswer(_value_)).
         1. Let _second_ be Completion(GetTheAnswer(_value_)).
       </emu-alg>
@@ -226,14 +225,14 @@
     <emu-clause id="sec-optional-errors">
       <h1>Optional Errors</h1>
 
-      <p>Whenever an algorithm is to <dfn>optionally report an error</dfn>, an implementation may choose one of the following behaviors:</p>
+      <p>Whenever an algorithm is to <dfn>optionally report an error</dfn>, an implementation may choose one of the following behaviours:</p>
       <ul>
         <li>Continue executing the rest of the algorithm.</li>
         <li>Report an error to the user (for example, in the browser console), and continue executing the rest of the algorithm.</li>
         <li>Return a ThrowCompletion.</li>
       </ul>
 
-      <p>An implementation can choose different behaviors for different optional errors.</p>
+      <p>An implementation can choose different behaviours for different optional errors.</p>
     </emu-clause>
   </emu-clause>
 
@@ -269,7 +268,7 @@
 
     <dt><dfn id="sec-terms-and-definitions-colun">column</dfn></dt>
     <dd>
-      <p>zero-based indexed offset within a line of the generated code, computed as UTF-16 code units for JavaScript and CSS source maps, and as byte indexes in the binary content (represented as a single line) for WebAssembly source maps.</p>
+      <p>zero-based indexed offset within a line of the generated code, computed as UTF-16 code units for JavaScript and CSS source maps, and as byte indeces in the binary content (represented as a single line) for WebAssembly source maps.</p>
       <emu-note>That means that "A" (`LATIN CAPITAL LETTER A`) measures as 1 code unit, and "🔥" (`FIRE`) measures as 2 code units. Source maps for other content types may diverge from this.</emu-note>
     </dd>
   </dl>
@@ -316,12 +315,12 @@
       1. Else, let _sign_ be 1.
       1. Let _value_ be floor(_unsigned_ / 2).
       1. If _value_ is 0 and _sign_ is -1, return -2<sup>31</sup>.
-      1. If _value_ is ≥ 2<sup>31</sup>, throw an error.
-        <emu-note>
-          The check is required here as _unsigned_ is the VLQUnsignedValue of |VlqDigitList|, not of |Vlq|.
-        </emu-note>
+      1. [id="step-VLQSignedValue-boundary-check"] If _value_ is ≥ 2<sup>31</sup>, throw an error.
       1. Return _sign_ × _value_.
     </emu-alg>
+    <emu-note>
+      The check in step <emu-xref href="#step-VLQSignedValue-boundary-check"></emu-xref> is needed because _unsigned_ is the VLQUnsignedValue of |VlqDigitList|, not of |Vlq|.
+    </emu-note>
   </emu-clause>
 
   <emu-clause id="sec-VLQUnsignedValue" type="sdo">
@@ -440,7 +439,7 @@
       1. Assert: _length_ is a non-negative integral Number.
       1. Let _list_ be a new empty List.
       1. Let _i_ be 0.
-      1. While _i_ &lt; ℝ(_length_), do
+      1. Repeat, while _i_ &lt; ℝ(_length_),
         1. Let _value_ be JSONObjectGet(_array_, ToString(𝔽(_i_))).
         1. Assert: _value_ is not ~missing~.
         1. Append _value_ to _list_.
@@ -465,9 +464,9 @@
       1. Let _strLen_ be the length of _string_.
       1. Let _lastStart_ be 0.
       1. Let _i_ be 0.
-      1. While _i_ &lt; _strLen_, do
+      1. Repeat, while _i_ &lt; _strLen_,
         1. Let _matched_ be *false*.
-        1. For each _sep_ of _separators_, do
+        1. For each String _sep_ of _separators_, do
           1. Let _sepLen_ be the length of _sep_.
           1. Let _candidate_ be the substring of _string_ from _i_ to min(_i_ + _sepLen_, _strLen_).
           1. If _candidate_ = _sep_ and _matched_ is *false*, then
@@ -608,7 +607,7 @@
         1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
-        1. Let _sourceMap_ be the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
+        1. Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
       </emu-alg>
 
       <emu-clause id="sec-GetOptionalString" type="abstract operation">
@@ -642,8 +641,9 @@
           1. If _values_ is not a JSON array, then
             1. Optionally report an error.
             1. Return _list_.
-          1. For each element _item_ of JSONArrayIterate(_values_),
-            1. If _item_ is a String, append _item_ to _list_.
+          1. For each element _item_ of JSONArrayIterate(_values_), do
+            1. If _item_ is a String, then
+              1. Append _item_ to _list_.
             1. Else,
               1. Optionally report an error.
               1. Append *""* to _list_.
@@ -666,8 +666,9 @@
           1. If _values_ is not a JSON array, then
             1. Optionally report an error.
             1. Return _list_.
-          1. For each element _item_ of JSONArrayIterate(_values_),
-            1. If _item_ is a String, append _item_ to _list_.
+          1. For each element _item_ of JSONArrayIterate(_values_), do
+            1. If _item_ is a String, then
+              1. Append _item_ to _list_.
             1. Else,
               1. If _item_ ≠ *null*, optionally report an error.
               1. Append *null* to _list_.
@@ -690,15 +691,19 @@
           1. If _values_ is not a JSON array, then
             1. Optionally report an error.
             1. Return _list_.
-          1. For each element _item_ of JSONArrayIterate(_values_),
-            1. If _item_ is an integral Number, _item_ ≠ *0*<sub>𝔽</sub>, and _item_ ≥ *0*<sub>𝔽</sub>, then
+          1. For each element _item_ of JSONArrayIterate(_values_), do
+            1. If _item_ is an integral Number, _item_ ≠ *+0*<sub>𝔽</sub>, and _item_ ≥ *+0*<sub>𝔽</sub>, then
               1. Append ℝ(_item_) to _list_.
             1. Else,
               1. If _item_ ≠ *null*, optionally report an error.
-                <!-- TODO: Should this step be removed, so that the list only contains numbers? -->
               1. Append *null* to _list_.
           1. Return _list_.
         </emu-alg>
+        <!--
+           TODO:
+          Should the "If _item_ ≠ *null*, optionally report an error" step be
+          removed, so that the list only contains numbers? 
+        -->
       </emu-clause>
     </emu-clause>
   </emu-clause>
@@ -899,17 +904,20 @@
           1. If _state_.[[SourceIndex]] &lt; 0 or _state_.[[SourceIndex]] ≥ the number of elements of _sources_, then
             1. Optionally report an error.
             1. Let _source_ be *null*.
-          1. Else, let _source_ be _sources_[_state_.[[SourceIndex]]].
+          1. Else,
+            1. Let _source_ be _sources_[_state_.[[SourceIndex]]].
           1. Perform DecodeMappingsField of |OriginalLine| with arguments _state_, _mappings_, _names_ and _sources_.
           1. If _state_.[[OriginalLine]] &lt; 0, then
             1. Optionally report an error.
             1. Let _originalLine_ be *null*.
-          1. Else, let _originalLine_ be _state_.[[OriginalLine]].
+          1. Else,
+            1. Let _originalLine_ be _state_.[[OriginalLine]].
           1. Perform DecodeMappingsField of |OriginalColumn| with arguments _state_, _mappings_, _names_ and _sources_.
           1. If _state_.[[OriginalColumn]] &lt; 0, then
             1. Optionally report an error.
             1. Let _originalColumn_ be *null*.
-          1. Else, let _originalColumn_ be _state_.[[OriginalColumn]].
+          1. Else,
+            1. Let _originalColumn_ be _state_.[[OriginalColumn]].
           1. Let _name_ be *null*.
           1. If |Name| is present, then
             1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
@@ -931,7 +939,7 @@
             Vlq
         </emu-grammar>
         <emu-alg>
-          1. Let _relativeSourceIndex_ the VLQSignedValue of |Vlq|.
+          1. Let _relativeSourceIndex_ be the VLQSignedValue of |Vlq|.
           1. Set _state_.[[SourceIndex]] to _state_.[[SourceIndex]] + _relativeSourceIndex_.
         </emu-alg>
         <emu-grammar>
@@ -1016,7 +1024,7 @@
 
       <ul>
         <li>
-          <p>The |BindingIdentifier|(s) for |LexicalDeclaration|, |VariableStatement| and |ParameterList|.</p>
+          <p>The |BindingIdentifier|(s) for |LexicalDeclaration|, |VariableStatement| and |FormalParameterList|.</p>
         </li>
         <li>
           <p>The |BindingIdentifier| for |FunctionDeclaration|, |FunctionExpression|, |AsyncFunctionDeclaration|, |AsyncFunctionExpression|, |GeneratorDeclaration|, |GeneratorExpression|, |AsyncGeneratorDeclaration|, and |AsyncGeneratorExpression| if it exists, or the opening parenthesis `(` preceding the |FormalParameters| otherwise.</p>
@@ -1074,15 +1082,18 @@
           1. If _sourceRoot_ contains the code point U+002F (SOLIDUS), then
             1. Let _idx_ be the index of the last occurrence of U+002F (SOLIDUS) in _sourceRoot_.
             1. Set _sourceUrlPrefix_ to the substring of _sourceRoot_ from 0 to _idx_ + 1.
-          1. Else, set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
-        1. For each _source_ in _sources_ with index _index_, do
+          1. Else,
+            1. Set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
+        1. Let _index_ be 0.
+        1. Repeat, while _index_ &lt; _sources_' length,
+          1. Let _source_ be _sources_[_index_].
           1. Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false* }.
           1. If _source_ ≠ *null*, then
             1. Set _source_ to the string-concatenation of _sourceUrlPrefix_ and _source_.
             1. Let _sourceURL_ be the result of URL parsing _source_ with _baseURL_.
             1. If _sourceURL_ is ~failure~, optionally report an error.
             1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
-          1. If _ignoredSources_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
+          1. If _ignoreList_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
           1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
           1. Append _decodedSource_ to _decodedSources_.
         1. Return _decodedSources_.
@@ -1155,13 +1166,14 @@
       1. Let _sectionsField_ be JSONObjectGet(_json_, *"sections"*).
       1. Assert: _sectionsField_ is not ~missing~.
       1. If _sectionsField_ is not a JSON array, throw an error.
-      1. If JSONObjectGet(_json_, *"version"*) is not *3<sub>𝔽</sub>*, optionally report an error.
+      1. If JSONObjectGet(_json_, *"version"*) is not *3*<sub>𝔽</sub>, optionally report an error.
       1. Let _fileField_ be GetOptionalString(_json_, *"file"*).
       1. Let _sourceMap_ be the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: « », [[Mappings]]: « » }.
       1. Let _previousOffset_ be *null*.
       1. Let _previousLastMapping_ be *null*.
-      1. For each _section_ of JSONArrayIterate(_sectionsField_), do
-        1. If _section_ is not a JSON object, optionally report an error.
+      1. For each JSON value _section_ of JSONArrayIterate(_sectionsField_), do
+        1. If _section_ is not a JSON object, then
+          1. Optionally report an error.
         1. Else,
           1. Let _offset_ be JSONObjectGet(_section_, *"offset"*).
           1. If _offset_ is not a JSON object, throw an error.
@@ -1169,10 +1181,10 @@
           1. Let _offsetColumn_ be JSONObjectGet(_offset_, *"column"*).
           1. If _offsetLine_ is not an integral Number, then
             1. Optionally report an error.
-            1. Set _offsetLine_ to *0*<sub>𝔽</sub>.
+            1. Set _offsetLine_ to *+0*<sub>𝔽</sub>.
           1. If _offsetColumn_ is not an integral Number, then
             1. Optionally report an error.
-            1. Set _offsetColumn_ to *0*<sub>𝔽</sub>.
+            1. Set _offsetColumn_ to *+0*<sub>𝔽</sub>.
           1. If _previousOffset_ ≠ *null*, then
             1. If _offsetLine_ &lt; JSONObjectGet(_previousOffset_, *"line"*), optionally report an error.
             1. Else if _offsetLine_ = JSONObjectGet(_previousOffset_, *"line"*) and _offsetColumn_ &lt; Get(_previousOffset_, *"column"*), optionally report an error.
@@ -1198,7 +1210,7 @@
               1. Append _mapping_ to _offsetMappings_.
             1. Set _sourceMap_.[[Mappings]] to the list-concatenation of _sourceMap_.[[Mappings]] and _offsetMappings_.
             1. Set _previousOffset_ to _offset_.
-            1. Let _sortedMappings_ be a copy of _offsetMappings_, sorted in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if GeneratedPositionLessThan(_a_, _b_) is *true*.
+            1. [declared="a,b"] Let _sortedMappings_ be a copy of _offsetMappings_, sorted in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if GeneratedPositionLessThan(_a_, _b_) is *true*.
             1. If _sortedMappings_ is not empty, set _previousLastMapping_ to the last element of _sortedMappings_.
         1. Return _sourceMap_.
     </emu-alg>
@@ -1298,26 +1310,26 @@
 
         <emu-alg>
           1. Let _tokens_ be the List of tokens obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
-          1. For each _token_ in _tokens_, in reverse order, do:
+          1. For each nonterminal _token_ in _tokens_, in reverse order, do
             1. If _token_ is not |SingleLineComment| or |MultiLineComment|, return *null*.
-              <!-- TODO: We need to define a SDO for this, to make explicit what the contents actually are -->
             1. Let _comment_ be the content of _token_.
             1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
             1. If _sourceMapURL_ is a String, return _sourceMapURL_.
           1. Return *null*.
         </emu-alg>
+        <!-- TODO: We need to define a SDO for getting the contents of a comment, to make explicit what they actually are -->
 
         <p>To extract a source map URL <dfn id="sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</dfn>:</p>
 
         <emu-alg>
-          1. Let _lines_ be StringSplit(_mappings_, « *"\u000D\u000A"*, *"\u000A"*, *"\u000D"*, *"\u2028"*, *"\u2029"* »).
+          1. Let _lines_ be StringSplit(_source_, « *"\u000D\u000A"*, *"\u000A"*, *"\u000D"*, *"\u2028"*, *"\u2029"* »).
           1. NOTE: The regular expression above matches the |LineTerminatorSequence| production.
           1. Let _lastURL_ be *null*.
-          1. For each _lineStr_ in _lines_, do:
+          1. For each String _lineStr_ in _lines_, do
             1. Let _line_ be StringToCodePoints(_lineStr_).
             1. Let _position_ be 0.
             1. Let _lineLength_ be the length of _line_.
-            1. While _position_ &lt; _lineLength_,
+            1. Repeat, while _position_ &lt; _lineLength_,
               1. Let _first_ be _line_[_position_].
               1. Set _position_ to _position_ + 1.
               1. If _first_ is U+002F (SOLIDUS) and _position_ &lt; _lineLength_, then
@@ -1330,7 +1342,7 @@
                   1. Set _position_ to _lineLength_.
                 1. Else if _second_ is U+002A (ASTERISK), then
                   1. Let _commentCp_ be a new empty List.
-                  1. While _position_ + 1 &lt; _lineLength_,
+                  1. Repeat, while _position_ + 1 &lt; _lineLength_,
                     1. Let _c1_ be _line_[_position_].
                     1. Set _position_ to _position_ + 1.
                     1. Let _c2_ be _line_[_position_].
@@ -1339,7 +1351,8 @@
                       1. Let _sourceMapURL_ be MatchSourceMapURL(CodePointsToString(_commentCp_)).
                       1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
                     1. Append _c1_ to _commentCp_.
-                1. Else, set _lastURL_ to *null*.
+                1. Else,
+                  1. Set _lastURL_ to *null*.
               1. Else if _first_ is not an ECMAScript |WhiteSpace|, then
                 1. Set _lastURL_ to *null*.
               1. NOTE: We reset _lastURL_ to *null* whenever we find a non-comment code character.
@@ -1389,14 +1402,14 @@ return lastURL;</code></pre>
           <h1>
             MatchSourceMapURL (
               _comment_: a String,
-            ): either ~NONE~ or a String
+            ): either ~none~ or a String
           </h1>
           <dl class="header"></dl>
           <emu-alg>
             1. Let _pattern_ be RegExpCreate(*"^[@#]\\s\*sourceMappingURL=(\\S\*?)\\s\*$"*, *""*).
             1. Let _match_ be RegExpExec(_pattern_, _comment_).
             1. If _match_ is not *null*, return Get(_match_, *"1"*).
-            1. Return ~NONE~.
+            1. Return ~none~.
           </emu-alg>
 
           <emu-note>The prefix for this annotation was initially `//@`, however this conflicts with Internet Explorer's Conditional Compilation and was changed to `//#`.</emu-note>
@@ -1432,7 +1445,7 @@ return lastURL;</code></pre>
       <emu-alg>
         1. Let _module_ be module_decode(_bytes_).
         1. If _module_ is WebAssembly error, return *null*.
-        1. For each custom section _customSection_ of _module_,
+        1. For each custom section _customSection_ of _module_, do
           1. Let _name_ be the `name` of _customSection_.
           1. If CodePointsToString(_name_) is *"sourceMappingURL"*, then
             1. Let _value_ be the `bytes` of _customSection_.
@@ -1457,19 +1470,20 @@ return lastURL;</code></pre>
       <emu-alg>
         1. Let _promiseCapability_ be NewPromiseCapability(%Promise%).
         1. Let _request_ be a new request whose request URL is _url_.
-        1. Let _processResponseConsumeBody_ be a new Abstract Closure with parameters (_response_, _bodyBytes_) that performs the following steps when called:
+        1. Let _processResponseConsumeBody_ be a new Abstract Closure with parameters (_response_, _bodyBytes_) that captures _promiseCapability_ and _url_, and performs the following steps when called:
           1. If _bodyBytes_ is *null* or ~failure~, then
             1. Perform Call(_promiseCapability_.[[Reject]], *undefined*, « a new *TypeError* »).
             1. Return.
           1. If _url_'s scheme is an HTTP(S) scheme and the byte sequence \``)]}'`\` is a byte-sequence-prefix of _bodyBytes_, then
-            1. While _bodyBytes_'s _length_ ≠ 0 and _bodyBytes_[0] is not an HTTP newline byte, remove the 0th element from _bodyBytes_.
+            1. Repeat, while _bodyBytes_'s byte-sequence-length ≠ 0 and _bodyBytes_[0] is not an HTTP newline byte,
+              1. Remove the 0th element from _bodyBytes_.
           1. Let _bodyString_ be Completion(UTF-8 decode of _bodyBytes_).
           1. IfAbruptRejectPromise(_bodyString_, _promiseCapability_).
           1. Let _jsonValue_ be Completion(ParseJSON(_bodyString_)).
           1. IfAbruptRejectPromise(_jsonValue_, _promiseCapability_).
           1. Perform Call(_promiseCapability_.[[Resolve]], *undefined*, « _jsonValue_ »).
         1. Perform fetch _request_ with processResponseConsumeBody set to _processResponseConsumeBody_.
-        1. Return _promise_.[[Promise]].
+        1. Return _promiseCapability_.[[Promise]].
       </emu-alg>
 
       <emu-note>
@@ -1555,7 +1569,8 @@ return lastURL;</code></pre>
     <dt>WHATWG Infra &lt;<a href="https://infra.spec.whatwg.org/">https://infra.spec.whatwg.org/</a>></dt>
     <dd>
       <dfn id="external-whatwg-infra-byte-sequence"><a href="https://infra.spec.whatwg.org/#byte-sequence">byte sequence</a></dfn>,
-      <dfn id="external-whatwg-infra-byte-sequence-prefix"><a href="https://infra.spec.whatwg.org/#byte-sequence-prefix">byte-sequence-prefix</a></dfn>
+      <dfn id="external-whatwg-infra-byte-sequence-prefix"><a href="https://infra.spec.whatwg.org/#byte-sequence-prefix">byte-sequence-prefix</a></dfn>,
+      <dfn id="external-whatwg-infra-byte-sequence-length"><a href="https://infra.spec.whatwg.org/#byte-sequence-length">byte-sequence-length</a></dfn>,
     </dd>
     <dt>WHATWG <emu-not-ref>URL</emu-not-ref> &lt;<a href="https://url.spec.whatwg.org/">https://url.spec.whatwg.org/</a>></dt>
     <dd>
