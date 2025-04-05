@@ -1071,9 +1071,8 @@
         1. Let _sourcesContentCount_ be the the number of elements in _sourcesContent_.
         1. Let _sourceUrlPrefix_ be *""*.
         1. If _sourceRoot_ ≠ *null*, then
-          1. If _sourceRoot_ contains the code point U+002F (SOLIDUS), then
-            1. Let _idx_ be the index of the last occurrence of U+002F (SOLIDUS) in _sourceRoot_.
-            1. Set _sourceUrlPrefix_ to the substring of _sourceRoot_ from 0 to _idx_ + 1.
+          1. If _sourceRoot_ ends with the code point U+002F (SOLIDUS), then
+            1. Set _sourceUrlPrefix_ to _sourceRoot_.
           1. Else, set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
         1. For each _source_ in _sources_ with index _index_, do
           1. Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false* }.
@@ -1084,6 +1083,7 @@
             1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
           1. If _ignoredSources_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
           1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
+          1. Else, optionally report an error.
           1. Append _decodedSource_ to _decodedSources_.
         1. Return _decodedSources_.
       </emu-alg>
