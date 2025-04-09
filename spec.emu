@@ -608,6 +608,7 @@
         1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
+        1. Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if GeneratedPositionLessThan(_a_, _b_) is *true*.
         1. Let _sourceMap_ be the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
       </emu-alg>
 
@@ -698,6 +699,21 @@
                 <!-- TODO: Should this step be removed, so that the list only contains numbers? -->
               1. Append *null* to _list_.
           1. Return _list_.
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-GeneratedPositionLessThan" type="abstract operation">
+        <h1>
+          GeneratedPositionLessThan (
+            _a_: a Decoded Mapping Record,
+            _b_: a Decoded Mapping Record,
+          ): a Boolean
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. If _a_.[[GeneratedLine]] &lt; _b_.[[GeneratedLine]], return *true*.
+          1. If _a_.[[GeneratedLine]] = _b_.[[GeneratedLine]] and _a_.[[GeneratedColumn]] &lt; _b_.[[GeneratedColumn]], return *true*.
+          1. Return *false*.
         </emu-alg>
       </emu-clause>
     </emu-clause>
@@ -1198,29 +1214,13 @@
               1. Append _mapping_ to _offsetMappings_.
             1. Set _sourceMap_.[[Mappings]] to the list-concatenation of _sourceMap_.[[Mappings]] and _offsetMappings_.
             1. Set _previousOffset_ to _offset_.
-            1. Let _sortedMappings_ be a copy of _offsetMappings_, sorted in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if GeneratedPositionLessThan(_a_, _b_) is *true*.
-            1. If _sortedMappings_ is not empty, set _previousLastMapping_ to the last element of _sortedMappings_.
+            1. If _offsetMappings_ is not empty, set _previousLastMapping_ to the last element of _offsetMappings_.
         1. Return _sourceMap_.
     </emu-alg>
 
     <emu-note>
       Implementations may choose to represent index source map sections without appending the mappings together, for example, by storing each section separately and conducting a binary search.
     </emu-note>
-
-    <emu-clause id="sec-GeneratedPositionLessThan" type="abstract operation">
-      <h1>
-        GeneratedPositionLessThan (
-          _a_: a Decoded Mapping Record,
-          _b_: a Decoded Mapping Record,
-        ): a Boolean
-      </h1>
-      <dl class="header"></dl>
-      <emu-alg>
-        1. If _a_.[[GeneratedLine]] &lt; _b_.[[GeneratedLine]], return *true*.
-        1. If _a_.[[GeneratedLine]] = _b_.[[GeneratedLine]] and _a_.[[GeneratedColumn]] &lt; _b_.[[GeneratedColumn]], return *true*.
-        1. Return *false*.
-      </emu-alg>
-    </emu-clause>
   </emu-clause>
 </emu-clause>
 
@@ -1483,6 +1483,169 @@ return lastURL;</code></pre>
         <pre><code class="json">{"version": 3, ...}</code></pre>
       </emu-note>
     </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-operations-on-source-maps">
+  <h1>Operations on source maps</h1>
+
+  <p>After decoding a source map, source map consumers can use the resulting Decoded Source Map Records to look up position information for debugging or other use cases. This section describes the behavior of typical operations that may be supported by source map consumers.</p>
+
+  <p>An <dfn id="original-position-record">Original Position Record</dfn> has the following fields:</p>
+  <emu-table id="table-original-position-fields" caption="Fields of Original Position Records">
+    <table>
+      <thead>
+        <tr>
+          <th>
+            Field Name
+          </th>
+          <th>
+            Value Type
+          </th>
+        </tr>
+      </thead>
+      <tr>
+        <td>[[Line]]</td>
+        <td>an integer</td>
+      </tr>
+      <tr>
+        <td>[[Column]]</td>
+        <td>an integer</td>
+      </tr>
+      <tr>
+        <td>[[Source]]</td>
+        <td>a Decoded Source Record</td>
+      </tr>
+      <tr>
+        <td>[[Name]]</td>
+        <td>a String or *null*</td>
+      </tr>
+    </table>
+  </emu-table>
+
+  <p>A <dfn id="generated-position-record" variants="Generated Position Records">Generated Position Record</dfn> has the following fields:</p>
+  <emu-table id="table-generated-position-fields" caption="Fields of Generated Position Records">
+    <table>
+      <thead>
+        <tr>
+          <th>
+            Field Name
+          </th>
+          <th>
+            Value Type
+          </th>
+        </tr>
+      </thead>
+      <tr>
+        <td>[[Line]]</td>
+        <td>an integer</td>
+      </tr>
+      <tr>
+        <td>[[Column]]</td>
+        <td>an integer</td>
+      </tr>
+    </table>
+  </emu-table>
+
+  <emu-clause id="sec-GetOriginalPositionExact" type="abstract operation">
+    <h1>
+      GetOriginalPositionExact (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _generatedLine_: an integer,
+        _generatedColumn_: an integer,
+      ): an Original Position Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
+      1. Let _i_ be 0.
+      1. While _i_ is less than the number of elements of _mappings_,
+        1. Let _mapping_ be _mappings_.[i].
+        1. If _mapping_.[[GeneratedLine]] = _generatedLine_ and _mapping_.[[GeneratedColumn]] = _generatedColumn_, then return the Original Position Record { [[Line]]: _mapping_.[[OriginalLine]], [[Column]]: _mapping_.[[OriginalColumn]], [[Source]]: _mapping_.[[OriginalSource]], [[Name]]: _mapping_.[[Name]] }.
+        1. Else, set _i_ to _i_ + 1.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-GetOriginalPositionClosest" type="abstract operation">
+    <h1>
+      GetOriginalPositionClosest (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _generatedLine_: an integer,
+        _generatedColumn_: an integer,
+      ): an Original Position Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
+      1. Let _closestPosition_ be *null*.
+      1. Let _i_ be 0.
+      1. While _i_ is less than the number of elements of _mappings_,
+        1. Let _mapping_ be _mappings_.[i].
+        1. If _mapping_.[[GeneratedLine]] > _generatedLine_, or _mapping_.[[GeneratedLine]] = _generatedLine_ and _mapping_.[[GeneratedColumn]] > _generatedColumn_, then return _closestPosition_.
+        1. Else, set _closestPosition_ to the Original Position Record { [[Line]]: _mapping_.[[OriginalLine]], [[Column]]: _mapping_.[[OriginalColumn]], [[Source]]: _mapping_.[[OriginalSource]], [[Name]]: _mapping_.[[Name]] }.
+        1. Set _i_ to _i_ + 1.
+      1. Return _closestPosition_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-GetGeneratedPosition" type="abstract operation">
+    <h1>
+      GetGeneratedPositions (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _originalLine_: an integer,
+        _originalColumn_: an integer,
+        _originalSource_: a Decoded Source Record,
+      ): a list of Generated Position Records
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
+      1. Let _generatedPositions_ be a new empty List.
+      1. Let _reverseMappings_ be ComputeReverseMappings(_mappings_, _originalSource_).
+      1. Let _i_ be 0.
+      1. While _i_ is less than the number of elements of _reverseMappings_,
+        1. Let _mapping_ be _mappings_[i].
+        1. If _mapping_.[[OriginalLine]] = _originalLine_ and _mapping_.[[OriginalLine]] = _originalLine_, then append the Generated Position Record { [[Line]]: _mapping_.[[GeneratedLine]], [[Column]]: _mapping_.[[GeneratedColumn]] } to _generatedPositions_.
+        1. Set _i_ to _i_ + 1.
+      1. Return _generatedPositions_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-ComputeReverseMappings" type="abstract operation">
+    <h1>
+      ComputeReverseMappings (
+        _mappings_: a list of Decoded Mapping Records,
+        _originalSource_: a Decoded Source Record,
+      ): a list of Decoded Mapping Records
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _reverseMappings_ be a new empty List.
+      1. Let _i_ be 0.
+      1. While _i_ is less than the number of elements of _mappings_,
+        1. Let _mapping_ be _mappings_[i].
+        1. If _mapping_.[[OriginalSource]] and _originalSource_ are the same Decoded Source Record, then
+          1. Append _mapping_ to _reverseMappings_.
+        1. Set _i_ to _i_ + 1.
+      1. Sort _reverseMappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if OriginalPositionLessThan(_a_, _b_) is *true*.
+      1. Return _reverseMappings_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-OriginalPositionLessThan" type="abstract operation">
+    <h1>
+      OriginalPositionLessThan (
+        _a_: a Decoded Mapping Record,
+        _b_: a Decoded Mapping Record,
+      ): a Boolean
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. If _a_.[[OriginalLine]] &lt; _b_.[[OriginalLine]], return *true*.
+      1. If _a_.[[OriginalLine]] = _b_.[[OriginalLine]] and _a_.[[OriginalColumn]] &lt; _b_.[[OriginalColumn]], return *true*.
+      1. Return *false*.
+    </emu-alg>
   </emu-clause>
 </emu-clause>
 
