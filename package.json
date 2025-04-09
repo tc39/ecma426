@@ -5,9 +5,11 @@
   "description": "The Source Map specification",
   "scripts": {
     "prebuild-only": "npm run clean && mkdir out  && cp -R img out",
-    "build-only": "ecmarkup --verbose --load-biblio @tc39/ecma262-biblio spec.emu out/index.html",
-    "build": "npm run build-only",
+    "build-only": "npm run ecmarkup -- --verbose --load-biblio @tc39/ecma262-biblio spec.emu out/index.html",
+    "build-loose": "npm run build-only",
+    "build": "npm run build-only -- --lint-spec",
     "clean": "rm -rf out",
+    "ecmarkup": "node ./scripts/ecmarkup.js",
     "format": "emu-format --write spec.emu",
     "test": "exit 0",
     "watch": "npm run build-only -- --watch"
