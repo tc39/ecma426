@@ -500,11 +500,11 @@
         </thead>
         <tr>
           <td>[[Line]]</td>
-          <td>a Number</td>
+          <td>a non-negative integral Number</td>
         </tr>
         <tr>
           <td>[[Column]]</td>
-          <td>a Number</td>
+          <td>a non-negative integral Number</td>
         </tr>
       </table>
     </emu-table>
@@ -523,15 +523,15 @@
         </thead>
         <tr>
           <td>[[SourceIndex]]</td>
-          <td>a Number</td>
+          <td>a non-negative integral Number</td>
         </tr>
         <tr>
           <td>[[Line]]</td>
-          <td>a Number</td>
+          <td>a non-negative integral Number</td>
         </tr>
         <tr>
           <td>[[Column]]</td>
-          <td>a Number</td>
+          <td>a non-negative integral Number</td>
         </tr>
       </table>
     </emu-table>
@@ -973,7 +973,7 @@
             1. Optionally report an error.
             1. Let _originalPosition_ be *null*.
           1. Else,
-            1. Let _originalPosition_ be a new Original Position Record { [[SourceIndex]]: _sources_[_state_.[[SourceIndex]]], [[Line]]: _state_.[[OriginalLine]], [[Column]]: _state_.[[OriginalColumn]] }.
+            1. Let _originalPosition_ be a new Original Position Record { [[SourceIndex]]: _state_.[[SourceIndex]], [[Line]]: _state_.[[OriginalLine]], [[Column]]: _state_.[[OriginalColumn]] }.
           1. Let _name_ be *null*.
           1. If |Name| is present, then
             1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
