@@ -37,6 +37,7 @@
   }
 
   emu-note[issue], emu-note[example] {
+    color: black;
     counter-increment: var(--note-type);
     border-left-color: var(--note-border-color);
     background-color: var(--note-background-color);
