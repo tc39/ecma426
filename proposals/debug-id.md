@@ -36,7 +36,7 @@ The proposed solution offers the following benefits:
 
 5. Guaranteed bidirectionality: Today source maps do not provide the ability to reliably resolve back to the generated file they are from. However in practice tools often require this as they are often leveraging the generated artifact to resolve scope information by parsing the source.
 
-6. Symbol server support: with Debug IDs and source maps with embedded sources it becomes possible to support symbol server lookup from symbol servers.
+6. Symbol server support: With Debug IDs and source maps with embedded sources it becomes possible to support symbol server lookup from symbol servers.
 
 ## Scope
 
@@ -104,16 +104,6 @@ Because the last line already has meaning in the existing specification for the 
 However this has the disadvantage that a tool could not add a Debug ID to a file without having to adjust all the tokens in the source map by the offset that this line adds.
 Having it at the end of the file means it's after all tokens which would allow a separate tool to add Debug IDs to generated files and source maps.
 
-## JavaScript API for Debug ID Resolution
-
-Today `error.stack` in most engines only returns the URLs of the files referenced by the stack trace.
-For Debug IDs to be useful, a solution would need to be added to enable mapping of JavaScript file URLs to Debug IDs.
-
-The strawman proposal is to add the Debug ID in two locations:
-
-- `import.meta.debugId`: a new property that should return the debug ID as a string of the current module if it has one, in the canonical UUID format.
-- A Function property in the global scope `getDebugIdForUrl(url)` that looks up the debug ID for a given script file by URL that has already been loaded by the browser in the current context.
-
 ## Appendix A: Self-Description of Source Maps and JavaScript Files
 
 Unfortunately, neither generated JavaScript files nor source maps can be easily identified without employing heuristics.
@@ -124,24 +114,39 @@ Although solving this issue is beyond the scope of this document, addressing it 
 Nevertheless, we recommend that tools utilize the following heuristics to determine self-identifying JavaScript files and source maps:
 
 - A JSON file containing a top-level object with the keys `mapping`, `version`, `debugId` and `sourcesContent` should be considered to be a self-identifying source map.
-- A UTF-8 encoded text file matching the regular expression `(?m)^//# debugId=([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$` should be considered a generated JavaScript file.
+- A UTF-8 encoded text file matching the regular expression `(?m)^//# debugId=([a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12})$` should be considered a generated self-identifying JavaScript file.
 
 ## Appendix B: Symbol Server Support
 
 With debug IDs it becomes possible to resolve source maps and generated code from the server.
 That way a tool such as a browser or a crash reporter could be pointed to a S3, GCS bucket or an HTTP server that can serve up source maps and build artifacts keyed by debug id.
 
-The structure itself is inspired by [debuginfod](https://sourceware.org/elfutils/Debuginfod.html):
+The strong upside of keying by an ID rather than a URL is that an ID is more resistant to resources moving on the symbol server.
 
-- generated code artifact: `<DebugIdFirstTwo>/<DebugIdRest>/source.js`
-- source map: `<DebugIdFirstTwo>/<DebugIdRest>/sourcemap.json`
+An additional use-case that was discovered is that Debug IDs can be passed alongside "resources" to browser extensions, and if the browser supports it, the browser extensions can resolve source map resources for the passed debug IDs and pass them back to the browser to populate dev tools.
+While this would technically be possible with URLs, having IDs makes association between JS resources and source maps much simpler and it is resistant to the JS resource locations changing.
 
-with the following variables:
+## Appendix C: JavaScript API for Debug ID Resolution
 
-- `DebugIdFirstTwo`: the first two characters in lowercase of the hexadecimal Debug ID
-- `DebugIdRest`: the remaining characters in lowercase of the hexadecimal Debug ID without dashes
+Note: This appendix for a JavaScript API is specifically not part of the proposal and may follow as a proposal to ECMA-262.
 
-Note that debuginfod usually does not use extensions on the path lookup syntax so the more natural filenames would just be `source` and `sourcemap`.
+Today `error.stack` in most engines only returns the URLs of the files referenced by the stack trace.
+For Debug IDs to be able to be used in post-hoc source mapping of stack traces, a JavaScript API would need to be added to enable mapping of file URLs to Debug IDs.
+
+The strawman API proposals include:
+
+- **A Function property in the global scope `getDebugIdForUrl(url: string): string | null;`**
+
+  The idea is for the function to be given a file URL (as it would be present on `Error.stack`), to retrieve the corresponding Debug ID.
+  For example, when encountering an error, (in-production debug) tooling could parse the stack trace, extract each frame’s file URL, and pass it to `getDebugIdForUrl()` to obtain its Debug ID.
+
+  This approach has a critical flaw: The `Error.stack` property, which would be necessary for parsing the stack trace, is not formally specified.
+  This makes it unreliable as a foundation for a standardized API, since it relies on non-standardized conventions across engines.
+
+- **Error.getDebugIdsForError(err: Error): (string | null)[];**
+
+  Having established that relying on `Error.stack` is not reliable, an alternative would be a static API `Error.getDebugIdsForError()`, which, when passed an error object, returns an array of Debug IDs for each stack frame, with `null` indicating a missing Debug ID.
+  This approach is a bit more functional, as it abstracts away the specifics of stack trace parsing and Debug ID retrieval.
 
 ## Polyfills
 
