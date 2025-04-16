@@ -512,7 +512,7 @@
 
   <emu-clause id="sec-original-position-record-type">
     <h1>Original Position Record</h1>
-    <p>A <dfn variants="Original Position Records">Original Position Record</dfn> is a tuple of a non-negative source index, a non-negative line and non-negative column number. It is similar to a Position Record but describes a source position in a concrete original source file identified via an index into the sources field.</p>
+    <p>A <dfn variants="Original Position Records">Original Position Record</dfn> is a tuple of a Decoded Source Record, a non-negative line and non-negative column number. It is similar to a Position Record but describes a source position in a concrete original source file.</p>
     <emu-table id="table-original-position-record-fields" caption="Original Position Record Fields">
       <table>
         <thead>
@@ -522,8 +522,8 @@
           </tr>
         </thead>
         <tr>
-          <td>[[SourceIndex]]</td>
-          <td>a non-negative integral Number</td>
+          <td>[[Source]]</td>
+          <td>a Decoded Source Record</td>
         </tr>
         <tr>
           <td>[[Line]]</td>
@@ -546,7 +546,7 @@
     </h1>
     <dl class="header">
       <dt>description</dt>
-      <dd>It returns ~lesser~, ~equal~ or ~greater~ depending whether _first_ occurs before, is equal or occurs after _second_ respectively. The [[SourceIndex]] field of Original Position Records are ignored.</dd>
+      <dd>It returns ~lesser~, ~equal~ or ~greater~ depending whether _first_ occurs before, is equal or occurs after _second_ respectively. The [[Source]] field of Original Position Records are ignored.</dd>
     </dl>
     <emu-alg>
       1. If _first_.[[Line]] &lt; _second_.[[Line]], return ~lesser~.
@@ -778,7 +778,7 @@
         <!--
            TODO:
           Should the "If _item_ ≠ *null*, optionally report an error" step be
-          removed, so that the list only contains numbers? 
+          removed, so that the list only contains numbers?
         -->
       </emu-clause>
     </emu-clause>
@@ -973,7 +973,7 @@
             1. Optionally report an error.
             1. Let _originalPosition_ be *null*.
           1. Else,
-            1. Let _originalPosition_ be a new Original Position Record { [[SourceIndex]]: _state_.[[SourceIndex]], [[Line]]: _state_.[[OriginalLine]], [[Column]]: _state_.[[OriginalColumn]] }.
+            1. Let _originalPosition_ be a new Original Position Record { [[Source]]: _sources_[_state_.[[SourceIndex]]], [[Line]]: _state_.[[OriginalLine]], [[Column]]: _state_.[[OriginalColumn]] }.
           1. Let _name_ be *null*.
           1. If |Name| is present, then
             1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
