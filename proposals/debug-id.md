@@ -38,6 +38,8 @@ The proposed solution offers the following benefits:
 
 6. Symbol server support: With Debug IDs and source maps with embedded sources it becomes possible to support symbol server lookup from symbol servers.
 
+7. Source map caching in debuggers: Source maps referenced via URL cannot be cached by debuggers because the source map at a location may change without the URL changing. With the proposed determinism of Debug IDs, browser dev tools and IDEs can decide upfront whether they need to load and parse a source map or not.
+
 ## Scope
 
 This proposal sets some specific limitations on source maps to simplify the processing in the wider ecosystem.
@@ -72,6 +74,9 @@ We propose this requirement to ensure consistency and promote simplicity across 
 Since Debug IDs are embedded in build artifacts, it is recommended that tools generated deterministic Debug IDs (e.g. UUIDv3, UUIDv5) whenever possible, so that the produced artifacts are stable across builds.
 Specification-wise, Debug IDs do not need to be deterministic.
 Determinism is not enforced so that tools can employ non-deterministic fallback mechanisms in case of colliding Debug IDs between two different generated artifacts.
+
+Whether or not a Debug ID is deterministic can be encoded via the UUID version bits. For instance, UUIDv3 and UUIDv5 are deterministic by design.
+Dev tools or debuggers may need to know whether a debug ID is deterministic to decide whether to apply caching mechanisms or not.
 
 ### Debug IDs in Source Maps
 
