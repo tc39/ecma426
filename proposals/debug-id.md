@@ -34,11 +34,13 @@ The proposed solution offers the following benefits:
 
 4. Standardization: The adoption of this proposal as a web standard will encourage a consistent and unified approach to handling source maps and generated code across the industry.
 
-5. Guaranteed bidirectionality: Today source maps do not provide the ability to reliably resolve back to the generated file they are from. However in practice tools often require this as they are often leveraging the generated artifact to resolve scope information by parsing the source.
+5. Guaranteed Bidirectionality: Today source maps do not provide the ability to reliably resolve back to the generated file they are from. However in practice tools often require this as they are often leveraging the generated artifact to resolve scope information by parsing the source.
 
-6. Symbol server support: With Debug IDs and source maps with embedded sources it becomes possible to support symbol server lookup from symbol servers.
+6. Symbol Server Support: With Debug IDs and source maps with embedded sources it becomes possible to support symbol server lookup from symbol servers.
 
-7. Source map caching in debuggers: Source maps referenced via URL cannot be cached by debuggers because the source map at a location may change without the URL changing. With the proposed determinism of Debug IDs, browser dev tools and IDEs can decide upfront whether they need to load and parse a source map or not.
+7. Source Map Caching in Debuggers: Source maps referenced via URL cannot be cached by debuggers because the source map at a location may change without the URL changing. With the proposed determinism of Debug IDs, browser dev tools and IDEs can decide upfront whether they need to load and parse a source map or not.
+
+8. Linking extra Information: Sometimes, you might want to link extra information to a source map, like [version control details](https://github.com/tc39/ecma426/issues/182) (e.g., Git commit hash) or [dependency information](https://github.com/tc39/ecma426/issues/14). Adding this directly into the source map file would make the format more complex and goes beyond its main purpose of mapping generated code back to the original source. Debug IDs offer a solution since you can store this extra information separately (e.g., in a database or another file) and use the source map's unique Debug ID to reliably link them together. This lets you associate extra context with a build without changing the source map format itself.
 
 ## Scope
 
@@ -159,6 +161,7 @@ For this proposal, we include a [repository for "polyfilling" Debug IDs](https:/
 It includes an implementation of plugins for various popular build-tooling as well as an implementation for a runtime API to access Debug IDs.
 
 Note: While polyfilling is possible and is in wide production use already[^1], we have found a plethora of issues:
+
 - Complexity in setup and compatibility
 - Polyfills usually require nasty workarounds for build-tool quirks
 - Build-tools often don't allow for modifying source-maps
