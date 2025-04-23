@@ -40,7 +40,7 @@ The proposed solution offers the following benefits:
 
 7. Source Map Caching in Debuggers: Source maps referenced via URL cannot be cached by debuggers because the source map at a location may change without the URL changing. With the proposed determinism of Debug IDs, browser dev tools and IDEs can decide upfront whether they need to load and parse a source map or not.
 
-8. Linking extra Information: Sometimes, you might want to link extra information to a source map, like [version control details](https://github.com/tc39/ecma426/issues/182) (e.g., Git commit hash) or [dependency information](https://github.com/tc39/ecma426/issues/14). Adding this directly into the source map file would make the format more complex and goes beyond its main purpose of mapping generated code back to the original source. Debug IDs offer a solution since you can store this extra information separately (e.g., in a database or another file) and use the source map's unique Debug ID to reliably link them together. This lets you associate extra context with a build without changing the source map format itself.
+8. Linking Extra Information: Sometimes, you might want to link extra information to a source map, like [version control details](https://github.com/tc39/ecma426/issues/182) (e.g., Git commit hash) or [dependency information](https://github.com/tc39/ecma426/issues/14). Adding such information to the source map specification would probably go beyond the main purpose of mapping generated code back to the original source. Debug IDs offer a solution since you can store this extra information separately (e.g., in a database or another file) and use the source map's unique Debug ID to reliably link them together.
 
 ## Scope
 
