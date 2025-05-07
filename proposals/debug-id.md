@@ -181,6 +181,7 @@ The following Source Map **Generators** have implemented Debug IDs as proposed:
 The following Source Map **Consumers/Debuggers** have implemented Debug IDs:
 
 - Sentry.io ([Docs](https://docs.sentry.io/platforms/javascript/sourcemaps/troubleshooting_js/artifact-bundles/#artifact-bundles))
+- Bugsink ([Article](https://www.bugsink.com/blog/bugsink-1.5-introducing-sourcemaps/))
 
 ## Questions
 
