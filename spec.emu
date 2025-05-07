@@ -484,6 +484,81 @@
   </emu-clause>
 </emu-clause>
 
+<emu-clause id="sec-position-types">
+  <h1>Position types</h1>
+
+  <emu-clause id="sec-position-record-type">
+    <h1>Position Record</h1>
+    <p>A <dfn>Position Record</dfn> is a tuple of a non-negative line and non-negative column number:</p>
+    <emu-table id="table-position-record-fields" caption="Position Record Fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value Type</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[Line]]</td>
+          <td>a non-negative integral Number</td>
+        </tr>
+        <tr>
+          <td>[[Column]]</td>
+          <td>a non-negative integral Number</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-original-position-record-type">
+    <h1>Original Position Record</h1>
+    <p>A <dfn variants="Original Position Records">Original Position Record</dfn> is a tuple of a Decoded Source Record, a non-negative line and non-negative column number. It is similar to a Position Record but describes a source position in a concrete original source file.</p>
+    <emu-table id="table-original-position-record-fields" caption="Original Position Record Fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value Type</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[Source]]</td>
+          <td>a Decoded Source Record</td>
+        </tr>
+        <tr>
+          <td>[[Line]]</td>
+          <td>a non-negative integral Number</td>
+        </tr>
+        <tr>
+          <td>[[Column]]</td>
+          <td>a non-negative integral Number</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-ComparePositions" type="abstract operation">
+    <h1>
+      ComparePositions (
+        _first_: a Position Record or a Original Position Record,
+        _second_: a Position Record or a Original Position Record,
+      ): ~lesser~, ~equal~ or ~greater~
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>It returns ~lesser~, ~equal~ or ~greater~ depending whether _first_ occurs before, is equal or occurs after _second_ respectively. The [[Source]] field of Original Position Records are ignored.</dd>
+    </dl>
+    <emu-alg>
+      1. If _first_.[[Line]] &lt; _second_.[[Line]], return ~lesser~.
+      1. If _first_.[[Line]] > _second_.[[Line]], return ~greater~.
+      1. Assert: _first_.[[Line]] is equal to _second_.[[Line]].
+      1. If _first_.[[Column]] &lt; _second_.[[Column]], return ~lesser~.
+      1. If _first_.[[Column]] > _second_.[[Column]], return ~greater~.
+      1. Return ~equal~.
+    </emu-alg>
+  </emu-clause>
+</emu-clause>
+
 <emu-clause id="sec-source-map-format">
   <h1>Source map format</h1>
 
@@ -703,7 +778,7 @@
         <!--
            TODO:
           Should the "If _item_ ≠ *null*, optionally report an error" step be
-          removed, so that the list only contains numbers? 
+          removed, so that the list only contains numbers?
         -->
       </emu-clause>
     </emu-clause>
@@ -747,24 +822,12 @@
           </tr>
         </thead>
         <tr>
-          <td>[[GeneratedLine]]</td>
-          <td>a non-negative integer</td>
+          <td>[[GeneratedPosition]]</td>
+          <td>a Position Record</td>
         </tr>
         <tr>
-          <td>[[GeneratedColumn]]</td>
-          <td>a non-negative integer</td>
-        </tr>
-        <tr>
-          <td>[[OriginalSource]]</td>
-          <td>a Decoded Source Record or *null*</td>
-        </tr>
-        <tr>
-          <td>[[OriginalLine]]</td>
-          <td>a non-negative integer or *null*</td>
-        </tr>
-        <tr>
-          <td>[[OriginalColumn]]</td>
-          <td>a non-negative integer or *null*</td>
+          <td>[[OriginalPosition]]</td>
+          <td>a Original Position Record or *null*</td>
         </tr>
         <tr>
           <td>[[Name]]</td>
@@ -889,7 +952,8 @@
           1. If _state_.[[GeneratedColumn]] &lt; 0, then
             1. Optionally report an error.
             1. Return.
-          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: *null*, [[OriginalLine]]: *null*, [[OriginalColumn]]: *null*, [[Name]]: *null* }.
+          1. Let _position_ be a new Position Record { [[Line]]: _state_.[[GeneratedLine]], [[Column]]: _state_.[[GeneratedColumn]] }.
+          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedPosition]]: _position_, [[OriginalPosition]]: *null*, [[Name]]: *null* }.
           1. Append _decodedMapping_ to _mappings_.
         </emu-alg>
         <emu-grammar>
@@ -901,30 +965,21 @@
           1. If _state_.[[GeneratedColumn]] &lt; 0, then
             1. Optionally report an error.
             1. Return.
+          1. Let _generatedPosition_ be a new Position Record { [[Line]]: _state_.[[GeneratedLine]], [[Column]]: _state_.[[GeneratedColumn]] }.
           1. Perform DecodeMappingsField of |OriginalSource| with arguments _state_, _mappings_, _names_ and _sources_.
-          1. If _state_.[[SourceIndex]] &lt; 0 or _state_.[[SourceIndex]] ≥ the number of elements of _sources_, then
-            1. Optionally report an error.
-            1. Let _source_ be *null*.
-          1. Else,
-            1. Let _source_ be _sources_[_state_.[[SourceIndex]]].
           1. Perform DecodeMappingsField of |OriginalLine| with arguments _state_, _mappings_, _names_ and _sources_.
-          1. If _state_.[[OriginalLine]] &lt; 0, then
-            1. Optionally report an error.
-            1. Let _originalLine_ be *null*.
-          1. Else,
-            1. Let _originalLine_ be _state_.[[OriginalLine]].
           1. Perform DecodeMappingsField of |OriginalColumn| with arguments _state_, _mappings_, _names_ and _sources_.
-          1. If _state_.[[OriginalColumn]] &lt; 0, then
+          1. If _state_.[[SourceIndex]] &lt; 0 or _state_.[[SourceIndex]] ≥ the number of elements of _sources_ or _state_.[[OriginalLine]] &lt; 0 or _state_.[[OriginalColumn]] &lt; 0, then
             1. Optionally report an error.
-            1. Let _originalColumn_ be *null*.
+            1. Let _originalPosition_ be *null*.
           1. Else,
-            1. Let _originalColumn_ be _state_.[[OriginalColumn]].
+            1. Let _originalPosition_ be a new Original Position Record { [[Source]]: _sources_[_state_.[[SourceIndex]]], [[Line]]: _state_.[[OriginalLine]], [[Column]]: _state_.[[OriginalColumn]] }.
           1. Let _name_ be *null*.
           1. If |Name| is present, then
             1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
             1. If _state_.[[NameIndex]] &lt; 0 or _state_.[[NameIndex]] ≥ the number of elements of _sources_, optionally report an error.
             1. Else, set _name_ to _names_[_state_.[[NameIndex]]].
-          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[GeneratedColumn]]: _state_.[[GeneratedColumn]], [[OriginalSource]]: _source_, [[OriginalLine]]: _originalLine_, [[OriginalColumn]]: _originalColumn_, [[Name]]: _name_ }.
+          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: _originalPosition_, [[Name]]: _name_ }.
           1. Append _decodedMapping_ to _mappings_.
         </emu-alg>
         <emu-grammar>
@@ -1080,9 +1135,8 @@
         1. Let _sourcesContentCount_ be the the number of elements in _sourcesContent_.
         1. Let _sourceUrlPrefix_ be *""*.
         1. If _sourceRoot_ ≠ *null*, then
-          1. If _sourceRoot_ contains the code point U+002F (SOLIDUS), then
-            1. Let _idx_ be the index of the last occurrence of U+002F (SOLIDUS) in _sourceRoot_.
-            1. Set _sourceUrlPrefix_ to the substring of _sourceRoot_ from 0 to _idx_ + 1.
+          1. If _sourceRoot_ ends with the code point U+002F (SOLIDUS), then
+            1. Set _sourceUrlPrefix_ to _sourceRoot_.
           1. Else,
             1. Set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
         1. Let _index_ be 0.
@@ -1170,7 +1224,7 @@
       1. If JSONObjectGet(_json_, *"version"*) is not *3*<sub>𝔽</sub>, optionally report an error.
       1. Let _fileField_ be GetOptionalString(_json_, *"file"*).
       1. Let _sourceMap_ be the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: « », [[Mappings]]: « » }.
-      1. Let _previousOffset_ be *null*.
+      1. Let _previousOffsetPosition_ be *null*.
       1. Let _previousLastMapping_ be *null*.
       1. For each JSON value _section_ of JSONArrayIterate(_sectionsField_), do
         1. If _section_ is not a JSON object, then
@@ -1186,12 +1240,11 @@
           1. If _offsetColumn_ is not an integral Number, then
             1. Optionally report an error.
             1. Set _offsetColumn_ to *+0*<sub>𝔽</sub>.
-          1. If _previousOffset_ ≠ *null*, then
-            1. If _offsetLine_ &lt; JSONObjectGet(_previousOffset_, *"line"*), optionally report an error.
-            1. Else if _offsetLine_ = JSONObjectGet(_previousOffset_, *"line"*) and _offsetColumn_ &lt; Get(_previousOffset_, *"column"*), optionally report an error.
-          1. If _previousLastMapping_ is not *null*, then
-            1. If _offsetLine_ &lt; _previousLastMapping_.[[GeneratedLine]], optionally report an error.
-            1. If _offsetLine_ = _previousLastMapping_.[[GeneratedLine]] and _offsetColumn_ &lt; _previousLastMapping_.[[GeneratedColumn]], optionally report an error.
+          1. Let _offsetPosition_ be a new Position Record { [[Line]]: _offsetLine_, [[Column]]: _offsetColumn_ }.
+          1. If _previousOffsetPosition_ ≠ *null*, then
+            1. If ComparePositions(_offsetPosition_, _previousOffsetPosition_) is ~lesser~, optionally report an error.
+          1. If _previousLastMapping_ ≠ *null*, then
+            1. If ComparePositions(_offsetPosition_, _previousLastMapping_.[[GeneratedPosition]]) is ~lesser~, optionally report an error.
             1. NOTE: This part of the decoding algorithm checks that entries of the sections field of index source maps are ordered and do not overlap. While it is expected that generators should not produce index source maps with overlapping sections, source map consumers may, for example, only check the simpler condition that the section offsets are ordered.
           1. Let _mapField_ be JSONObjectGet(_section_, *"map"*).
           1. If _mapField_ is not a JSON object, throw an error.
@@ -1205,13 +1258,13 @@
                 1. Append _additionalSource_ to _sourceMap_.[[Sources]].
             1. Let _offsetMappings_ be a new empty List.
             1. For each Decoded Mapping Record _mapping_ of _decodedSection_.[[Mappings]], do
-              1. If _mapping_.[[GeneratedLine]] = 0, then
-                1. Set _mapping_.[[GeneratedColumn]] to _mapping_.[[GeneratedColumn]] + _offsetColumn_.
-              1. Set _mapping_.[[GeneratedLine]] to _mapping_.[[GeneratedLine]] + _offsetLine_.
+              1. If _mapping_.[[GeneratedPosition]].[[Line]] = 0, then
+                1. Set _mapping_.[[GeneratedPosition]].[[Column]] to _mapping_.[[GeneratedPosition]].[[Column]] + _offsetColumn_.
+              1. Set _mapping_.[[GeneratedPosition]].[[Line]] to _mapping_.[[GeneratedPosition]].[[Line]] + _offsetLine_.
               1. Append _mapping_ to _offsetMappings_.
             1. Set _sourceMap_.[[Mappings]] to the list-concatenation of _sourceMap_.[[Mappings]] and _offsetMappings_.
-            1. Set _previousOffset_ to _offset_.
-            1. [declared="a,b"] Let _sortedMappings_ be a copy of _offsetMappings_, sorted in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if GeneratedPositionLessThan(_a_, _b_) is *true*.
+            1. Set _previousOffsetPosition_ to _offsetPosition_.
+            1. [declared="a,b"] Let _sortedMappings_ be a copy of _offsetMappings_, sorted in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
             1. If _sortedMappings_ is not empty, set _previousLastMapping_ to the last element of _sortedMappings_.
         1. Return _sourceMap_.
     </emu-alg>
@@ -1219,21 +1272,6 @@
     <emu-note>
       Implementations may choose to represent index source map sections without appending the mappings together, for example, by storing each section separately and conducting a binary search.
     </emu-note>
-
-    <emu-clause id="sec-GeneratedPositionLessThan" type="abstract operation">
-      <h1>
-        GeneratedPositionLessThan (
-          _a_: a Decoded Mapping Record,
-          _b_: a Decoded Mapping Record,
-        ): a Boolean
-      </h1>
-      <dl class="header"></dl>
-      <emu-alg>
-        1. If _a_.[[GeneratedLine]] &lt; _b_.[[GeneratedLine]], return *true*.
-        1. If _a_.[[GeneratedLine]] = _b_.[[GeneratedLine]] and _a_.[[GeneratedColumn]] &lt; _b_.[[GeneratedColumn]], return *true*.
-        1. Return *false*.
-      </emu-alg>
-    </emu-clause>
   </emu-clause>
 </emu-clause>
 
