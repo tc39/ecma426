@@ -363,12 +363,12 @@ If a "generated range" contains a callsite, then the range describes an inlined 
 ```
 generated_range_bindings :=
   'G'       // Tag: 0x6 unsigned
-  sBINDING+
+  uBINDING+
 ```
 
-`generated_range_bindings` are only valid for generated ranges that have a `sDEFINITION`. The bindings list must be equal in length as the variable list of the original scope the `sDEFINITION` references. `sBINDING+` is a list of indices into the `"names"` field of the source map JSON. Each binding is a JavaScript expression that, when evaluated, produces the **value** of the corresponding variable.
+`generated_range_bindings` are only valid for generated ranges that have a `sDEFINITION`. The bindings list must be equal in length as the variable list of the original scope the `sDEFINITION` references. `uBINDING+` is a list of 1-based indices into the `"names"` field of the source map JSON. Each binding is a JavaScript expression that, when evaluated, produces the **value** of the corresponding variable.
 
-`sBINDING+` indices are encoded absolute. To signify that a variable is unavailable, use the index `-1`.
+`uBINDING+` indices are encoded absolute. To signify that a variable is unavailable, use the index `0`.
 
 ```
 generated_range_subrange_binding :=
@@ -377,7 +377,7 @@ generated_range_subrange_binding :=
   binding_from+
 
 binding_from :=
-  sBINDING
+  uBINDING
   uLINE
   uCOLUMN
 ```
@@ -385,10 +385,12 @@ binding_from :=
 A variable might not be available through the full generated range, or a different expression is required for parts of the generated range to retrieve a variables value. In this case a generator can use `generated_range_subrange_binding` to encode this.
 
   * `uVARIABLE_INDEX` is an index into the corresponding original scopes' variables list. It is encoded relative inside a generated range.
-  * `binding_from` are the sub-ranges. The initial value expression for a variable is provided by the `generated_range_bindings` item. The generated position in `binding_from` is the start from which the expression `sBINDING` from `binding_from` needs to be used to retrieve the variables value instead.
-  * `sBINDING` is an index into the `"names"` field in the source map JSON. It is relative to previous occurrences (also relative to the last `sBINDING+` in `generated_range_bindings`)
+  * `binding_from` are the sub-ranges. The initial value expression for a variable is provided by the `generated_range_bindings` item. The generated position in `binding_from` is the start from which the expression `uBINDING` from `binding_from` needs to be used to retrieve the variables value instead.
+  * `uBINDING` is a 1-based absolute index into the `"names"` field in the source map JSON. To indicate that a variable is unavailable, use the index `0`.
   * `uLINE` is relative to the generated range's start line for the first `generated_range_subrange_binding` for a specific variable. Or relative to the previous subrange `uLINE` of the same variable.
   * `uCOLUMN` is relative to the `binding_from`/`generated_range_start` `uCOLUMN` if the line of this subrange is the same as the line of the preceding `binding_from`/`generated_range_start` or absolute otherwise.
+
+Note: `uBINDING` in `binding_from` and `uBINDING+` in `generated_range_bindings` are both absolute 1-based indices. This means the index `1` (encoded as the unsigned VLQ `B`) refers to the first entry in the `names` array.
 
 ### Example
 
