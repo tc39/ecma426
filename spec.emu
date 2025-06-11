@@ -1350,7 +1350,7 @@
         <emu-alg>
           1. Let _tokens_ be the List of tokens obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
           1. For each nonterminal _token_ in _tokens_, in reverse order, do
-            1. If _token_ is not |SingleLineComment| or |MultiLineComment|, return *null*.
+            1. If _token_ is not |SingleLineComment|, return *null*.
             1. Let _comment_ be the content of _token_.
             1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
             1. If _sourceMapURL_ is a String, return _sourceMapURL_.
@@ -1362,9 +1362,9 @@
 
         <emu-alg>
           1. Let _lines_ be StringSplit(_source_, « *"\u000D\u000A"*, *"\u000A"*, *"\u000D"*, *"\u2028"*, *"\u2029"* »).
-          1. NOTE: The regular expression above matches the |LineTerminatorSequence| production.
+          1. NOTE: The list of strings above matches the |LineTerminatorSequence| production.
           1. Let _lastURL_ be *null*.
-          1. For each String _lineStr_ in _lines_, do
+          1. For each String _lineStr_ in _lines_, in reverse List order, do
             1. Let _line_ be StringToCodePoints(_lineStr_).
             1. Let _position_ be 0.
             1. Let _lineLength_ be the length of _line_.
@@ -1376,25 +1376,17 @@
                 1. Set _position_ to _position_ + 1.
                 1. If _second_ is U+002F (SOLIDUS), then
                   1. Let _comment_ be the substring of _lineStr_ from _position_ to _lineLength_.
+                  1. If _comment_ contains the code point U+0022 (QUOTATION MARK), U+0027 (APOSTROPHE), U+002F (SOLIDUS), or U+0060 (GRAVE ACCENT), then
+                    1. Return *null*.
                   1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
-                  1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
+                  1. If _sourceMapURL_ is a String, return _sourceMapURL_.
                   1. Set _position_ to _lineLength_.
-                1. Else if _second_ is U+002A (ASTERISK), then
-                  1. Let _commentCp_ be a new empty List.
-                  1. Repeat, while _position_ + 1 &lt; _lineLength_,
-                    1. Let _c1_ be _line_[_position_].
-                    1. Set _position_ to _position_ + 1.
-                    1. Let _c2_ be _line_[_position_].
-                    1. If _c1_ is U+002A (ASTERISK) and _c2_ is U+002F (SOLIDUS), then
-                      1. Set _position_ to _position_ + 1.
-                      1. Let _sourceMapURL_ be MatchSourceMapURL(CodePointsToString(_commentCp_)).
-                      1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
-                    1. Append _c1_ to _commentCp_.
                 1. Else,
-                  1. Set _lastURL_ to *null*.
-              1. Else if _first_ is not an ECMAScript |WhiteSpace|, then
-                1. Set _lastURL_ to *null*.
-              1. NOTE: We reset _lastURL_ to *null* whenever we find a non-comment code character.
+                  1. Return *null*.
+              1. Else if _first_ is an ECMAScript |WhiteSpace|, then
+                1. Set _position_ to _position_ + 1.
+              1. Else,
+                1. Return *null*.
           1. Return _lastURL_.
         </emu-alg>
         <emu-note>
