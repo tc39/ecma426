@@ -584,6 +584,8 @@
     <li>The <dfn id="json-names"><code>names</code> field</dfn> is an optional list of symbol names which may be used by the mappings field.</li>
     <li>The <dfn id="json-mappings"><code>mappings</code> field</dfn> is a string with the encoded mapping data (see section <emu-xref href="#sec-mappings"></emu-xref>).</li>
     <li>The <dfn id="json-ignoreList"><code>ignoreList</code> field</dfn> is an optional list of indices of files that should be considered third party code, such as framework code or bundler-<emu-not-ref>generated code</emu-not-ref>. This allows developer tools to avoid code that developers likely don't want to see or step through, without requiring developers to configure this beforehand. It refers to the sources field and lists the indices of all the known third-party sources in the source map. Some browsers may also use the deprecated `x_google_ignoreList` field if `ignoreList` is not present.</li>
+    <li>My odd field 1</li>
+    <li>My odd field 2</li>
   </ul>
 
   <emu-clause id="sec-decoding-source-maps">
