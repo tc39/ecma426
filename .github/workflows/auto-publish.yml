@@ -45,11 +45,11 @@ jobs:
       - uses: actions/download-artifact@v4
         if: success() || failure()
       - run: cp -r ./artifact/. .
-        if: github.ref_name == 'main'
-      - run: mkdir -p pr && cp -r ./artifact/. ./pr/${{ github.event.number }}
-        if: github.event_name != 'push'
+        if: github.event_name == 'push' && github.ref_name == 'main'
       - run: mkdir -p branch && cp -r ./artifact/. ./branch/${{ github.ref_name }}
         if: github.event_name == 'push' && github.ref_name != 'main'
+      - run: mkdir -p pr && cp -r ./artifact/. ./pr/${{ github.event.number }}
+        if: github.event_name != 'push'
       - run: rm -r artifact
       - name: Configure git
         run: |
