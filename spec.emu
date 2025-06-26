@@ -977,7 +977,7 @@
           1. Let _name_ be *null*.
           1. If |Name| is present, then
             1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
-            1. If _state_.[[NameIndex]] &lt; 0 or _state_.[[NameIndex]] ≥ the number of elements of _sources_, optionally report an error.
+            1. If _state_.[[NameIndex]] &lt; 0 or _state_.[[NameIndex]] ≥ the number of elements of _names_, optionally report an error.
             1. Else, set _name_ to _names_[_state_.[[NameIndex]]].
           1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: _originalPosition_, [[Name]]: _name_ }.
           1. Append _decodedMapping_ to _mappings_.
