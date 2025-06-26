@@ -81,12 +81,25 @@ const request = async (url, method = 'GET', postData) => {
 
 const perPage = 100;
 
+// Old email addresses used in commits that have then been removed
+// from the GitHub account of the user.
+const oldEmails = new Map([
+	["luca.forstner@sentry.io", "lforst"]
+]);
+
 function getAuthorFromCommit(commitObj) {
 	if (!commitObj) {
 		return false;
 	}
 	const { author } = commitObj;
 	if (!author) {
+		if (commitObj.commit?.author) {
+			const username = oldEmails.get(commitObj.commit.author.email);
+			if (username) {
+				return username;
+			}
+		}
+
     throw new Error("Missing author for commit " + commitObj.sha);
 	}
 	return author.login;
@@ -155,7 +168,6 @@ const usernames = request(sheetData).then((json) => JSON.parse(json)).then(data 
 
 const exceptions = new Set([
   'fitzgen', // former Mozilla employee
-  'lforst', // Sentry employee
   'jaro-sevcik', // Google empolyee
   'jkrems', // Google employee
   'josephschorr', // former Google empolyee
