@@ -572,7 +572,8 @@
     "sourcesContent": [null, null],
     "names": ["src", "maps", "are", "fun"],
     "mappings": "A,AAAB;;ABCDE"
-    "ignoreList": [0]
+    "ignoreList": [0],
+    "debugId": "<UUID>"
   }
   </code></pre>
   <ul>
@@ -584,6 +585,7 @@
     <li>The <dfn id="json-names"><code>names</code> field</dfn> is an optional list of symbol names which may be used by the mappings field.</li>
     <li>The <dfn id="json-mappings"><code>mappings</code> field</dfn> is a string with the encoded mapping data (see section <emu-xref href="#sec-mappings"></emu-xref>).</li>
     <li>The <dfn id="json-ignoreList"><code>ignoreList</code> field</dfn> is an optional list of indices of files that should be considered third party code, such as framework code or bundler-<emu-not-ref>generated code</emu-not-ref>. This allows developer tools to avoid code that developers likely don't want to see or step through, without requiring developers to configure this beforehand. It refers to the sources field and lists the indices of all the known third-party sources in the source map. Some browsers may also use the deprecated `x_google_ignoreList` field if `ignoreList` is not present.</li>
+    <li>The <dfn id="json-debugId"><code>debugId</code> field</dfn> is an optional string containing the Debug ID embedded in both generated code and source maps, using the canonical UUID format. This allows tools to associate source maps with their generated artifacts.</li>
   </ul>
 
   <emu-clause id="sec-decoding-source-maps">
@@ -604,6 +606,10 @@
         </thead>
         <tr>
           <td>[[File]]</td>
+          <td>a String or *null*</td>
+        </tr>
+        <tr>
+          <td>[[DebugId]]</td>
           <td>a String or *null*</td>
         </tr>
         <tr>
@@ -676,6 +682,7 @@
         1. If _mappingsField_ is not a String, throw an error.
         1. If JSONObjectGet(_json_, *"sources"*) is not a JSON array, throw an error.
         1. Let _fileField_ be GetOptionalString(_json_, *"file"*).
+        1. Let _debugIdField_ be GetOptionalString(_json_, *"debugId"*).
         1. Let _sourceRootField_ be GetOptionalString(_json_, *"sourceRoot"*).
         1. Let _sourcesField_ be GetOptionalListOfOptionalStrings(_json_, *"sources"*).
         1. Let _sourcesContentField_ be GetOptionalListOfOptionalStrings(_json_, *"sourcesContent"*).
@@ -683,7 +690,7 @@
         1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
-        1. Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
+        1. Return the Decoded Source Map Record { [[File]]: _fileField_, [[DebugId]]: _debugIdField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
       </emu-alg>
 
       <emu-clause id="sec-GetOptionalString" type="abstract operation">
@@ -1342,29 +1349,51 @@
         </h1>
         <dl class="header">
           <dt>description</dt>
-          <dd>It extracts a source map URL from a <strong>JavaScript</strong> source. It has two possible implementations: either <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> or without parsing.</dd>
+          <dd>It extracts a source map URL from a <strong>JavaScript</strong> source.</dd>
+        </dl>
+        <emu-alg>
+          1. Return JavaScriptExtractMagicComment(_source_, *"sourceMappingURL"*, *true*).
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-JavaScriptExtractMagicComment" type="abstract operation">
+        <h1>
+          JavaScriptExtractMagicComment (
+            _source_: a String,
+            _commentType_: a String,
+            _supportLegacy_: a Boolean,
+          ): a String or *null*
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It extracts a magic comment from a <strong>JavaScript</strong> source. A magic comment is of the form <code>//# commentType=value</code>.</dd>
         </dl>
 
-        <p>To extract a source map URL <dfn id="sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</dfn>:</p>
+        <p>To extract a magic comment <dfn id="sec-JavaScriptExtractMagicComment-through-parsing">through parsing</dfn>:</p>
 
         <emu-alg>
           1. Let _tokens_ be the List of tokens obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
           1. For each nonterminal _token_ in _tokens_, in reverse order, do
             1. If _token_ is not |SingleLineComment| or |MultiLineComment|, return *null*.
             1. Let _comment_ be the content of _token_.
-            1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
-            1. If _sourceMapURL_ is a String, return _sourceMapURL_.
+            1. Let _commentValue_ be MatchMagicComment(_comment_, _commentType_, _supportLegacy_).
+            1. If _commentValue_ is a String, return _commentValue_.
           1. Return *null*.
         </emu-alg>
-        <!-- TODO: We need to define a SDO for getting the contents of a comment, to make explicit what they actually are -->
 
-        <p>To extract a source map URL <dfn id="sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</dfn>:</p>
+        <p>To extract a magic comment <dfn id="sec-JavaScriptExtractMagicComment-without-parsing">without parsing</dfn>:</p>
 
         <emu-alg>
           1. Let _lines_ be StringSplit(_source_, « *"\u000D\u000A"*, *"\u000A"*, *"\u000D"*, *"\u2028"*, *"\u2029"* »).
-          1. NOTE: The regular expression above matches the |LineTerminatorSequence| production.
-          1. Let _lastURL_ be *null*.
-          1. For each String _lineStr_ in _lines_, do
+          1. NOTE: The separators above match the |LineTerminatorSequence| production.
+          1. Let _lastValue_ be *null*.
+          1. Let _limit_ be *null*.
+          1. If _commentType_ is *"debugId"*, let _limit_ be 5.
+          1. If _limit_ is not *null*, let _start_ be max(0, the number of elements of _lines_ minus _limit_).
+          1. Else, let _start_ be 0.
+          1. Let _linesToProcess_ be the List of elements of _lines_ from index _start_ to the end.
+          1. If _commentType_ is not *"debugId"*, reverse the order of elements in _linesToProcess_.
+          1. For each String _lineStr_ in _linesToProcess_, do
             1. Let _line_ be StringToCodePoints(_lineStr_).
             1. Let _position_ be 0.
             1. Let _lineLength_ be the length of _line_.
@@ -1376,8 +1405,8 @@
                 1. Set _position_ to _position_ + 1.
                 1. If _second_ is U+002F (SOLIDUS), then
                   1. Let _comment_ be the substring of _lineStr_ from _position_ to _lineLength_.
-                  1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
-                  1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
+                  1. Let _commentValue_ be MatchMagicComment(_comment_, _commentType_, _supportLegacy_).
+                  1. If _commentValue_ is a String, set _lastValue_ to _commentValue_.
                   1. Set _position_ to _lineLength_.
                 1. Else if _second_ is U+002A (ASTERISK), then
                   1. Let _commentCp_ be a new empty List.
@@ -1387,74 +1416,51 @@
                     1. Let _c2_ be _line_[_position_].
                     1. If _c1_ is U+002A (ASTERISK) and _c2_ is U+002F (SOLIDUS), then
                       1. Set _position_ to _position_ + 1.
-                      1. Let _sourceMapURL_ be MatchSourceMapURL(CodePointsToString(_commentCp_)).
-                      1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
+                      1. Let _commentValue_ be MatchMagicComment(CodePointsToString(_commentCp_), _commentType_, _supportLegacy_).
+                      1. If _commentValue_ is a String, set _lastValue_ to _commentValue_.
                     1. Append _c1_ to _commentCp_.
                 1. Else,
-                  1. Set _lastURL_ to *null*.
+                  1. Set _lastValue_ to *null*.
               1. Else if _first_ is not an ECMAScript |WhiteSpace|, then
-                1. Set _lastURL_ to *null*.
-              1. NOTE: We reset _lastURL_ to *null* whenever we find a non-comment code character.
-          1. Return _lastURL_.
+                1. Set _lastValue_ to *null*.
+              1. NOTE: We reset _lastValue_ to *null* whenever we find a non-comment code character.
+            1. If _commentType_ is *"debugId"* and _lastValue_ is not *null*, return _lastValue_.
+          1. Return _lastValue_.
         </emu-alg>
-        <emu-note>
-          The algorithm above has been designed so that the source lines can be iterated in reverse order, returning early after scanning through a line that contains a `sourceMappingURL` comment.
-        </emu-note>
-        <emu-note>
-          <p>The algorithm above is equivalent to the following JavaScript implementation:</p>
+      </emu-clause>
 
-          <pre><code class="javascript">const JS_NEWLINE = /^/m;
+      <emu-clause type="abstract operation" id="sec-MatchMagicComment">
+        <h1>
+          MatchMagicComment (
+            _comment_: a String,
+            _commentType_: a String,
+            _supportLegacy_: a Boolean,
+          ): either ~none~ or a String
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _prefix_ be *"^#\\s*"*.
+          1. If _supportLegacy_ is *true*, set _prefix_ to *"^[@#]\\s*"*.
+          1. Let _pattern_ be RegExpCreate(the string-concatenation of _prefix_, _commentType_, *"=(\\S*?)\\s*$"*, *""*).
+          1. Let _match_ be RegExpExec(_pattern_, _comment_).
+          1. If _match_ is not *null*, return Get(_match_, *"1"*).
+          1. Return ~none~.
+        </emu-alg>
+      </emu-clause>
 
-// This RegExp will always match one of the following:
-// - single-line comments
-// - "single-line" multi-line comments
-// - unclosed multi-line comments
-// - just trailing whitespaces
-// - a code character
-// The loop below differentiates between all these cases.
-const JS_COMMENT =
-  /\s*(?:\/\/(?&lt;single&gt;.*)|\/\*(?&lt;multi&gt;.*?)\*\/|\/\*.*|$|(?&lt;code&gt;[^\/]+))/uym;
-
-const PATTERN = /^[@#]\s*sourceMappingURL=(\S*?)\s*$/;
-
-let lastURL = null;
-for (const line of source.split(JS_NEWLINE)) {
-  JS_COMMENT.lastIndex = 0;
-  while (JS_COMMENT.lastIndex &lt; line.length) {
-    let commentMatch = JS_COMMENT.exec(line).groups;
-    let comment = commentMatch.single ?? commentMatch.multi;
-    if (comment != null) {
-      let match = PATTERN.exec(comment);
-      if (match !== null) lastURL = match[1];
-    } else if (commentMatch.code != null) {
-      lastURL = null;
-    } else {
-      // We found either trailing whitespaces or an unclosed comment.
-      // Assert: JS_COMMENT.lastIndex === line.length
-    }
-  }
-}
-return lastURL;</code></pre>
-        </emu-note>
-
-        <emu-clause type="abstract operation" id="sec-MatchSourceMapURL">
-          <h1>
-            MatchSourceMapURL (
-              _comment_: a String,
-            ): either ~none~ or a String
-          </h1>
-          <dl class="header"></dl>
-          <emu-alg>
-            1. Let _pattern_ be RegExpCreate(*"^[@#]\\s\*sourceMappingURL=(\\S\*?)\\s\*$"*, *""*).
-            1. Let _match_ be RegExpExec(_pattern_, _comment_).
-            1. If _match_ is not *null*, return Get(_match_, *"1"*).
-            1. Return ~none~.
-          </emu-alg>
-
-          <emu-note>The prefix for this annotation was initially `//@`, however this conflicts with Internet Explorer's Conditional Compilation and was changed to `//#`.</emu-note>
-
-          <p>Source map generators shall only emit `//#`, while source map consumers shall accept both `//@` and `//#`.</p>
-        </emu-clause>
+      <emu-clause id="sec-JavaScriptExtractDebugId" type="abstract operation">
+        <h1>
+          JavaScriptExtractDebugId (
+            _source_: a String,
+          ): a String or *null*
+        </h1>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It extracts a Debug ID comment from a <strong>JavaScript</strong> source.</dd>
+        </dl>
+        <emu-alg>
+          1. Return JavaScriptExtractMagicComment(_source_, *"debugId"*, *false*).
+        </emu-alg>
       </emu-clause>
 
       <emu-clause id="sec-CSSExtractSourceMapURL" type="abstract operation">
@@ -1470,29 +1476,24 @@ return lastURL;</code></pre>
         <p>Extracting <span>source map URL</span>s from CSS is similar to JavaScript, with the exception that CSS only supports `/* ... */`-style comments.</p>
       </emu-clause>
 
-      <emu-clause id="sec-WebAssemblyExtractSourceMapURL" type="abstract operation">
+      <emu-clause id="sec-CSSExtractDebugId" type="abstract operation">
         <h1>
-          WebAssemblyExtractSourceMapURL (
-            _bytes_: a Data Block,
+          CSSExtractDebugId (
+            _source_: a String,
           ): a String or *null*
         </h1>
         <dl class="header">
           <dt>description</dt>
-          <dd>It extracts a source map URL from a <strong>WebAssembly</strong> binary source.</dd>
+          <dd>It extracts a Debug ID comment from a <strong>CSS</strong> source.</dd>
         </dl>
+        <p>Extracting Debug ID comments from CSS is similar to JavaScript's <emu-xref href="#sec-JavaScriptExtractDebugId">JavaScriptExtractDebugId</emu-xref> operation, with the exception that CSS only supports `/* ... */`-style comments.</p>
       </emu-clause>
-      <emu-alg>
-        1. Let _module_ be module_decode(_bytes_).
-        1. If _module_ is WebAssembly error, return *null*.
-        1. For each custom section _customSection_ of _module_, do
-          1. Let _name_ be the `name` of _customSection_.
-          1. If CodePointsToString(_name_) is *"sourceMappingURL"*, then
-            1. Let _value_ be the `bytes` of _customSection_.
-            1. Return CodePointsToString(_value_).
-        1. Return *null*.
-      </emu-alg>
 
-      <p>Since WebAssembly is not a textual format and it does not support comments, it supports a single unambiguous extraction method. The URL is encoded as a WebAssembly name, and it's placed as the content of the custom section. It is invalid for tools that generate WebAssembly code to generate two or more custom sections with the `sourceMappingURL` name.</p>
+      <emu-note>
+        <p>The prefix for sourceMappingURL annotations was initially `//@`, however this conflicts with Internet Explorer's Conditional Compilation and was changed to `//#`. Source map generators shall only emit `//#`, while source map consumers shall accept both `//@` and `//#`.</p>
+
+        <p>For debugId annotations, only the `//#` prefix is supported and source map generators shall only emit `//#`. Legacy `//@` is not supported for debugId comments.</p>
+      </emu-note>
     </emu-clause>
   </emu-clause>
 
