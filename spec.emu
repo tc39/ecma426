@@ -571,7 +571,7 @@
     "sources": ["foo.js", "bar.js"],
     "sourcesContent": [null, null],
     "names": ["src", "maps", "are", "fun"],
-    "mappings": "A,AAAB;;ABCDE"
+    "mappings": "A,AAAB;;ABCDE",
     "ignoreList": [0]
   }
   </code></pre>
@@ -1108,7 +1108,7 @@
           <p>Source map generators may chose to additionally emit a named mapping on the opening parenthesis `(`.</p>
         </li>
         <li>
-          <p>Source map generators may emit named mapping for |IdentifierReference|| in |Expression|.</p>
+          <p>Source map generators may emit named mapping for |IdentifierReference| in |Expression|.</p>
         </li>
       </ul>
     </emu-clause>
