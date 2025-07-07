@@ -281,7 +281,7 @@
 
       <dt><dfn id="sec-terms-and-definitions-generated-range" variants="generated ranges">generated range</dfn></dt>
       <dd>
-        <p>a code range in generated code. The term <em>range</em> is chosen deliberately: A range does not necessarily correspond to a lexical JavaScript/WASM scope, e.g. when function bodies were inlined by a compiler.</p>
+        <p>a code range in generated code. The term <em>range</em> is chosen deliberately: a range does not necessarily correspond to a lexical JavaScript/WASM scope, e.g. when function bodies were inlined by a compiler.</p>
       </dd>
     </ins>
   </dl>
@@ -1179,7 +1179,7 @@
           <tr>
             <td>[[IsStackFrame]]</td>
             <td>a Boolean</td>
-            <td>Signifies whether this scope is something that can be called, e.g. a function or method.</td>
+            <td>Signifies whether this scope is something that when run would introduce a new frame in the call stack, such as a function or method.</td>
           </tr>
           <tr>
             <td>[[Variables]]</td>
@@ -1227,29 +1227,19 @@
             <td>The corresponding original scope</td>
           </tr>
           <tr>
-            <td>[[IsStackFrame]]</td>
-            <td>a Boolean</td>
-            <td>Whether this generated range is a JavaScript/Wasm function.</td>
-          </tr>
-          <tr>
-            <td>[[IsHidden]]</td>
-            <td>a Boolean</td>
-            <td>Whether this generated range is a compiler/transpiler inserted JavaScript/Wasm function even though [[Definition]] is not *null*. E.g. a original block scope was transpiled to a JS function. If [[IsHidden]] is *true*, then [[IsStackFrame]] must also be true.</td>
+            <td>[[StackFrameType]]</td>
+            <td>~none~, ~original~, or ~hidden~</td>
+            <td>~original~ signifies that this generated range is a JavaScript/Wasm function. ~hidden~ signifies that this generated range is a compiler/transpiler inserted JavaScript/Wasm function even though [[Definition]] is not *null*. E.g. a original block scope was transpiled to a JS function.</td>
           </tr>
           <tr>
             <td>[[Bindings]]</td>
-            <td>a List of either Strings or *null*</td>
-            <td>A list of JavaScript expressions that when evaluated in this generated range, evaluates to the value of the corresponding variable. *null* indicates that the variable is unavailable in this range.</td>
-          </tr>
-          <tr>
-            <td>[[SubRangeBindings]]</td>
-            <td>a List of Sub-Range Binding Records</td>
-            <td>Variables that require different expression throughout this range to retrieve its value specify [[SubRangeBindings]].</td>
+            <td>a List of Lists of Binding Records</td>
+            <td>[[Bindings]] contains one or more JavaScript expressions for each variable, that when evaluated in this generated range, retrieves the value for that variable.</td>
           </tr>
           <tr>
             <td>[[CallSite]]</td>
             <td>a Original Position Record or *null*</td>
-            <td>The presence of [[CallSite]] signifies that this generated range represents an inlined original scope body. [[Definition]] must contain a valid reference and the Original Scope Record behind [[Definition]] must have the value *true* in it's [[IsStackFrame]] field.</td>
+            <td>[[CallSite]] is not *null* when this generated range represents an inlined original scope body. When [[CallSite]] is set, [[Definition]] must also be set and [[Definition]].[[IsStackFrame]] must be true.</td>
           </tr>
           <tr>
             <td>[[Children]]</td>
@@ -1258,10 +1248,9 @@
           </tr>
         </table>
       </emu-table>
-      <p>A root Decoded Generated Record describes a distinct part of the generated code. Each Generated Range Record may be associated with a Original Scope Record as indicated by the presence of the [[Definition]] field.</p>
-      <p>[[Bindings]] are intended for debuggers to retrieve the values of original variables. The length of [[Bindings]] must be equal to [[Variables]] of the corresponding Original Scope Record. Given an index i, the JavaScript expression [[Binding]][i], when evaluated inside the generated range, retrieves the value for the original variable [[Variables]][i].</p>
-      <p>If a variable requires different expressions across a generated range, then [[SubRangeBindings]] can be used. [[SubRangeBinding]] splits the generated range into multiple sub-ranges, but just for a specific variable. Note that the same can be achieved with splitting the whole generated range, but at the cost of duplicating all of the information.</p>
-      <p>If a variable utilizes [[SubRangeBindings]] then the expression for the first sub-range is found in [[Bindings]] and the rest in [[SubRangeBindings]].</p>
+      <p>A root Generated Range Record describes a distinct part of the generated code. Each Generated Range Record may be associated with a Original Scope Record as indicated by the presence of the [[Definition]] field.</p>
+      <p>[[Bindings]] are intended for debuggers to retrieve the values of original variables. The length of [[Bindings]] must be equal to [[Variables]] of the corresponding Original Scope Record. Given an index _i_, [[Binding]][_i_] describes how to retrieve the value for the original variable [[Variables]][i].</p>
+      <p>[[Binding]][_i_] is a List of Binding Records, as there might be different expressions required in different parts of the generated range to retrieve a variables' value. In the common case, [[Binding]][_i_] will either be an empty List, in which case the variable is unavailable throughout the range. Or a single element list where [[Binding]][_i_][0].[[From]] matches [[Start]] and [[Binding]][_i_][0].[[Binding]] is JavaScript expression.</p>
       <emu-note example>
         Let _range_ be a Generated Range Record that starts at "0:0" (line 0, column 0) and ends at "0:30". The corresponding Original Scope Record contains a single variable "foo". The value of "foo" can be retrieved via the expression "a" in the range ["0:0", "0:10"). "foo" is unavailable in the range ["0:10", "0:20") and in the range ["0:20", "0:30") the expression "b" must be used. Then _range_ looks like:
         <pre><code>
@@ -1269,8 +1258,11 @@
             [[Start]]: { [[Line]]: 0, [[Column]]: 0 },
             [[End]]: { [[Line]]: 0, [[Column]]: 30 },
             [[Definition]]: { ... }
-            [[Bindings]]: ["a"]
-            [[SubRangeBindings]]: [
+            [[Bindings]]: [[
+              {
+                [{From]]: { [[Line]]: 0, [[Column]]: 0 },
+                [[Binding]]: "a",
+              },
               {
                 [[From]]: { [[Line]]: 0, [[Column]]: 10 },
                 [[Binding]]: *null*,
@@ -1279,7 +1271,7 @@
                 [[From]]: { [[Line]]: 0, [[Column]]: 20 },
                 [[Binding]]: "b",
               },
-            ],
+            ]],
           }
         </code></pre>
       </emu-note>
@@ -1287,34 +1279,8 @@
       <ul>
         <li>[[Definition]] must not be *null*.</li>
         <li>[[Definition]].[[IsStackFrame]] must be *true*.</li>
-        <li>[[IsStackFrame]] must be *false*.</li>
+        <li>[[StackFrameType]] must be ~NONE~.</li>
       </ul>
-
-      <emu-clause id="sec-sub-range-binding-record-type">
-        <h1>The Sub-Range Binding Record</h1>
-        <p>The <dfn variant="Sub-Range Binding Records">Sub-Range Binding Record</dfn> describe a variable that requires different JavaScript expressions in different parts of a generated range to retrieve the variables value.</p>
-        <emu-table id="table-sub-range-binding-record-fields" caption="Sub-Range Binding Record Fields">
-          <table>
-            <thead>
-              <tr>
-                <th>Field Name</th>
-                <th>Value</th>
-                <th>Meaning</th>
-              </tr>
-            </thead>
-            <tr>
-              <td>[[Variable]]</td>
-              <td>a String</td>
-              <td>The variable for which these expressions must be used to retrieve its value. [[Variable]] must be contained in the [[Definition]].[[Variables]] List. That is it must be valid variable in the corresponding Original Scope Record.</td>
-            </tr>
-            <tr>
-              <td>[[Bindings]]</td>
-              <td>a List of Binding Records</td>
-              <td>A list of position and expression tuples that describe from which position a specific expression must be used to retrieve this variables' value.</td>
-            </tr>
-          </table>
-        </emu-table>
-      </emu-clause>
 
       <emu-clause id="sec-binding-record-type">
         <h1>The Binding Record</h1>
@@ -1331,12 +1297,12 @@
             <tr>
               <td>[[From]]</td>
               <td>a Position Record</td>
-              <td>Use [[Binding]] from this position until either the next [[From]] or the ranges' end position to retrieve this variables' value.</td>
+              <td>Use [[Binding]] from this position until either the next [[From]] or the ranges' [[End]] position to retrieve this variables' value.</td>
             </tr>
             <tr>
               <td>[[Binding]]</td>
-              <td>a String</td>
-              <td>The expression to use to retrieve this variables' value.</td>
+              <td>a String or *null*</td>
+              <td>The expression to use to retrieve this variables' value, or *null* if the variable is unavailable.</td>
             </tr>
           </table>
         </emu-table>
@@ -1567,11 +1533,11 @@
             </tr>
             <tr>
               <td>0x4</td>
-              <td>If set, then this range as a JavaScript/WASM function in the generated code. This includes methods, accessors, arrow functions, constructors, etc. Any JavaScript language construct that can be called and will result in a stack frame. If set, the [[IsStackFrame]] field is set to *true*.</td>
+              <td>If set, then this range as a JavaScript/WASM function in the generated code. This includes methods, accessors, arrow functions, constructors, etc. Any JavaScript language construct that can be called and will result in a stack frame. If set, the [[StackFrameType]] field is set to either ~original~ or ~hidden~, depending on the bit 0x8.</td>
             </tr>
             <tr>
               <td>0x8</td>
-              <td>Only valid if the 0x4 ([[IsStackFrame]]) is also set. Marks this range as a outlined function. E.g. a transpiler translated a block scope into a function. Any call to this range should be hidden in translated stack traces.</td>
+              <td>Only valid if the bit 0x4 is also set. Marks this range as a outlined function. E.g. a transpiler translated a block scope into a function. Any call to this range should be hidden in translated stack traces. If set, the [[StackFrameType]] field is set to ~hidden~. If not set, but the bit 0x4 is set, then the [[StackFrameType]] field is set to ~original~.</td>
             </tr>
           </table>
         </emu-table>
@@ -1691,6 +1657,11 @@
               <td>[[SubRangeColumn]]</td>
               <td>a non-negative Number</td>
               <td>|BindingColumn|</td>
+            </tr>
+            <tr>
+              <td>[[SubRangeVariableIndex]]</td>
+              <td>a non-negative Number</td>
+              <td>Tracks the variable while decoding sub-range bindings.</td>
             </tr>
           </table>
         </emu-table>
@@ -1976,8 +1947,10 @@
             1. Set _range_.[[Start]].[[Column]] to _state_.[[RangeColumn]].
             1. Assert: |RangeDefinition| is present if and only if, _flags & 0x2 = 0x2.
             1. If |RangeDefinition| is present, perform DecodeGeneratedRangeItem of |RangeDefinition| with arguments _range_, _state_ and _names_.
-            1. If _flags_ & 0x4 = 0x4, set _range_.[[IsStackFrame]] to *true*.
-            1. If _flags_ & 0x8 = 0x8, set _range_.[[IsHidden]] to *true*.
+            1. If _flags_ & 0x4 = 0x4 and _flags_ & 0x8 = 0x8, set _range_.[[StackFrameType]] to ~hidden~.
+            1. Else if _flags_ & 0x8 = 0x8, optionally report an error.
+            1. Else if _flags_ & 0x4 = 0x4, set _range_.[[StackFrameType]] to ~original~.
+            1. Else, set _range_.[[StackFrameType]] to ~none~.
           </emu-alg>
           <emu-grammar>
             GeneratedRangeEnd :
@@ -2005,10 +1978,8 @@
             1. [id="step-reset-subrange-line"] Set _state_.[[SubRangeLine]] to _range_.[[Start]].[[Line]].
             1. [id="step-reset-subrange-column"] Set _state_.[[SubRangeColumn]] to _range_.[[Start]].[[Column]].
             1. Let _variableIndex_ be the VLQUnsignedValue of |VariableIndex|.
-            1. Let _variable_ be _range_.[[Definition]].[[Variables]][_variableIndex_].
-            1. Let _subRangeBinding_ be a new Sub-Range Binding Record { [[Variable]]: _variable_, [[Binding]]: « » }.
-            1. Perform DecodeSubRangeBinding of |BindingFromList| with arguments _subRangeBinding_, _state_ and _names_.
-            1. Append _subRangeBinding_ to _range_.[[SubRangeBindings]].
+            1. Set _state_.[[SubRangeVariableIndex]] to _variableIndex_.
+            1. Perform DecodeGeneratedRangeItem of |BindingFromList| with arguments _range_, _state_ and _names_.
           </emu-alg>
           <emu-note>
             Sub-range "from" positions are encoded relative to each other. Step <emu-xref href="#step-reset-subrange-line"></emu-xref> and <emu-xref href="#step-reset-subrange-line"></emu-xref> make it so that the first sub-range is relative to the ranges' start position.
@@ -2057,41 +2028,30 @@
               Vlq
           </emu-grammar>
           <emu-alg>
-            1. Let _binding_ be the VLQSignedValue of |Vlq|.
-            1. If _binding_ ≥ 0, append _names_[_binding_] to _range_.[[Bindings]].
-            1. Else, append *null* to _range_.[[Bindings]].
+            1. Let _bindings_ be a new empty List.
+            1. Let _binding_ be the VLQUnsignedValue of |Vlq|.
+            1. If _binding_ > 0, append { [[From]]: _range_.[[Start]], [[Binding]]: _names_[_binding_ - 1] } to _bindings_.
+            1. Append _bindings_ to _range_.[[Bindings]].
           </emu-alg>
-        </emu-clause>
-
-        <emu-clause id="sec-DecodeSubRangeBinding" type="sdo">
-          <h1>
-            DecodeSubRangeBinding (
-              _subRangeBinding_: a Sub-Range Binding Record,
-              _state_: a Decode Scope State Record,
-              _names_: a List of Strings,
-            )
-          </h1>
-          <dl class="header"></dl>
           <emu-grammar>
             BindingFromList :
               BindingFromList BindingFrom
           </emu-grammar>
           <emu-alg>
-            1. Perform DecodeSubRangeBinding of |BindingFromList| with arguments _subRangeBinding_, _state_ and _names_.
-            1. Perform DecodeSubRangeBinding of |BindingFrom| with arguments _subRangeBinding_, _state_ and _names_.
+            1. Perform DecodeGeneratedRangeItem of |BindingFromList| with arguments _range_, _state_ and _names_.
+            1. Perform DecodeGeneratedRangeItem of |BindingFrom| with arguments _range_, _state_ and _names_.
           </emu-alg>
           <emu-grammar>
             BindingFrom :
               BindingLine BindingColumn Vlq
           </emu-grammar>
           <emu-alg>
-            1. Perform DecodeSubRangeBinding of |BindingLine| with arguments _subRangeBinding_, _state_ and _names_.
-            1. Perform DecodeSubRangeBinding of |BindingColumn| with arguments _subRangeBinding_, _state_ and _names_.
-            1. Let _expressionIndex_ be the VLQUnsignedValue of |Vlq|.
-            1. If _expressionIndex_ ≥ 0, let _expression_ be _names_[_expressionIndex_].
-            1. Else, let _expression_ be *null*.
-            1. Let _binding_ be a new Binding Record { [[From]]: { [[Line]]: _state_.[[SubRangeLine]], [[Column]]: _state_.[[SubRangeColumn]] }, [[Binding]]: _expression_ }.
-            1. Append _binding_ to _subRangeBinding_.[[Bindings]].
+            1. Perform DecodeGeneratedRangeItem of |BindingLine| with arguments _range_, _state_ and _names_.
+            1. Perform DecodeGeneratedRangeItem of |BindingColumn| with arguments _range_, _state_ and _names_.
+            1. Let _bindingIndex_ be the VLQUnsignedValue of |Vlq|.
+            1. If _bindingIndex_ > 0, let _binding_ be _names_[_bindingIndex_ - 1].
+            1. Else, let _binding_ be *null*.
+            1. Append { [[From]]: { [[Line]]: _state_.[[SubRangeLine]], [[Column]]: _state_.[[SubRangeColumn]] }, [[Binding]]: _binding_ } to _range_.[[Bindings]][_state_.[[SubRangeVariableIndex]]].
           </emu-alg>
           <emu-grammar>
             BindingLine :
