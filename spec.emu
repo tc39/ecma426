@@ -1239,7 +1239,7 @@
           <tr>
             <td>[[CallSite]]</td>
             <td>a Original Position Record or *null*</td>
-            <td>[[CallSite]] is not *null* when this generated range represents an inlined original scope body. When [[CallSite]] is set, [[Definition]] must also be set and [[Definition]].[[IsStackFrame]] must be true.</td>
+            <td>[[CallSite]] is not *null* when this generated range represents an inlined original scope body.</td>
           </tr>
           <tr>
             <td>[[Children]]</td>
@@ -1249,7 +1249,7 @@
         </table>
       </emu-table>
       <p>A root Generated Range Record describes a distinct part of the generated code. Each Generated Range Record may be associated with a Original Scope Record as indicated by the presence of the [[Definition]] field.</p>
-      <p>[[Bindings]] are intended for debuggers to retrieve the values of original variables. The length of [[Bindings]] must be equal to [[Variables]] of the corresponding Original Scope Record. Given an index _i_, [[Binding]][_i_] describes how to retrieve the value for the original variable [[Variables]][i].</p>
+      <p>[[Bindings]] are intended for debuggers to retrieve the values of original variables. The length of [[Bindings]] must be equal to [[Variables]] of the corresponding Original Scope Record. Given an index _i_, [[Binding]][_i_] describes how to retrieve the value for the original variable [[Variables]][_i_].</p>
       <p>[[Binding]][_i_] is a List of Binding Records, as there might be different expressions required in different parts of the generated range to retrieve a variables' value. In the common case, [[Binding]][_i_] will either be an empty List, in which case the variable is unavailable throughout the range. Or a single element list where [[Binding]][_i_][0].[[From]] matches [[Start]] and [[Binding]][_i_][0].[[Binding]] is JavaScript expression.</p>
       <emu-note example>
         Let _range_ be a Generated Range Record that starts at "0:0" (line 0, column 0) and ends at "0:30". The corresponding Original Scope Record contains a single variable "foo". The value of "foo" can be retrieved via the expression "a" in the range ["0:0", "0:10"). "foo" is unavailable in the range ["0:10", "0:20") and in the range ["0:20", "0:30") the expression "b" must be used. Then _range_ looks like:
@@ -1945,7 +1945,7 @@
             1. Set _range_.[[Start]].[[Line]] to _state_.[[RangeLine]].
             1. Perform DecodeGeneratedRangeItem of |RangeColumn| with arguments _range_, _state_ and _names_.
             1. Set _range_.[[Start]].[[Column]] to _state_.[[RangeColumn]].
-            1. Assert: |RangeDefinition| is present if and only if, _flags & 0x2 = 0x2.
+            1. Assert: |RangeDefinition| is present if and only if, _flags_ & 0x2 = 0x2.
             1. If |RangeDefinition| is present, perform DecodeGeneratedRangeItem of |RangeDefinition| with arguments _range_, _state_ and _names_.
             1. If _flags_ & 0x4 = 0x4 and _flags_ & 0x8 = 0x8, set _range_.[[StackFrameType]] to ~hidden~.
             1. Else if _flags_ & 0x8 = 0x8, optionally report an error.
@@ -2112,7 +2112,7 @@
             1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
           1. If _ignoreList_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
           1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
-          1. <ins>If _index_ ≥ 0 and _index &lt; _scopes_' length, then</ins>
+          1. <ins>If _index_ &lt; _scopes_' length, then</ins>
             1. <ins>Set _decodedSource_.[[Scope]] to _scopes_.[_index_].</ins>
           1. Append _decodedSource_ to _decodedSources_.
         1. Return _decodedSources_.
