@@ -281,7 +281,8 @@
 
       <dt><dfn id="sec-terms-and-definitions-generated-range" variants="generated ranges">generated range</dfn></dt>
       <dd>
-        <p>a code range in generated code. The term <em>range</em> is chosen deliberately: a range does not necessarily correspond to a lexical JavaScript/WASM scope, e.g. when function bodies were inlined by a compiler.</p>
+        <p>a code range in generated code.</p>
+        <emu-note>The term <em>range</em> is chosen deliberately: a range does not necessarily correspond to a lexical JavaScript/WASM scope, e.g. when function bodies were inlined by a compiler.</emu-note>
       </dd>
     </ins>
   </dl>
@@ -575,7 +576,8 @@
   <h1>Source map format</h1>
 
   <p>A source map is a JSON document containing a top-level JSON object with the following structure:</p>
-  <pre><code class="json">
+  <ins class="block">
+    <pre><code class="json">
   {
     "version" : 3,
     "file": "out.js",
@@ -584,9 +586,11 @@
     "sourcesContent": [null, null],
     "names": ["src", "maps", "are", "fun"],
     "mappings": "A,AAAB;;ABCDE",
-    "ignoreList": [0]
+    "ignoreList": [0],
+    "scopes":"BCCAQ,BHAAAC,BCCaC,CDC,CCA,CCY,EDBAA,EGAC,ECvBC,FW,FJ,FI"
   }
   </code></pre>
+  </ins>
   <ul>
     <li>The <dfn id="json-version"><code>version</code> field</dfn> shall always be the number 3 as an integer. The source map may be rejected if the field has any other value.</li>
     <li>The <dfn id="json-file"><code>file</code> field</dfn> is an optional name of the generated code that this source map is associated with. It's not specified if this can be an URL, relative path name, or just a base name. Source map generators may choose the appropriate interpretation for their contexts of use.</li>
@@ -1142,7 +1146,7 @@
 
     <p>The scope information is split across two data structures: original scopes and generated ranges. Original scopes describe the scope tree for original sources. Generated ranges describe where these scopes are found in the generated code. The scope information includes location information, for both original scopes and generated ranges, the type and name of a scope, as well as the original names of variables and how to retrieve their values in the generated code.</p>
 
-    <p>The scopes field is a comma (`,`) separated list of items. Each item is a list of base64 VLQs. The first base64 VLQ in each item is a tag that specifies which item is described by the rest of the VLQs. Items encode the original scope and generated range trees in prefix order.</p>
+    <p>The scopes field is a comma (`,`) separated list of items. Each item is a list of base64 VLQs. The first base64 VLQ in each item is a tag that specifies which item is described by the rest of the VLQs. Both original scopes and generated ranges are trees. Each node in these trees are described by a respective "start" and "end" item. "start" items appear in pre-order and "end" items appear in post-order. Any items other then "start" or "end" describe the "current" scope or range. The "current" scope or range is defined by the last seen "start" item.</p>
 
     <emu-clause id="sec-original-scope-record-type">
       <h1>Original Scope Record</h1>
@@ -1229,7 +1233,7 @@
           <tr>
             <td>[[StackFrameType]]</td>
             <td>~none~, ~original~, or ~hidden~</td>
-            <td>~original~ signifies that this generated range is a JavaScript/Wasm function. ~hidden~ signifies that this generated range is a compiler/transpiler inserted JavaScript/Wasm function even though [[Definition]] is not *null*. E.g. a original block scope was transpiled to a JS function.</td>
+            <td>~original~ signifies that this generated range is a JavaScript/Wasm function. ~hidden~ signifies that this generated range is a compiler/transpiler inserted JavaScript/Wasm function even though [[Definition]] is not *null*. E.g. a original block scope was transpiled to a JS function. ~none~ signifies that this generated range is not a JavaScript/WASM function.</td>
           </tr>
           <tr>
             <td>[[Bindings]]</td>
@@ -1476,7 +1480,7 @@
             BindingFromList BindingFrom
 
           BindingFrom :
-            BindingLine BindingColumn Vlq
+            BindingLine BindingColumn BindingExpression
 
           GeneratedRangeCallSite :
             `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
@@ -1503,6 +1507,9 @@
             Vlq
 
           BindingColumn :
+            Vlq
+
+          BindingExpression :
             Vlq
 
           CallSiteSourceIdx :
@@ -1552,7 +1559,7 @@
             Tag UnknownVlqList
 
           Tag :
-            Vlq but not `A` `B` `C` `D` `E` `F` `G` `H` `I`
+            Vlq but not `B` `C` `D` `E` `F` `G` `H` `I`
 
           UnknownVlqList :
             Vlq
@@ -2043,12 +2050,12 @@
           </emu-alg>
           <emu-grammar>
             BindingFrom :
-              BindingLine BindingColumn Vlq
+              BindingLine BindingColumn BindingExpression
           </emu-grammar>
           <emu-alg>
             1. Perform DecodeGeneratedRangeItem of |BindingLine| with arguments _range_, _state_ and _names_.
             1. Perform DecodeGeneratedRangeItem of |BindingColumn| with arguments _range_, _state_ and _names_.
-            1. Let _bindingIndex_ be the VLQUnsignedValue of |Vlq|.
+            1. Let _bindingIndex_ be the VLQUnsignedValue of |BindingExpression|.
             1. If _bindingIndex_ > 0, let _binding_ be _names_[_bindingIndex_ - 1].
             1. Else, let _binding_ be *null*.
             1. Append { [[From]]: { [[Line]]: _state_.[[SubRangeLine]], [[Column]]: _state_.[[SubRangeColumn]] }, [[Binding]]: _binding_ } to _range_.[[Bindings]][_state_.[[SubRangeVariableIndex]]].
