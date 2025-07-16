@@ -1374,7 +1374,7 @@
             UnknownItem
 
           OriginalScopeStart :
-            `B` ScopeFlags ScopeLine ScopeColumn ScopeName? ScopeKind?
+            `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
 
           OriginalScopeEnd :
             `C` ScopeLine ScopeColumn
@@ -1395,7 +1395,7 @@
           ScopeColumn :
             Vlq
 
-          ScopeName :
+          ScopeNameOrKind :
             Vlq
 
           ScopeKind :
@@ -1404,7 +1404,7 @@
           ScopeVariable :
             Vlq
         </emu-grammar>
-        <p>The VLQUnsignedValue of |ScopeFlags| encodes the presence of |ScopeName| and |ScopeKind| and marks the scope as a function:</p>
+        <p>The VLQUnsignedValue of |ScopeFlags| encodes the presence of |ScopeNameOrKind| and |ScopeKind| and marks the scope as a function:</p>
         <emu-table id="table-scope-flags" caption="|ScopeFlags| bits">
           <table>
             <thead>
@@ -1415,11 +1415,11 @@
             </thead>
             <tr>
               <td>0x1</td>
-              <td>Set if |ScopeName| is present.</td>
+              <td>|ScopeNameOrKind| is present and contains the scope's name.</td>
             </tr>
             <tr>
               <td>0x2</td>
-              <td>Set if |ScopeKind| is present.</td>
+              <td>If 0x1 is also set, |ScopeKind| is present and contains the scope's kind. If 0x1 is not set, then |ScopeNameOrKind| is present and contains the scope's kind.</td>
             </tr>
             <tr>
               <td>0x4</td>
@@ -1628,12 +1628,12 @@
             <tr>
               <td>[[ScopeNameIndex]]</td>
               <td>a non-negative Number</td>
-              <td>|ScopeName|</td>
+              <td>|ScopeNameOrKind|</td>
             </tr>
             <tr>
               <td>[[ScopeKindIndex]]</td>
               <td>a non-negative Number</td>
-              <td>|ScopeKind|</td>
+              <td>|ScopeNameOrKind| and |ScopeKind|</td>
             </tr>
             <tr>
               <td>[[ScopeVariableIndex]]</td>
@@ -1792,7 +1792,7 @@
           </emu-alg>
           <emu-grammar>
             OriginalScopeStart :
-              `B` ScopeFlags ScopeLine ScopeColumn ScopeName? ScopeKind?
+              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
           </emu-grammar>
           <emu-alg>
             1. Perform DecodeOriginalScopeItem of |ScopeLine| with arguments _scope_, _state_ and _names_.
@@ -1800,10 +1800,16 @@
             1. Perform DecodeOriginalScopeItem of |ScopeColumn| with arguments _scope_, _state_ and _names_.
             1. Set _scope_.[[Start]].[[Column]] to _state_.[[ScopeColumn]].
             1. Let _flags_ be the VLQUnsignedValue of |ScopeFlags|.
-            1. Assert: |ScopeName| is present if and only if, _flags_ & 0x1 = 0x1.
-            1. If |ScopeName| is present, perform DecodeOriginalScopeItem of |ScopeName| with arguments _scope_, _state_ and _names_.
-            1. Assert: |ScopeKind| is present if and only if, _flags_ & 0x2 = 0x2.
-            1. If |ScopeKind| is present, perform DecodeOriginalScopeItem of |ScopeKind| with arguments _scope_, _state_ and _names_.
+            1. If _flags_ & 0x3 = 0x1, then
+              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is not present.
+              1. DecodeOriginalScopeName(|ScopeNameOrKind|, _scope_, _state_, _names_).
+            1. Else if _flags_ & 0x3 = 0x2, then
+              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is not present.
+              1. DecodeOriginalScopeKind(|ScopeNameOrKind|, _scope_, _state_, _names_).
+            1. Else if _flags_ & 0x3 = 0x3, then
+              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is present.
+              1. DecodeOriginalScopeName(|ScopeNameOrKind|, _scope_, _state_, _names_).
+              1. DecodeOriginalScopeKind(|ScopeKind|, _scope_, _state_, _names_).
             1. If _flags_ & 0x4 = 0x4, set _scope_.[[IsStackFrame]] to *true*.
           </emu-alg>
           <emu-grammar>
@@ -1861,24 +1867,6 @@
             1. Set _state_.[[ScopeColumn]] to _state_.[[ScopeColumn]] + _relativeColumn_.
           </emu-alg>
           <emu-grammar>
-            ScopeName :
-              Vlq
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeName_ be the VLQSignedValue of |Vlq|.
-            1. Set _state_.[[ScopeNameIndex]] to _state_.[[ScopeNameIndex]] + _relativeName_.
-            1. Set _scope_.[[Name]] to _names_[_state_.[[ScopeNameIndex]]].
-          </emu-alg>
-          <emu-grammar>
-            ScopeKind :
-              Vlq
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeKind_ be the VLQSignedValue of |Vlq|.
-            1. Set _state_.[[ScopeKindIndex]] to _state_.[[ScopeKindIndex]] + _relativeKind_.
-            1. Set _scope_.[[Kind]] to _names_[_state_.[[ScopeKindIndex]]].
-          </emu-alg>
-          <emu-grammar>
             ScopeVariable :
               Vlq
           </emu-grammar>
@@ -1886,6 +1874,40 @@
             1. Let _relativeVariable_ be the VLQSignedValue of |Vlq|.
             1. Set _state_.[[ScopeVariableIndex]] to _state_.[[ScopeVariableIndex]] + _relativeVariable_.
             1. Append _names_[_state_.[[ScopeVariableIndex]]] to _scope_.[[Variables]].
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-DecodeOriginalScopeName" type="abstract operation">
+          <h1>
+            DecodeOriginalScopeName (
+              _name_: a |Vlq| Parse Node,
+              _scope_: a Original Scope Record,
+              _state_: a Decode Scope State Record,
+              _names_: a List of Strings,
+            )
+          </h1>
+          <dl class="header"></dl>
+          <emu-alg>
+            1. Let _relativeName_ be the VLQSignedValue of _name_.
+            1. Set _state_.[[ScopeNameIndex]] to _state_.[[ScopeNameIndex]] + _relativeName_.
+            1. Set _scope_.[[Name]] to _names_[_state_.[[ScopeNameIndex]]].
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-DecodeOriginalScopeKind" type="abstract operation">
+          <h1>
+            DecodeOriginalScopeKind (
+              _kind_: a |Vlq| Parse Node,
+              _scope_: a Original Scope Record,
+              _state_: a Decode Scope State Record,
+              _names_: a List of Strings,
+            )
+          </h1>
+          <dl class="header"></dl>
+          <emu-alg>
+            1. Let _relativeKind_ be the VLQSignedValue of _kind_.
+            1. Set _state_.[[ScopeKindIndex]] to _state_.[[ScopeKindIndex]] + _relativeKind_.
+            1. Set _scope_.[[Kind]] to _names_[_state_.[[ScopeKindIndex]]].
           </emu-alg>
         </emu-clause>
       </emu-clause>
