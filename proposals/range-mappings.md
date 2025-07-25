@@ -6,10 +6,8 @@ Source maps proposal at stage 2 of the process, see [Our process document](https
 
 ## Author
 
-Tobias Koppers
-
 * Stage: 2
-* Author: Tobias Koppers
+* Author: Asumu Takikawa, Tobias Koppers
 * Date: November, 2023
 
 ## Motiviation
@@ -97,21 +95,19 @@ console.log(\n"hello world");
 To avoid a breaking change to the `mappings` field, a new field named `rangeMappings` is added.
 It contains encoded data per-line in the generated code.
 Each line is separated by `;`.
-The data contains a bit per mapping in that line.
-When the bit is set, the mapping is a range mapping, otherwise it is a normal mapping.
-For every 6 bits a base64 encoded char is emitted.
-Zero bits can be padded or omitted, to create full base64 chars or make the encoding shorter.
-When there is no bit defined for a mapping, it is assumed to be a normal mapping.
+The data contains a sequence of unsigned VLQs. Each VLQ encodes a relative offset to the next
+zero-based index in the mappings of that line that is a range mapping. Mappings that are not
+explicitly marked by these offsets are normal mappings and are not range mappings.
 
 ```
-"rangeMappings": "AAB;;g"
+"rangeMappings": "ABCgB;;B"
 ```
 
 decodes as:
 
 ```
-Line 1: 0b000000 0b000000 0b000001 => the 13th mapping is a range mapping
-Line 3: 0b100000 => the 6th mapping is a range mapping
+Line 1: 0b000000 0b000001 0b000010 0b100000 0b000001 => 0 1 2 32 => the 1st, 2nd, 4th, and 36th mappings are range mappings
+Line 3: 0b000001 => 1 => the 2nd mapping is a range mapping
 ```
 
 > Note: The per-line encoding is chosen to make it easier to generate SourceMap line by line.
