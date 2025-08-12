@@ -2532,6 +2532,386 @@ return lastURL;</code></pre>
   </emu-clause>
 </emu-clause>
 
+<emu-clause id="sec-computing-original-stack-frames">
+  <h1>Computing original stack frames</h1>
+  <p></p>
+
+  <emu-clause id="sec-debugger-position-record-type">
+    <h1>Debugger Position Record</h1>
+    <p>A <dfn id="debugger-position-record">Debugger Position Record</dfn> is a tuple of a source URL and non-negative line and column numbers.</p>
+    <emu-table id="table-debugger-position-record-fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value Type</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[URL]]</td>
+          <td>a URL or *null*</td>
+        </tr>
+        <tr>
+          <td>[[Line]]</td>
+          <td>a non-negative integral Number</td>
+        </tr>
+        <tr>
+          <td>[[Column]]</td>
+          <td>a non-negative integral Number</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-debugger-bindings-record-type">
+    <h1>Debugger Bindings Records</h1>
+    <p>A <dfn id="debugger-bindings-record">Debugger Bindings Record</dfn> associates variable names to implementation-defined representations of javascript values in the debuggee or to ~unavailable~.</p>
+  </emu-clause>
+
+  <emu-clause id="sec-debugger-scope-record-type">
+    <h1>Debugger Scope Record</h1>
+    <p>A <dfn id="debugger-scope-record" variants="Debugger Scope Records">Debugger Scope Record</dfn> is a tuple of start and end positions and a Debugger Bindings Record.</p>
+    <emu-table id="table-debugger-scope-record-fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[Start]]</td>
+          <td>A Debugger Position Record</td>
+          <td>The line and column (inclusive) where the scope starts.</td>
+        </tr>
+        <tr>
+          <td>[[End]]</td>
+          <td>A Debugger Position Record</td>
+          <td>The line and column (exclusive) where the scope ends.</td>
+        </tr>
+        <tr>
+          <td>[[Bindings]]</td>
+          <td>A Debugger Bindings Record</td>
+          <td>The bindings of the scope.</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-debugger-frame-record-type">
+    <h1>Debugger Frame Record</h1>
+    <p>A <dfn id="debugger-frame-record" variants="Debugger Frame Records">Debugger Frame Record</dfn> is a tuple of a position, a list of scopes and an optional name.</p>
+    <emu-table id="table-debugger-frame-record-fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[Position]]</td>
+          <td>A Debugger Position Record</td>
+          <td>The position where execution was paused.</td>
+        </tr>
+        <tr>
+          <td>[[Scopes]]</td>
+          <td>A List of Debugger Scope Records</td>
+          <td>The scopes of the frame, starting with the innermost scope.</td>
+        </tr>
+        <tr>
+          <td>[[Name]]</td>
+          <td>A String or *null*</td>
+          <td>The name of the frame.</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-sourcemapped-frame-record-type">
+    <h1>SourceMapped Frame Record</h1>
+    <p>A <dfn id="sourcemapped-frame-record" variants="SourceMapped Frame Records">SourceMapped Frame Record</dfn> contains the name and position of an original frame and the index of its corresponding generated frame.</p>
+    <emu-table id="table-sourcemapped-frame-record-fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[Name]]</td>
+          <td>A String or *null*</td>
+          <td>The name of the original frame.</td>
+        </tr>
+        <tr>
+          <td>[[OriginalPosition]]</td>
+          <td>A Debugger Position Record</td>
+          <td>The position of the original frame.</td>
+        </tr>
+        <tr>
+          <td>[[GeneratedFrameIndex]]</td>
+          <td>a non-negative integral Number</td>
+          <td>The index of the corresponding generated frame.</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-EvaluateInScope" type="abstract operation">
+    <h1>
+      EvaluateInScope (
+        _frameIndex_: a non-negative integral Number,
+        _scopeIndex_: a non-negative integral Number,
+        _expression_: a String,
+      )
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>
+        The debugger must provide an operation for evaluating an expression in the frame and scope from the current stack indicated by their indices.
+        EvaluateInScope(0, 0, _expression_) evaluates _expression_ in the innermost scope of the current top frame.
+      </dd>
+    </dl>
+  </emu-clause>
+
+  <emu-clause id="sec-FindInnermostGeneratedRange" type="abstract operation">
+    <h1>
+      FindInnermostGeneratedRange (
+        _ranges_: a List of Generated Range Records,
+        _position_: a Debugger Position Record,
+      ): a Generated Range Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. For each Generated Range Record _range_ of _ranges_, do
+        1. If ComparePositions(_range_.[[Start]], _position_) is not ~greater~ and ComparePositions(_range_.[[End]], _position_) is ~greater~, then
+          1. Let _descendantRange_ be FindInnermostGeneratedRange(_range_.[[Children]], _position_).
+          1. If _descendantRange_ is not *null*, then
+            1. Return _descendantRange_.
+          1. Else,
+            1. return _range_.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindInnermostOriginalScope" type="abstract operation">
+    <h1>
+      FindInnermostOriginalScope (
+        _scope_: an Original Scope Record,
+        _position_: a Debugger Position Record,
+      ): an Original Scope Record
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. For each Original Scope Record _childScope_ of _scope_.[[Children]], do
+        1. If ComparePositions(_childScope_.[[Start]], _position_) is not ~greater~ and ComparePositions(_childScope_.[[End]], _position_) is ~greater~, then
+          1. return FindInnermostOriginalScope(_childScope_, _position_).
+      1. Return _scope_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindSourceForURL" type="abstract operation">
+    <h1>
+      FindSourceForURL (
+        _sources_: a List of Decoded Source Records,
+        _URL_: a URL,
+      ): a Decoded Source Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. For each Decoded Source Record _source_ of _sources_, do
+        1. If _source_.[[URL]] is _URL_, then
+          1. Return _source_.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindAncestorRangeForDefinition" type="abstract operation">
+    <h1>
+      FindAncestorRangeForDefinition (
+        _range_: a Generated Range Record,
+        _definition_: an Original Scope Record,
+      ): a Generated Range Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Repeat, while _range_ is not *null*,
+        1. If _range_.[[Definition]] is _definition_, then
+          1. Return _range_.
+        1. Set _range_ to its parent or *null* if it has no parent.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindFunctionName" type="abstract operation">
+    <h1>
+      FindFunctionName (
+        _scope_: an Original Scope Record,
+      ): String or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. If _scope_.[[IsStackFrame]], then
+        1. Return _scope_.[[Name]].
+      1. Let _parentScope_ be the parent of _scope_ or *null* if it has no parent.
+      1. If _parentScope_ is not *null*, then
+        1. Return FindFunctionName(_parentScope_).
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindDebuggerScopeIndexForRange" type="abstract operation">
+    <h1>
+      FindDebuggerScopeIndexForRange (
+        _debuggerScopes_: a List of Debugger Scope Records,
+        _start_: a Debugger Position Record,
+        _end_: a Debugger Position Record,
+      ): a non-negative integral Number or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _index_ be 0.
+      1. Repeat, while _index_ is smaller than the length of _debuggerScopes_,
+        1. Let _scope_ be _debuggerScopes_[_index_].
+        1. If ComparePositions(_scope_.[[Start]], _start_) is not ~greater~ and ComparePositions(_scope_.[[End]], _end_) is not ~less~, then
+          1. Return _index_.
+        1. Set _index_ to _index_ + 1.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindBindingRecord" type="abstract operation">
+    <h1>
+      FindBindingRecord (
+        _subRangeBindings_: a List of Binding Records,
+        _position_: a Debugger Position Record,
+      ): a Binding Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. For each Binding Record _subRangeBinding_ in _subRangeBindings_, in reverse List order, do
+        1. If ComparePositions(_subRangeBinding_.[[From]], _position_) is not ~greater~, then
+          1. Return _subRangeBinding_.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-GetOriginalPosition" type="abstract operation">
+    <h1>
+      GetOriginalPosition (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _generatedPosition_: a Position Record,
+      ): a Decoded Mapping Record or *null*
+    </h1>
+    <dl class="header">TODO: to be added in https://github.com/tc39/ecma426/pull/195</dl>
+  </emu-clause>
+
+  <emu-clause id="sec-ComputeOriginalFrames" type="abstract operation">
+    <h1>
+      ComputeOriginalFrames (
+        _sourceMap_: a Decoded Source Map Record,
+        _generatedFrames_: a List of Debugger Frame Records,
+      ): a List of Debugger Frame Records
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _framePositions_ be a new empty List.
+      1. For each Debugger Frame Record _frame_ of _generatedFrames_, do
+        1. Append _frame_.[[Position]] to _framePositions_.
+      1. Let _sourceMappedFrames_ be SymbolizeStackTrace(_sourceMap_, _framePositions_).
+      1. Let _originalFrames_ be a new empty List.
+      1. For each SourceMapped Frame Record _sourceMappedFrame_ of _sourceMappedFrames_, do
+        1. Let _generatedFrameIndex_ be _sourceMappedFrame_.[[GeneratedFrameIndex]].
+        1. Let _generatedFrame_ be _generatedFrames_[_generatedFrameIndex_].
+        1. Let _originalPosition_ be _sourceMappedFrame_.[[OriginalPosition]].
+        1. Let _originalScopes_ be BuildScopeChain(_sourceMap_, _generatedFrame_.[[Scopes]], _generatedFrame_.[[Position]], _generatedFrameIndex_, _originalPosition_).
+        1. Append { [[Position]]: _originalPosition_, [[Scopes]]: _originalScopes_, [[Name]]: _sourceMappedFrame_.[[Name]] } to _originalFrames_.
+      1. Return _originalFrames_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-SymbolizeStackTrace" type="abstract operation">
+    <h1>
+      SymbolizeStackTrace (
+        _sourceMap_: a Decoded Source Map Record,
+        _framePositions_: a List of Debugger Position Records,
+      ): a List of SourceMapped Frame Records
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _sourceMappedFrames_ be a new empty List.
+      1. Let _i_ be 0.
+      1. Repeat, while _i_ is smaller than the length of _framePositions_,
+        1. Let _generatedPosition_ be _framePositions_[i].
+        1. Let _mapping_ be GetOriginalPosition(_sourceMap_, _generatedPosition_).
+        1. Assert: _mapping_ is not *null*.
+        1. Let _originalPosition_ be _mapping_.[[OriginalPosition]].
+        1. Let _originalSource_ be FindSourceForURL(_sourceMap_.[[Sources]], _originalPosition_.[[URL]]).
+        1. Assert: _originalSource_ is not *null*.
+        1. Let _originalScope_ be FindInnermostOriginalScope(_originalSource_.[[Scope]], _originalPosition_).
+        1. Let _name_ be FindFunctionName(_originalScope_).
+        1. Append { [[Name]]: _name_, [[OriginalPosition]]: _originalPosition_, [[GeneratedFrameIndex]]: _i_ } to _sourceMappedFrames_.
+        1. Let _generatedRange_ be FindInnermostGeneratedRange(_sourceMap_, _generatedPosition_).
+        1. Repeat, while _generatedRange_ is not *null* and _generatedRange_.[[StackFrameType]] is ~none~,
+          1. Let _callSite_ be _generatedRange_.[[CallSite]].
+          1. If _callSite_ is not *null*, then
+            1. Let _callSiteSource_ be _callSite_.[[Source]].
+            1. Let _callSiteScope_ be FindInnermostOriginalScope(_callSiteSource_.[[Scope]], _callSite_).
+            1. Let _callSiteName_ be FindFunctionName(_callSiteScope_).
+            1. Append { [[Name]]: _callSiteName_, [[OriginalPosition]]: _callSite_, [[GeneratedFrameIndex]]: _i_ } to _sourceMappedFrames_.
+          1. Set _generatedRange_ to its parent or *null* if it has no parent.
+      1. Return _sourceMappedFrames_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-BuildScopeChain" type="abstract operation">
+    <h1>
+      BuildScopeChain (
+        _sourceMap_: a Decoded Source Map Record,
+        _debuggerScopes_: a List of Debugger Scope Records,
+        _generatedPosition_: a Debugger Position Record,
+        _generatedFrameIndex_: a non-negative integral Number,
+        _originalPosition_: a Debugger Position Record,
+      ): a Debugger Frame Record
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _innermostGeneratedRange_ be FindInnermostGeneratedRange(_sourceMap_.[[Ranges]], _generatedPosition_).
+      1. Assert: _innermostGeneratedRange_ is not *null*.
+      1. Let _originalSource_ be FindSourceForURL(_sourceMap_.[[Sources]], _originalPosition_.[[URL]]).
+      1. Assert: _originalSource_ is not *null*.
+      1. Let _originalScope_ be FindInnermostOriginalScope(_originalSource_.[[Scope]], _originalPosition_).
+      1. Let _name_ be FindFunctionName(_originalScope_).
+      1. Let _originalDebuggerScopes_ be a new empty List.
+      1. Repeat, while _originalScope_ is not *null*,
+        1. Let _generatedRange_ be FindAncestorRangeForDefinition(_innermostGeneratedRange_, _originalScope_).
+        1. Let _originalBindings_ be a new empty Debugger Bindings Record.
+        1. If _generatedRange_ is not *null*, then
+          1. Assert: The length of _originalScope_.[[Variables]] is equal to the length of _generatedRange_.[[Bindings]].
+          1. Let _scopeIndex_ be FindDebuggerScopeIndexForRange(_debuggerScopes_, _generatedRange_.[[Start]], _generatedRange_.[[End]]).
+          1. Let _i_ be 0.
+          1. Repeat, while _i_ is smaller than the length of _originalScope_.[[Variables]],
+            1. Let _variable_ be _originalScope_.[[Variables]][i].
+            1. Let _binding_ be FindBindingRecord(_generatedRange_.[[Bindings]][i], _generatedPosition_).
+            1. Assert: _binding_ is not *null*.
+            1. Let _value_ be ~unavailable~.
+            1. If _binding_.[[Binding]] is not *null*, then
+              1. Set _value_ to EvaluateInScope(_generatedFrameIndex_, _scopeIndex_, __binding_.[[Binding]]).
+            1. Set the value of _variable_ in _originalBindings_ to _value_.
+            1. Set _i_ to _i_ + 1.
+          1. Else,
+            1. For each String _variable_ of _originalScope_.[[Variables]], do
+              1. Set the value of _variable_ in _originalBindings_ to ~unavailable~.
+        1. Append { [[Start]]: _originalScope_.[[Start]], [[End]]: _originalScope_.[[End]], [[Bindings]]: _originalBindings_ } to _originalDebuggerScopes_.
+      1. Return { [[Position]]: _originalPosition_, [[Scopes]]: _originalDebuggerScopes_, [[Name]]: _name_ }.
+    </emu-alg>
+  </emu-clause>
+</emu-clause>
+
 <emu-annex id="sec-conventions">
   <h1>Conventions</h1>
 
