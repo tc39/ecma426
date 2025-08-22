@@ -1829,7 +1829,7 @@
             OriginalScopeStart :
               `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
 
-            OriginalScopeEnd:
+            OriginalScopeEnd :
               `C` ScopeLine ScopeColumn
           </emu-grammar>
           <emu-alg>
