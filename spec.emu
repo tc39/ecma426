@@ -1767,7 +1767,7 @@
         </emu-clause>
       </emu-clause>
 
-        <emu-clause id="sec-DecodedOriginalScopeTree" type="sdo">
+        <emu-clause id="sec-DecodedOriginalScopeTrees" type="sdo">
           <h1>
             DecodedOriginalScopeTrees (
               _state_: a Decode Scope State Record,
