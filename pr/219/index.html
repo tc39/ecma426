@@ -6260,26 +6260,26 @@ h1.version {
     <h1><span class="secnum">12.1</span> Debugger Position Record</h1>
     <p>A <dfn id="debugger-position-record" tabindex="-1">Debugger Position Record</dfn> is a tuple of a source <emu-xref href="#external-whatwg-url" id="_ref_437"><a href="#external-whatwg-url">URL</a></emu-xref> and non-negative line and <emu-xref href="#sec-terms-and-definitions-colun" id="_ref_438"><a href="#sec-terms-and-definitions-colun">column</a></emu-xref> numbers.</p>
     <emu-table id="table-debugger-position-record-fields"><figure><figcaption>Table 14</figcaption>
-      
-        
-          Field Name
-          Value Type
-        
-      
-      
-        
-          <var class="field">[[URL]]</var>
-          a <emu-xref href="#external-whatwg-url" id="_ref_439"><a href="#external-whatwg-url">URL</a></emu-xref> or <emu-val>null</emu-val>
-        
-        
-          <var class="field">[[Line]]</var>
-          a non-negative <emu-xref href="#integral-number"><a href="https://tc39.es/ecma262/#integral-number">integral Number</a></emu-xref>
-        
-        
-          <var class="field">[[Column]]</var>
-          a non-negative <emu-xref href="#integral-number"><a href="https://tc39.es/ecma262/#integral-number">integral Number</a></emu-xref>
-        
-      
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value Type</th>
+          </tr>
+        </thead>
+        <tbody><tr>
+          <td><var class="field">[[URL]]</var></td>
+          <td>a <emu-xref href="#external-whatwg-url" id="_ref_439"><a href="#external-whatwg-url">URL</a></emu-xref> or <emu-val>null</emu-val></td>
+        </tr>
+        <tr>
+          <td><var class="field">[[Line]]</var></td>
+          <td>a non-negative <emu-xref href="#integral-number"><a href="https://tc39.es/ecma262/#integral-number">integral Number</a></emu-xref></td>
+        </tr>
+        <tr>
+          <td><var class="field">[[Column]]</var></td>
+          <td>a non-negative <emu-xref href="#integral-number"><a href="https://tc39.es/ecma262/#integral-number">integral Number</a></emu-xref></td>
+        </tr>
+      </tbody></table>
     </figure></emu-table>
   </emu-clause>
 
@@ -6292,30 +6292,30 @@ h1.version {
     <h1><span class="secnum">12.3</span> Debugger Scope Record</h1>
     <p>A <dfn id="debugger-scope-record" variants="Debugger Scope Records" tabindex="-1">Debugger Scope Record</dfn> is a tuple of start and end positions and a <emu-xref href="#debugger-bindings-record" id="_ref_440"><a href="#debugger-bindings-record">Debugger Bindings Record</a></emu-xref>.</p>
     <emu-table id="table-debugger-scope-record-fields"><figure><figcaption>Table 15</figcaption>
-      
-        
-          Field Name
-          Value
-          Meaning
-        
-      
-      
-        
-          <var class="field">[[Start]]</var>
-          A <emu-xref href="#debugger-position-record" id="_ref_441"><a href="#debugger-position-record">Debugger Position Record</a></emu-xref>
-          The line and <emu-xref href="#sec-terms-and-definitions-colun" id="_ref_442"><a href="#sec-terms-and-definitions-colun">column</a></emu-xref> (inclusive) where the scope starts.
-        
-        
-          <var class="field">[[End]]</var>
-          A <emu-xref href="#debugger-position-record" id="_ref_443"><a href="#debugger-position-record">Debugger Position Record</a></emu-xref>
-          The line and <emu-xref href="#sec-terms-and-definitions-colun" id="_ref_444"><a href="#sec-terms-and-definitions-colun">column</a></emu-xref> (exclusive) where the scope ends.
-        
-        
-          <var class="field">[[Bindings]]</var>
-          A <emu-xref href="#debugger-bindings-record" id="_ref_445"><a href="#debugger-bindings-record">Debugger Bindings Record</a></emu-xref>
-          The bindings of the scope.
-        
-      
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody><tr>
+          <td><var class="field">[[Start]]</var></td>
+          <td>A <emu-xref href="#debugger-position-record" id="_ref_441"><a href="#debugger-position-record">Debugger Position Record</a></emu-xref></td>
+          <td>The line and <emu-xref href="#sec-terms-and-definitions-colun" id="_ref_442"><a href="#sec-terms-and-definitions-colun">column</a></emu-xref> (inclusive) where the scope starts.</td>
+        </tr>
+        <tr>
+          <td><var class="field">[[End]]</var></td>
+          <td>A <emu-xref href="#debugger-position-record" id="_ref_443"><a href="#debugger-position-record">Debugger Position Record</a></emu-xref></td>
+          <td>The line and <emu-xref href="#sec-terms-and-definitions-colun" id="_ref_444"><a href="#sec-terms-and-definitions-colun">column</a></emu-xref> (exclusive) where the scope ends.</td>
+        </tr>
+        <tr>
+          <td><var class="field">[[Bindings]]</var></td>
+          <td>A <emu-xref href="#debugger-bindings-record" id="_ref_445"><a href="#debugger-bindings-record">Debugger Bindings Record</a></emu-xref></td>
+          <td>The bindings of the scope.</td>
+        </tr>
+      </tbody></table>
     </figure></emu-table>
   </emu-clause>
 
@@ -6323,30 +6323,30 @@ h1.version {
     <h1><span class="secnum">12.4</span> Debugger Frame Record</h1>
     <p>A <dfn id="debugger-frame-record" variants="Debugger Frame Records" tabindex="-1">Debugger Frame Record</dfn> is a tuple of a position, a list of scopes and an optional name.</p>
     <emu-table id="table-debugger-frame-record-fields"><figure><figcaption>Table 16</figcaption>
-      
-        
-          Field Name
-          Value
-          Meaning
-        
-      
-      
-        
-          <var class="field">[[Position]]</var>
-          A <emu-xref href="#debugger-position-record" id="_ref_446"><a href="#debugger-position-record">Debugger Position Record</a></emu-xref>
-          The position where execution was paused.
-        
-        
-          <var class="field">[[Scopes]]</var>
-          A <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.es/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref> of <emu-xref href="#debugger-scope-record" id="_ref_447"><a href="#debugger-scope-record">Debugger Scope Records</a></emu-xref>
-          The scopes of the frame, starting with the innermost scope.
-        
-        
-          <var class="field">[[Name]]</var>
-          A String or <emu-val>null</emu-val>
-          The name of the frame.
-        
-      
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody><tr>
+          <td><var class="field">[[Position]]</var></td>
+          <td>A <emu-xref href="#debugger-position-record" id="_ref_446"><a href="#debugger-position-record">Debugger Position Record</a></emu-xref></td>
+          <td>The position where execution was paused.</td>
+        </tr>
+        <tr>
+          <td><var class="field">[[Scopes]]</var></td>
+          <td>A <emu-xref href="#sec-list-and-record-specification-type"><a href="https://tc39.es/ecma262/#sec-list-and-record-specification-type">List</a></emu-xref> of <emu-xref href="#debugger-scope-record" id="_ref_447"><a href="#debugger-scope-record">Debugger Scope Records</a></emu-xref></td>
+          <td>The scopes of the frame, starting with the innermost scope.</td>
+        </tr>
+        <tr>
+          <td><var class="field">[[Name]]</var></td>
+          <td>A String or <emu-val>null</emu-val></td>
+          <td>The name of the frame.</td>
+        </tr>
+      </tbody></table>
     </figure></emu-table>
   </emu-clause>
 
@@ -6354,30 +6354,30 @@ h1.version {
     <h1><span class="secnum">12.5</span> SourceMapped Frame Record</h1>
     <p>A <dfn id="sourcemapped-frame-record" variants="SourceMapped Frame Records" tabindex="-1">SourceMapped Frame Record</dfn> contains the name and position of an original frame and the index of its corresponding generated frame.</p>
     <emu-table id="table-sourcemapped-frame-record-fields"><figure><figcaption>Table 17</figcaption>
-      
-        
-          Field Name
-          Value
-          Meaning
-        
-      
-      
-        
-          <var class="field">[[Name]]</var>
-          A String or <emu-val>null</emu-val>
-          The name of the original frame.
-        
-        
-          <var class="field">[[OriginalPosition]]</var>
-          A <emu-xref href="#debugger-position-record" id="_ref_448"><a href="#debugger-position-record">Debugger Position Record</a></emu-xref>
-          The position of the original frame.
-        
-        
-          <var class="field">[[GeneratedFrameIndex]]</var>
-          a non-negative <emu-xref href="#integral-number"><a href="https://tc39.es/ecma262/#integral-number">integral Number</a></emu-xref>
-          The index of the corresponding generated frame.
-        
-      
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tbody><tr>
+          <td><var class="field">[[Name]]</var></td>
+          <td>A String or <emu-val>null</emu-val></td>
+          <td>The name of the original frame.</td>
+        </tr>
+        <tr>
+          <td><var class="field">[[OriginalPosition]]</var></td>
+          <td>A <emu-xref href="#debugger-position-record" id="_ref_448"><a href="#debugger-position-record">Debugger Position Record</a></emu-xref></td>
+          <td>The position of the original frame.</td>
+        </tr>
+        <tr>
+          <td><var class="field">[[GeneratedFrameIndex]]</var></td>
+          <td>a non-negative <emu-xref href="#integral-number"><a href="https://tc39.es/ecma262/#integral-number">integral Number</a></emu-xref></td>
+          <td>The index of the corresponding generated frame.</td>
+        </tr>
+      </tbody></table>
     </figure></emu-table>
   </emu-clause>
 
