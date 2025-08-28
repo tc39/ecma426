@@ -1772,7 +1772,7 @@
             DecodedOriginalScopeTrees (
               _state_: a Decode Scope State Record,
               _names_: a List of Strings,
-            ): a List of Original Scope Record
+            ): a List of either Original Scope Records or *null*
           </h1>
           <dl class="header"></dl>
           <emu-grammar>
@@ -1787,7 +1787,7 @@
             OriginalScopeTreeItem: [empty]
           </emu-grammar>
           <emu-alg>
-            1. Return « ».
+            1. Return « *null* ».
           </emu-alg>
           <emu-grammar>
             OriginalScopeTree :
