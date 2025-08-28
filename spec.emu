@@ -1741,6 +1741,14 @@
           <dl class="header"></dl>
           <emu-grammar>
             Scopes :
+              OriginalScopeTreeList
+          </emu-grammar>
+          <emu-alg>
+            1. Let _originalScopes_ be the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+            1. Set _info_.[[Scopes]] to _originalScopes_.
+          </emu-alg>
+          <emu-grammar>
+            Scopes :
               OriginalScopeTreeList `,` TopLevelItemList
           </emu-grammar>
           <emu-alg>
