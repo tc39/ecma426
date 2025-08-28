@@ -1824,7 +1824,7 @@
           1. Return « _originalScope_ ».
         </emu-alg>
 
-        <emu-clause id="sec-OriginalScopeStart" type="sdo">
+        <emu-clause id="sec-OriginalScopePosition" type="sdo">
           <h1>
             OriginalScopePosition (
               _lineAccumulator_: an Index Accumulator Record,
