@@ -1328,7 +1328,10 @@
 
         OriginalScopeTreeItem :
           OriginalScopeTree
-          [empty]
+          EmptyItem
+
+        EmptyItem :
+          `A`
 
         TopLevelItemList :
           TopLevelItem
@@ -1559,7 +1562,7 @@
             Tag UnknownVlqList
 
           Tag :
-            Vlq but not `B` `C` `D` `E` `F` `G` `H` `I`
+            Vlq but not `A` `B` `C` `D` `E` `F` `G` `H` `I`
 
           UnknownVlqList :
             Vlq
@@ -1731,7 +1734,7 @@
           </emu-alg>
           <emu-grammar>
             OriginalScopeTreeItem :
-              [empty]
+              EmptyItem
           </emu-grammar>
           <emu-alg>
             1. Append *null* to _info_.[[Scopes]].
