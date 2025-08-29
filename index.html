@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en-GB-oxendict"><head><meta charset="utf-8"><meta property="og:image" content="https://tc39.es/ecmarkup/ecma-logo.png"><meta property="og:title" content="Source map format specification"><meta property="og:description" content="Introduction
+<html lang="en-GB-oxendict"><head><meta name="viewport" content="width=device-width, initial-scale=1"><meta charset="utf-8"><meta property="og:image" content="https://tc39.es/ecmarkup/ecma-logo.png"><meta property="og:title" content="Source map format specification"><meta property="og:description" content="Introduction
   This Ecma Standard defines the Source map format, used for mapping transpiled source code back to the original sources.
   The source map format has the following goals:
   
@@ -479,10 +479,15 @@ function Menu() {
 
 Menu.prototype.documentKeydown = function (e) {
   e.stopPropagation();
-  if (e.keyCode === 80) {
+  if (e.key === 'p') {
     this.togglePinEntry();
-  } else if (e.keyCode >= 48 && e.keyCode < 58) {
+  } else if ([0, 1, 2, 3, 4, 5, 6, 7, 8, 9].includes(parseInt(e.key))) {
     this.selectPin((e.keyCode - 9) % 10);
+  } else if (e.key === '`') {
+    const hash = document.location.hash;
+    const id = decodeURIComponent(hash.slice(1));
+    const target = document.getElementById(id);
+    target?.scrollIntoView(true);
   }
 };
 
@@ -931,7 +936,7 @@ let referencePane = {
     this.$pane.appendChild(this.$tableContainer);
 
     if (menu != null) {
-      menu.$specContainer.appendChild(this.$container);
+      menu.$specContainer.after(this.$container);
     }
   },
 
@@ -1263,6 +1268,9 @@ function doShortcut(e) {
     document.documentElement.classList.toggle('show-ao-annotations');
   } else if (e.key === '?') {
     document.getElementById('shortcuts-help').classList.toggle('active');
+  } else if (e.key === ';') {
+    let el = document.getElementById('bd75b99add5f');
+    if (el != null) el.remove();
   }
 }
 
@@ -1972,6 +1980,23 @@ body.oldtoc {
   margin: 0 auto;
 }
 
+#metadata-block {
+  margin: 4em 0;
+  padding: 10px;
+  border: 1px solid #ee8421;
+}
+
+#metadata-block h1 {
+  font-size: 1.5em;
+  margin-top: 0;
+}
+
+#metadata-block > ul {
+  list-style-type: none;
+  margin: 0;
+  padding: 0;
+}
+
 span[aria-hidden='true'] {
   font-size: 0;
   white-space: pre;
@@ -2255,12 +2280,7 @@ emu-grammar.inline,
 emu-production.inline,
 emu-grammar.inline emu-production emu-rhs,
 emu-production.inline emu-rhs,
-emu-grammar[collapsed] emu-production emu-rhs {
-  display: inline;
-  padding-left: 1ex;
-  margin-left: 0;
-}
-
+emu-grammar[collapsed] emu-production emu-rhs,
 emu-production[collapsed] emu-rhs {
   display: inline;
   padding-left: 0.5ex;
@@ -2638,7 +2658,7 @@ table.real-table th {
 }
 
 emu-table td {
-  background: var(--background-color);
+  background: transparent;
 }
 
 td[colspan]:not([colspan="1"]), th[colspan]:not([colspan="1"]) {
@@ -2745,7 +2765,7 @@ tr.del > td {
   height: 100vh;
   max-width: 500px;
   box-sizing: border-box;
-  background-color: var(--control-background-color);
+  background: var(--control-background-color);
   overflow: hidden;
   transition: opacity 0.1s linear;
   padding: 0 5px;
@@ -3186,7 +3206,7 @@ li.menu-search-result-term::before {
 
 .toolbox::after {
   border-color: var(--toolbox-tail-background-outside-color);
-  border-top-color: var(--control-background-color);
+  border-top-color: var(--control-border-color);
   border-width: 10px;
   margin-left: -10px;
 }
@@ -3203,7 +3223,7 @@ li.menu-search-result-term::before {
   left: 0;
   right: 0;
   display: none;
-  background-color: var(--control-background-color);
+  background: var(--control-background-color);
   z-index: 1;
 }
 
@@ -3244,6 +3264,10 @@ li.menu-search-result-term::before {
   padding-right: 5px;
 }
 
+emu-normative-optional {
+  display: block;
+}
+
 emu-normative-optional::before {
   display: block;
   color: var(--attributes-tag-foreground-color);
@@ -3255,7 +3279,6 @@ emu-normative-optional,
 [deprecated],
 [legacy] {
   border-left: 5px solid var(--normative-optional-border-color);
-  display: block;
   padding: 0.5em;
   background: var(--normative-optional-background-color);
 }
@@ -3284,7 +3307,7 @@ emu-normative-optional,
   outline: solid 10000px var(--control-dialog-fade-color);
   border-radius: 5px;
   border-width: 1px 1px 0 1px;
-  background-color: var(--control-background-color);
+  background: var(--control-background-color);
   display: none;
 }
 
@@ -3312,6 +3335,7 @@ emu-normative-optional,
 
 #ecma-logo {
   background: var(--figure-background);
+  width: 500px;
 }
 </style><style>@media print {
 @font-face {
@@ -3385,6 +3409,7 @@ emu-normative-optional,
 
 :root {
   --page-number-style: decimal;
+  -prince-change-line-breaks-for-pagination: yes; /* see https://www.princexml.com/doc/prince-for-books/#pagination-fine-tuning */
 }
 
 @page {
@@ -3393,16 +3418,16 @@ emu-normative-optional,
   margin-bottom: 20mm;
   margin-inside: 19mm;
   margin-outside: 13mm;
-  -prince-page-fill: prefer-fill;
+  -prince-page-fill: prefer-balance; /* see https://www.princexml.com/doc/prince-for-books/#the-property--prince-page-fill */
 
-  /* Uncomment when producing WIP versions of final standards */
+  /* Uncomment when producing WIP versions of final standards, see https://www.princexml.com/doc/paged/#page-regions */
   /*
   @prince-overlay {
     color: rgba(0,0,0,0.15);
-    content: "WORK IN PROGRESS";
+    content: "DRAFT";
     font-family: Arial;
     font-weight: bolder;
-    font-size: 100pt;
+    font-size: 200pt;
     transform: rotate(-60deg);
   }
   */
@@ -3512,7 +3537,7 @@ body {
   line-height: 1.15;
 }
 
-h1, h2, h3, h4, h5, h6 { -prince-bookmark-level: none }
+h1, h2, h3, h4, h5, h6 { -prince-bookmark-level: none } /* see https://www.princexml.com/doc/prince-output/#pdf-bookmarks */
 
 .copyright-notice + h1.title {
   break-before: recto;
@@ -3532,13 +3557,22 @@ p {
   text-wrap: pretty;
   overflow-wrap: break-word;
   hyphens: auto;
-  orphans: 2;
-  widows: 2;
+  orphans: 2, -prince-prefer 3; /* see https://www.princexml.com/doc/prince-for-books/#pagination-goals */
+  widows: 2, -prince-prefer 3;
 }
 
 h1 {
   text-wrap: balance;
   line-height: 1.4;
+}
+
+pre:has(> code) {
+  margin: 0;
+}
+
+p + pre:has(+ p) {
+  padding-top: 0;
+  padding-bottom: 0;
 }
 
 emu-alg {
@@ -3579,6 +3613,10 @@ emu-alg ol li:last-child {
   break-after: initial; /* it's okay to break after the last item in a list, even if it's also the first item in the list */
 }
 
+emu-normative-optional {
+  break-inside: avoid;
+}
+
 emu-normative-optional emu-clause[id] {
   margin-top: 0;
 }
@@ -3595,6 +3633,10 @@ emu-note {
 emu-note .note {
   font-size: 9pt;
   min-width: 4.5em;
+}
+
+emu-note table td {
+  background-color: white;
 }
 
 emu-note p,
@@ -3625,7 +3667,6 @@ emu-intro, emu-clause, emu-annex {
 }
 
 emu-clause p:first-of-type {
-  margin-bottom: 0;
   orphans: 3;
 }
 
@@ -3745,7 +3786,7 @@ caption, table > figcaption {
 }
 
 caption {
-  -prince-caption-page: first;
+  -prince-caption-page: first; /* see https://www.princexml.com/doc/css-props/#prop-prince-caption-page */
 }
 
 /* do not break inside of small tables */
@@ -3786,6 +3827,11 @@ emu-figure img {
   height: auto;
 }
 
+.attributes-tag {
+  break-before: avoid-page;
+  break-after: avoid-page;
+}
+
 #spec-container {
   max-width: initial;
 }
@@ -3812,7 +3858,7 @@ emu-figure img {
 }
 
 #toc a[href]::after {
-  content: leader(dotted)  target-counter(attr(href), page);
+  content: leader(dotted) target-counter(attr(href), page);
 }
 
 #toc > ol.toc {
@@ -3864,8 +3910,16 @@ a[data-print-href]::after {
   width: auto;
 }
 
-.annex-title {
+emu-annex > h1 {
   text-align: center;
+}
+
+emu-annex > h1 span {
+  display: block;
+}
+
+emu-annex > h1 .secnum {
+  margin: 0 0 1lh;
 }
 
 .copyright-notice { /* ecma mandated */
@@ -3873,12 +3927,8 @@ a[data-print-href]::after {
   border: 1px solid black;
   padding: 1em;
   page: copyright;
-  page-break-before: always;
-  page-break-after: always;
-}
-
-.full-page-svg {
-  color: rgba(255, 255, 255, 0);
+  break-before: page;
+  break-after: page;
 }
 
 .secnum {
@@ -3929,6 +3979,7 @@ h1.version {
 }
 
 #front-cover h1.title {
+  display: block;
   font-weight: bold;
   font-size: 20pt;
   line-height: 1.2;
@@ -3940,15 +3991,6 @@ h1.version {
 
 #inside-cover {
   page: inside-cover;
-}
-
-#inside-cover address {
-  color: black;
-  font-size: 12pt;
-  font-style: normal;
-  position: relative;
-  left: 72mm;
-  top: 82mm;
 }
 
 #toc {
@@ -3963,6 +4005,10 @@ h1.version {
 
 .annex-kind {
   font-weight: normal;
+}
+
+p.ECMAaddress {
+  margin: 0;
 }
 
 }</style><style>
@@ -4004,11 +4050,13 @@ h1.version {
 
   <li><span>Jump to search box</span><code>/</code></li>
   <li><span>Toggle pinning of the current clause</span><code>p</code></li>
-  <li><span>Jump to <i>n</i>th pin</span><code>1-9</code></li>
+  <li><span>Jump to the <i>n</i><sup>th</sup> pin</span><code>1-9</code></li>
+  <li><span>Jump to the 10<sup>th</sup> pin</span><code>0</code></li>
+  <li><span>Jump to the most recent link target</span><code>`</code></li>
 </ul></div><div id="menu-toggle"><svg xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%; stroke:currentColor" viewBox="0 0 120 120" width="54" height="54">
       <title>Menu</title>
       <path stroke-width="10" stroke-linecap="round" d="M30,60 h60  M30,30 m0,5 h60  M30,90 m0,-5 h60"></path>
-    </svg></div><div id="menu-spacer" class="menu-spacer"></div><div id="menu"><div id="menu-search"><input type="text" id="menu-search-box" placeholder="Search..."><div id="menu-search-results" class="inactive"></div></div><div id="menu-pins"><div class="menu-pane-header">Pins<button class="unpin-all">clear</button></div><ul id="menu-pins-list"></ul></div><div class="menu-pane-header">Table of Contents</div><div id="menu-toc"><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-intro" title="Introduction">Introduction</a></li><li><span class="item-toggle-none"></span><a href="#sec-scope" title="Scope"><span class="secnum">1</span> Scope</a></li><li><span class="item-toggle-none"></span><a href="#sec-conformance" title="Conformance"><span class="secnum">2</span> Conformance</a></li><li><span class="item-toggle">+</span><a href="#sec-references" title="References"><span class="secnum">3</span> References</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-references-normative" title="Normative References"><span class="secnum">3.1</span> Normative References</a></li><li><span class="item-toggle-none"></span><a href="#sec-references-informative" title="Informative References"><span class="secnum">3.2</span> Informative References</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-notational-conventions" title="Notational Conventions"><span class="secnum">4</span> Notational Conventions</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-algorithm-conventions" title="Algorithm Conventions"><span class="secnum">4.1</span> Algorithm Conventions</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-implicit-completions" title="Implicit Completions"><span class="secnum">4.1.1</span> Implicit Completions</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#example-get-the-answer" title="GetTheAnswer ( input )"><span class="secnum">4.1.1.1</span> GetTheAnswer ( <var>input</var> )</a></li><li><span class="item-toggle-none"></span><a href="#example-get-the-answer-2" title="GetTheAnswer2 ( input )"><span class="secnum">4.1.1.2</span> GetTheAnswer2 ( <var>input</var> )</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-optional-errors" title="Optional Errors"><span class="secnum">4.1.2</span> Optional Errors</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-grammar-notation" title="Grammar Notation"><span class="secnum">4.2</span> Grammar Notation</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-terms-and-definitions" title="Terms and Definitions"><span class="secnum">5</span> Terms and Definitions</a></li><li><span class="item-toggle">+</span><a href="#sec-base64-vlq" title="base64 VLQ"><span class="secnum">6</span> base64 VLQ</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-VLQSignedValue" title="VLQSignedValue"><span class="secnum">6.1</span> VLQSignedValue</a></li><li><span class="item-toggle-none"></span><a href="#sec-VLQUnsignedValue" title="VLQUnsignedValue"><span class="secnum">6.2</span> VLQUnsignedValue</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-json-values-utilities" title="JSON values utilities"><span class="secnum">7</span> JSON values utilities</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-ParseJSON" title="ParseJSON ( string )"><span class="secnum">7.1</span> ParseJSON ( <var>string</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-JSONObjectGet" title="JSONObjectGet ( object, key )"><span class="secnum">7.2</span> JSONObjectGet ( <var>object</var>, <var>key</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-JSONArrayIterate" title="JSONArrayIterate ( array )"><span class="secnum">7.3</span> JSONArrayIterate ( <var>array</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-StringSplit" title="StringSplit ( string, separators )"><span class="secnum">7.4</span> StringSplit ( <var>string</var>, <var>separators</var> )</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-position-types" title="Position types"><span class="secnum">8</span> Position types</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-position-record-type" title="Position Record"><span class="secnum">8.1</span> Position Record</a></li><li><span class="item-toggle-none"></span><a href="#sec-original-position-record-type" title="Original Position Record"><span class="secnum">8.2</span> Original Position Record</a></li><li><span class="item-toggle-none"></span><a href="#sec-ComparePositions" title="ComparePositions ( first, second )"><span class="secnum">8.3</span> ComparePositions ( <var>first</var>, <var>second</var> )</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-source-map-format" title="Source map format"><span class="secnum">9</span> Source map format</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-decoding-source-maps" title="Decoding source maps"><span class="secnum">9.1</span> Decoding source maps</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-ParseSourceMap" title="ParseSourceMap ( string, baseURL )"><span class="secnum">9.1.1</span> ParseSourceMap ( <var>string</var>, <var>baseURL</var> )</a></li><li><span class="item-toggle">+</span><a href="#sec-DecodeSourceMap" title="DecodeSourceMap ( json, baseURL )"><span class="secnum">9.1.2</span> DecodeSourceMap ( <var>json</var>, <var>baseURL</var> )</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-GetOptionalString" title="GetOptionalString ( object, key )"><span class="secnum">9.1.2.1</span> GetOptionalString ( <var>object</var>, <var>key</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-GetOptionalListOfStrings" title="GetOptionalListOfStrings ( object, key )"><span class="secnum">9.1.2.2</span> GetOptionalListOfStrings ( <var>object</var>, <var>key</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-GetOptionalListOfOptionalStrings" title="GetOptionalListOfOptionalStrings ( object, key )"><span class="secnum">9.1.2.3</span> GetOptionalListOfOptionalStrings ( <var>object</var>, <var>key</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-GetOptionalListOfArrayIndexes" title="GetOptionalListOfArrayIndexes ( object, key )"><span class="secnum">9.1.2.4</span> GetOptionalListOfArrayIndexes ( <var>object</var>, <var>key</var> )</a></li></ol></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-mappings" title="Mappings structure"><span class="secnum">9.2</span> Mappings structure</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-mappings-grammar" title="Mappings grammar"><span class="secnum">9.2.1</span> Mappings grammar</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-DecodeMappingsField" title="DecodeMappingsField"><span class="secnum">9.2.1.1</span> DecodeMappingsField</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-DecodeMappings" title="DecodeMappings ( rawMappings, names, sources )"><span class="secnum">9.2.2</span> DecodeMappings ( <var>rawMappings</var>, <var>names</var>, <var>sources</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-mappings-for-generated-javascript-code" title="Mappings for generated JavaScript code"><span class="secnum">9.2.3</span> Mappings for generated JavaScript code</a></li><li><span class="item-toggle-none"></span><a href="#sec-names-for-generated-javascript-code" title="Names for generated JavaScript code"><span class="secnum">9.2.4</span> Names for generated JavaScript code</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-sources" title="Resolving sources"><span class="secnum">9.3</span> Resolving sources</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-DecodeSourceMapSources" title="DecodeSourceMapSources ( baseURL, sourceRoot, sources, sourcesContent, ignoreList )"><span class="secnum">9.3.1</span> DecodeSourceMapSources ( <var>baseURL</var>, <var>sourceRoot</var>, <var>sources</var>, <var>sourcesContent</var>, <var>ignoreList</var> )</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-extensions" title="Extensions"><span class="secnum">9.4</span> Extensions</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-index-source-map" title="Index source map"><span class="secnum">10</span> Index source map</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-DecodeIndexSourceMap" title="DecodeIndexSourceMap ( json, baseURL )"><span class="secnum">10.1</span> DecodeIndexSourceMap ( <var>json</var>, <var>baseURL</var> )</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-retrieving-source-maps" title="Retrieving source maps"><span class="secnum">11</span> Retrieving source maps</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-linking-generated-code" title="Linking generated code to source maps"><span class="secnum">11.1</span> Linking generated code to source maps</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-linking-http-header" title="Linking through HTTP headers"><span class="secnum">11.1.1</span> Linking through HTTP headers</a></li><li><span class="item-toggle">+</span><a href="#sec-linking-inline" title="Linking through inline annotations"><span class="secnum">11.1.2</span> Linking through inline annotations</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-JavaScriptExtractSourceMapURL" title="JavaScriptExtractSourceMapURL ( source )"><span class="secnum">11.1.2.1</span> JavaScriptExtractSourceMapURL ( <var>source</var> )</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-MatchSourceMapURL" title="MatchSourceMapURL ( comment )"><span class="secnum">11.1.2.1.1</span> MatchSourceMapURL ( <var>comment</var> )</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-CSSExtractSourceMapURL" title="CSSExtractSourceMapURL ( source )"><span class="secnum">11.1.2.2</span> CSSExtractSourceMapURL ( <var>source</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-WebAssemblyExtractSourceMapURL" title="WebAssemblyExtractSourceMapURL ( bytes )"><span class="secnum">11.1.2.3</span> WebAssemblyExtractSourceMapURL ( <var>bytes</var> )</a></li></ol></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-fetching-source-maps" title="Fetching source maps"><span class="secnum">11.2</span> Fetching source maps</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-FetchSourceMap" title="FetchSourceMap ( url )"><span class="secnum">11.2.1</span> FetchSourceMap ( <var>url</var> )</a></li></ol></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-conventions" title="Conventions"><span class="secnum">Annex A <span class="annex-kind">(informative)</span></span> Conventions</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-source-map-naming" title="Source map naming"><span class="secnum">A.1</span> Source map naming</a></li><li><span class="item-toggle-none"></span><a href="#sec-linking-eval" title="Linking eval'd code to named generated code"><span class="secnum">A.2</span> Linking eval'd code to named generated code</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-notes" title="Notes"><span class="secnum">Annex B <span class="annex-kind">(informative)</span></span> Notes</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-language-neutral-mapping" title="Language neutral stack mapping"><span class="secnum">B.1</span> Language neutral stack mapping</a></li><li><span class="item-toggle-none"></span><a href="#sec-multi-level-mapping" title="Multi-level mapping"><span class="secnum">B.2</span> Multi-level mapping</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-external-definitions" title="Terms defined in other specifications"><span class="secnum">Annex C <span class="annex-kind">(informative)</span></span> Terms defined in other specifications</a></li><li><span class="item-toggle-none"></span><a href="#sec-bibliography" title="Bibliography"><span class="secnum">Annex D <span class="annex-kind">(informative)</span></span> Bibliography</a></li><li><span class="item-toggle-none"></span><a href="#sec-colophon" title="Colophon"><span class="secnum">Annex E <span class="annex-kind">(informative)</span></span> Colophon</a></li><li><span class="item-toggle-none"></span><a href="#sec-copyright-and-software-license" title="Copyright &amp; Software License">Copyright &amp; Software License</a></li></ol></div></div><div id="spec-container"><h1 class="version">Draft ECMA-426 / August 7, 2025</h1><h1 class="title">Source map format specification</h1>
+    </svg></div><div id="menu-spacer" class="menu-spacer"></div><div id="menu"><div id="menu-search"><input type="text" id="menu-search-box" placeholder="Search..."><div id="menu-search-results" class="inactive"></div></div><div id="menu-pins"><div class="menu-pane-header">Pins<button class="unpin-all">clear</button></div><ul id="menu-pins-list"></ul></div><div class="menu-pane-header">Table of Contents</div><div id="menu-toc"><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-intro" title="Introduction">Introduction</a></li><li><span class="item-toggle-none"></span><a href="#sec-scope" title="Scope"><span class="secnum">1</span> Scope</a></li><li><span class="item-toggle-none"></span><a href="#sec-conformance" title="Conformance"><span class="secnum">2</span> Conformance</a></li><li><span class="item-toggle">+</span><a href="#sec-references" title="References"><span class="secnum">3</span> References</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-references-normative" title="Normative References"><span class="secnum">3.1</span> Normative References</a></li><li><span class="item-toggle-none"></span><a href="#sec-references-informative" title="Informative References"><span class="secnum">3.2</span> Informative References</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-notational-conventions" title="Notational Conventions"><span class="secnum">4</span> Notational Conventions</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-algorithm-conventions" title="Algorithm Conventions"><span class="secnum">4.1</span> Algorithm Conventions</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-implicit-completions" title="Implicit Completions"><span class="secnum">4.1.1</span> Implicit Completions</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#example-get-the-answer" title="GetTheAnswer ( input )"><span class="secnum">4.1.1.1</span> GetTheAnswer ( <var>input</var> )</a></li><li><span class="item-toggle-none"></span><a href="#example-get-the-answer-2" title="GetTheAnswer2 ( input )"><span class="secnum">4.1.1.2</span> GetTheAnswer2 ( <var>input</var> )</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-optional-errors" title="Optional Errors"><span class="secnum">4.1.2</span> Optional Errors</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-grammar-notation" title="Grammar Notation"><span class="secnum">4.2</span> Grammar Notation</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-terms-and-definitions" title="Terms and Definitions"><span class="secnum">5</span> Terms and Definitions</a></li><li><span class="item-toggle">+</span><a href="#sec-base64-vlq" title="base64 VLQ"><span class="secnum">6</span> base64 VLQ</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-VLQSignedValue" title="VLQSignedValue"><span class="secnum">6.1</span> VLQSignedValue</a></li><li><span class="item-toggle-none"></span><a href="#sec-VLQUnsignedValue" title="VLQUnsignedValue"><span class="secnum">6.2</span> VLQUnsignedValue</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-json-values-utilities" title="JSON values utilities"><span class="secnum">7</span> JSON values utilities</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-ParseJSON" title="ParseJSON ( string )"><span class="secnum">7.1</span> ParseJSON ( <var>string</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-JSONObjectGet" title="JSONObjectGet ( object, key )"><span class="secnum">7.2</span> JSONObjectGet ( <var>object</var>, <var>key</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-JSONArrayIterate" title="JSONArrayIterate ( array )"><span class="secnum">7.3</span> JSONArrayIterate ( <var>array</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-StringSplit" title="StringSplit ( string, separators )"><span class="secnum">7.4</span> StringSplit ( <var>string</var>, <var>separators</var> )</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-position-types" title="Position types"><span class="secnum">8</span> Position types</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-position-record-type" title="Position Record"><span class="secnum">8.1</span> Position Record</a></li><li><span class="item-toggle-none"></span><a href="#sec-original-position-record-type" title="Original Position Record"><span class="secnum">8.2</span> Original Position Record</a></li><li><span class="item-toggle-none"></span><a href="#sec-ComparePositions" title="ComparePositions ( first, second )"><span class="secnum">8.3</span> ComparePositions ( <var>first</var>, <var>second</var> )</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-source-map-format" title="Source map format"><span class="secnum">9</span> Source map format</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-decoding-source-maps" title="Decoding source maps"><span class="secnum">9.1</span> Decoding source maps</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-ParseSourceMap" title="ParseSourceMap ( string, baseURL )"><span class="secnum">9.1.1</span> ParseSourceMap ( <var>string</var>, <var>baseURL</var> )</a></li><li><span class="item-toggle">+</span><a href="#sec-DecodeSourceMap" title="DecodeSourceMap ( json, baseURL )"><span class="secnum">9.1.2</span> DecodeSourceMap ( <var>json</var>, <var>baseURL</var> )</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-GetOptionalString" title="GetOptionalString ( object, key )"><span class="secnum">9.1.2.1</span> GetOptionalString ( <var>object</var>, <var>key</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-GetOptionalListOfStrings" title="GetOptionalListOfStrings ( object, key )"><span class="secnum">9.1.2.2</span> GetOptionalListOfStrings ( <var>object</var>, <var>key</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-GetOptionalListOfOptionalStrings" title="GetOptionalListOfOptionalStrings ( object, key )"><span class="secnum">9.1.2.3</span> GetOptionalListOfOptionalStrings ( <var>object</var>, <var>key</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-GetOptionalListOfArrayIndexes" title="GetOptionalListOfArrayIndexes ( object, key )"><span class="secnum">9.1.2.4</span> GetOptionalListOfArrayIndexes ( <var>object</var>, <var>key</var> )</a></li></ol></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-mappings" title="Mappings structure"><span class="secnum">9.2</span> Mappings structure</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-mappings-grammar" title="Mappings grammar"><span class="secnum">9.2.1</span> Mappings grammar</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-DecodeMappingsField" title="DecodeMappingsField"><span class="secnum">9.2.1.1</span> DecodeMappingsField</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-DecodeMappings" title="DecodeMappings ( rawMappings, names, sources )"><span class="secnum">9.2.2</span> DecodeMappings ( <var>rawMappings</var>, <var>names</var>, <var>sources</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-mappings-for-generated-javascript-code" title="Mappings for generated JavaScript code"><span class="secnum">9.2.3</span> Mappings for generated JavaScript code</a></li><li><span class="item-toggle-none"></span><a href="#sec-names-for-generated-javascript-code" title="Names for generated JavaScript code"><span class="secnum">9.2.4</span> Names for generated JavaScript code</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-sources" title="Resolving sources"><span class="secnum">9.3</span> Resolving sources</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-DecodeSourceMapSources" title="DecodeSourceMapSources ( baseURL, sourceRoot, sources, sourcesContent, ignoreList )"><span class="secnum">9.3.1</span> DecodeSourceMapSources ( <var>baseURL</var>, <var>sourceRoot</var>, <var>sources</var>, <var>sourcesContent</var>, <var>ignoreList</var> )</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-extensions" title="Extensions"><span class="secnum">9.4</span> Extensions</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-index-source-map" title="Index source map"><span class="secnum">10</span> Index source map</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-DecodeIndexSourceMap" title="DecodeIndexSourceMap ( json, baseURL )"><span class="secnum">10.1</span> DecodeIndexSourceMap ( <var>json</var>, <var>baseURL</var> )</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-retrieving-source-maps" title="Retrieving source maps"><span class="secnum">11</span> Retrieving source maps</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-linking-generated-code" title="Linking generated code to source maps"><span class="secnum">11.1</span> Linking generated code to source maps</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-linking-http-header" title="Linking through HTTP headers"><span class="secnum">11.1.1</span> Linking through HTTP headers</a></li><li><span class="item-toggle">+</span><a href="#sec-linking-inline" title="Linking through inline annotations"><span class="secnum">11.1.2</span> Linking through inline annotations</a><ol class="toc"><li><span class="item-toggle">+</span><a href="#sec-JavaScriptExtractSourceMapURL" title="JavaScriptExtractSourceMapURL ( source )"><span class="secnum">11.1.2.1</span> JavaScriptExtractSourceMapURL ( <var>source</var> )</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-MatchSourceMapURL" title="MatchSourceMapURL ( comment )"><span class="secnum">11.1.2.1.1</span> MatchSourceMapURL ( <var>comment</var> )</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-CSSExtractSourceMapURL" title="CSSExtractSourceMapURL ( source )"><span class="secnum">11.1.2.2</span> CSSExtractSourceMapURL ( <var>source</var> )</a></li><li><span class="item-toggle-none"></span><a href="#sec-WebAssemblyExtractSourceMapURL" title="WebAssemblyExtractSourceMapURL ( bytes )"><span class="secnum">11.1.2.3</span> WebAssemblyExtractSourceMapURL ( <var>bytes</var> )</a></li></ol></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-fetching-source-maps" title="Fetching source maps"><span class="secnum">11.2</span> Fetching source maps</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-FetchSourceMap" title="FetchSourceMap ( url )"><span class="secnum">11.2.1</span> FetchSourceMap ( <var>url</var> )</a></li></ol></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-conventions" title="Conventions"><span class="secnum">Annex A <span class="annex-kind">(informative)</span></span> Conventions</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-source-map-naming" title="Source map naming"><span class="secnum">A.1</span> Source map naming</a></li><li><span class="item-toggle-none"></span><a href="#sec-linking-eval" title="Linking eval'd code to named generated code"><span class="secnum">A.2</span> Linking eval'd code to named generated code</a></li></ol></li><li><span class="item-toggle">+</span><a href="#sec-notes" title="Notes"><span class="secnum">Annex B <span class="annex-kind">(informative)</span></span> Notes</a><ol class="toc"><li><span class="item-toggle-none"></span><a href="#sec-language-neutral-mapping" title="Language neutral stack mapping"><span class="secnum">B.1</span> Language neutral stack mapping</a></li><li><span class="item-toggle-none"></span><a href="#sec-multi-level-mapping" title="Multi-level mapping"><span class="secnum">B.2</span> Multi-level mapping</a></li></ol></li><li><span class="item-toggle-none"></span><a href="#sec-external-definitions" title="Terms defined in other specifications"><span class="secnum">Annex C <span class="annex-kind">(informative)</span></span> Terms defined in other specifications</a></li><li><span class="item-toggle-none"></span><a href="#sec-bibliography" title="Bibliography"><span class="secnum">Annex D <span class="annex-kind">(informative)</span></span> Bibliography</a></li><li><span class="item-toggle-none"></span><a href="#sec-colophon" title="Colophon"><span class="secnum">Annex E <span class="annex-kind">(informative)</span></span> Colophon</a></li><li><span class="item-toggle-none"></span><a href="#sec-copyright-and-software-license" title="Copyright &amp; Software License">Copyright &amp; Software License</a></li></ol></div></div><div id="spec-container"><h1 class="version">Draft ECMA-426 / August 29, 2025</h1><h1 class="title">Source map format specification</h1>
 <p><img src="img/ecma-logo.svg" id="ecma-logo" alt="Ecma International logo"></p>
 <div id="metadata-block">
   <h1>About this Specification</h1>
@@ -5322,17 +5370,17 @@ h1.version {
   <p>This specification is authored on <a href="https://github.com/tc39/ecma426">GitHub</a> in a plaintext source format called <a href="https://github.com/bterlson/ecmarkup">Ecmarkup</a>. Ecmarkup is an HTML and Markdown dialect that provides a framework and toolset for authoring ECMAScript specifications in plaintext and processing the specification into a full-featured HTML rendering that follows the editorial conventions for this document. Ecmarkup builds on and integrates a number of other formats and technologies including <a href="https://github.com/rbuckton/grammarkdown">Grammarkdown</a> for defining syntax and <a href="https://github.com/domenic/ecmarkdown">Ecmarkdown</a> for authoring algorithm steps. PDF renderings of this specification are produced by printing the HTML rendering to a PDF.</p>
   <p>The first edition of this specification was authored using <a href="https://speced.github.io/bikeshed/">Bikeshed</a>, a different plaintext source format based on HTML and Markdown.</p>
   <p>Pre-standard versions of this document were authored using Google Docs.</p>
-</emu-annex><emu-annex id="sec-copyright-and-software-license" class="copyright-notice" back-matter="">
-      <h1>Copyright &amp; Software License</h1>
-      <p class="ECMAaddress">Ecma International</p>
+</emu-annex><emu-annex id="sec-copyright-and-software-license" back-matter="">
+        <h1>Copyright &amp; Software License</h1>
+        <p class="ECMAaddress">Ecma International</p>
 <p class="ECMAaddress">Rue du Rhone 114</p>
 <p class="ECMAaddress">CH-1204 Geneva</p>
 <p class="ECMAaddress">Tel: +41 22 849 6000</p>
 <p class="ECMAaddress">Fax: +41 22 849 6001</p>
 <p class="ECMAaddress">Web: <a href="https://ecma-international.org/">https://ecma-international.org/</a></p>
 
-      <h2>Copyright Notice</h2>
-      <p>© 2025 Ecma International</p>
+        <div class="copyright-notice" id="copyright-notice"><h2>Copyright Notice</h2>
+<p>© 2025 Ecma International</p>
 
 <p>This draft document may be copied and furnished to others, and derivative works that comment on or otherwise explain it or assist in its implementation may be prepared, copied, published, and distributed, in whole or in part, without restriction of any kind, provided that the above copyright notice and this section are included on all such copies and derivative works. However, this document itself may not be modified in any way, including by removing the copyright notice or references to Ecma International, except as needed for the purpose of developing any document or deliverable produced by Ecma International.</p>
 
@@ -5341,9 +5389,9 @@ h1.version {
 <p>The limited permissions are granted through the standardization phase and will not be revoked by Ecma International or its successors or assigns during this time.</p>
 
 <p>This document and the information contained herein is provided on an "AS IS" basis and ECMA INTERNATIONAL DISCLAIMS ALL WARRANTIES, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTY THAT THE USE OF THE INFORMATION HEREIN WILL NOT INFRINGE ANY OWNERSHIP RIGHTS OR ANY IMPLIED WARRANTIES OF MERCHANTABILITY OR FITNESS FOR A PARTICULAR PURPOSE.</p>
-
-      <h2>Software License</h2>
-      <p>All Software contained in this document ("Software") is protected by copyright and is being made available under the "BSD License", included below. This Software may be subject to third party rights (rights from parties other than Ecma International), including patent rights, and no licenses under such third party rights are granted under this license even if the third party concerned is a member of Ecma International. SEE THE ECMA CODE OF CONDUCT IN PATENT MATTERS AVAILABLE AT <a href="https://ecma-international.org/memento/codeofconduct.htm">https://ecma-international.org/memento/codeofconduct.htm</a> FOR INFORMATION REGARDING THE LICENSING OF PATENT CLAIMS THAT ARE REQUIRED TO IMPLEMENT ECMA INTERNATIONAL STANDARDS.</p>
+</div>
+        <h2>Software License</h2>
+        <p>All Software contained in this document ("Software") is protected by copyright and is being made available under the "BSD License", included below. This Software may be subject to third party rights (rights from parties other than Ecma International), including patent rights, and no licenses under such third party rights are granted under this license even if the third party concerned is a member of Ecma International. SEE THE ECMA CODE OF CONDUCT IN PATENT MATTERS AVAILABLE AT <a href="https://ecma-international.org/memento/codeofconduct.htm">https://ecma-international.org/memento/codeofconduct.htm</a> FOR INFORMATION REGARDING THE LICENSING OF PATENT CLAIMS THAT ARE REQUIRED TO IMPLEMENT ECMA INTERNATIONAL STANDARDS.</p>
 
 <p>Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:</p>
 
@@ -5355,6 +5403,6 @@ h1.version {
 
 <p>THIS SOFTWARE IS PROVIDED BY THE ECMA INTERNATIONAL "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL ECMA INTERNATIONAL BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.</p>
 
-    </emu-annex>
+      </emu-annex>
 
 </div></body></html>
