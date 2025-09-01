@@ -1784,7 +1784,7 @@
         </h1>
         <dl class="header"></dl>
         <emu-grammar>
-          OriginalScopeTreeList : OriginalScopeTreeList `,`  OriginalScopeTreeItem
+          OriginalScopeTreeList : OriginalScopeTreeList `,` OriginalScopeTreeItem
         </emu-grammar>
         <emu-alg>
           1. Let _left_ be the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
