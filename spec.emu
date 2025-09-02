@@ -1617,27 +1617,27 @@
             </tr>
             <tr>
               <td>[[ScopeLine]]</td>
-              <td>a non-negative Number</td>
+              <td>an Index Accumulator Record</td>
               <td>|ScopeLine|</td>
             </tr>
             <tr>
               <td>[[ScopeColumn]]</td>
-              <td>a non-negative Number</td>
+              <td>an Index Accumulator Record</td>
               <td>|ScopeColumn|</td>
             </tr>
             <tr>
               <td>[[ScopeNameIndex]]</td>
-              <td>a non-negative Number</td>
+              <td>an Index Accumulator Record</td>
               <td>|ScopeNameOrKind|</td>
             </tr>
             <tr>
               <td>[[ScopeKindIndex]]</td>
-              <td>a non-negative Number</td>
+              <td>an Index Accumulator Record</td>
               <td>|ScopeNameOrKind| and |ScopeKind|</td>
             </tr>
             <tr>
               <td>[[ScopeVariableIndex]]</td>
-              <td>a non-negative Number</td>
+              <td>an Index Accumulator Record</td>
               <td>|ScopeVariable|</td>
             </tr>
             <tr>
@@ -1672,6 +1672,42 @@
             </tr>
           </table>
         </emu-table>
+
+        <p>An <dfn>Index Accumulator Record</dfn> is used to keep track of an index that is expressed in consecutive relative increments. It has the following fields:</p>
+        <emu-table id="table-index-accumulator-record-fields" caption="Index Accumulator Record Fields">
+          <table>
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>[[Index]]</td>
+              <td>a non-negative integer</td>
+            </tr>
+          </table>
+        </emu-table>
+
+        <emu-clause id="sec-AccumulateIndex" type="abstract operation">
+          <h1>
+            AccumulateIndex (
+              _accumulator_: an Index Accumulator Record,
+              _increment_: an integer,
+            ): a non-negative integer
+          </h1>
+          <dl class="header">
+            <dt>description</dt>
+            <dd>Adds _increment_ to the accumulator and returns the new value.</dd>
+          </dl>
+          <emu-alg>
+            1. Set _accumulator_.[[Index]] to _accumulator_.[[Index]] + _increment_.
+            1. If _accumulator_.[[Index]] &lt; 0, then
+              1. Optionally report an error.
+              1. Set _accumulator_.[[Index]] to 0.
+            1. Return _accumulator_.[[Index]].
+          </emu-alg>
+        </emu-clause>
       </emu-clause>
 
       <emu-clause id="sec-DecodeScopesInfo" type="abstract operation">
@@ -1705,36 +1741,20 @@
           <dl class="header"></dl>
           <emu-grammar>
             Scopes :
+              OriginalScopeTreeList
+          </emu-grammar>
+          <emu-alg>
+            1. Let _originalScopes_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+            1. Set _info_.[[Scopes]] to _originalScopes_.
+          </emu-alg>
+          <emu-grammar>
+            Scopes :
               OriginalScopeTreeList `,` TopLevelItemList
           </emu-grammar>
           <emu-alg>
-            1. Perform DecodeScopesInfoItem of |OriginalScopeTreeList| with arguments _info_, _state_ and _names_.
+            1. Let _originalScopes_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+            1. Set _info_.[[Scopes]] to _originalScopes_.
             1. Perform DecodeScopesInfoItem of |TopLevelItemList| with arguments _info_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            OriginalScopeTreeList :
-              OriginalScopeTreeList `,` OriginalScopeTreeItem
-          </emu-grammar>
-          <emu-alg>
-            1. Perform DecodeScopesInfoItem of |OriginalScopeTreeList| with arguments _info_, _state_ and _names_.
-            1. Perform DecodeScopesInfoItem of |OriginalScopeTreeItem| with arguments _info_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            OriginalScopeTreeItem :
-              OriginalScopeTree
-          </emu-grammar>
-          <emu-alg>
-            1. Set _state_.[[ScopeLine]] to 0.
-            1. Set _state_.[[ScopeColumn]] to 0.
-            1. Let _scope_ be DecodeOriginalScope(|OriginalScopeTree|, _state_, _names_).
-            1. Append _scope_ to _info_.[[Scopes]].
-          </emu-alg>
-          <emu-grammar>
-            OriginalScopeTreeItem :
-              [empty]
-          </emu-grammar>
-          <emu-alg>
-            1. Append *null* to _info_.[[Scopes]].
           </emu-alg>
           <emu-grammar>
             TopLevelItemList :
@@ -1755,29 +1775,43 @@
         </emu-clause>
       </emu-clause>
 
-      <emu-clause id="sec-DecodeOriginalScope" type="abstract operation">
+      <emu-clause id="sec-DecodedTopLevelOriginalScopeTrees" type="sdo">
         <h1>
-          DecodeOriginalScope (
-            _scopeTree_: a |OriginalScopeTree| Parse Node,
+          DecodedTopLevelOriginalScopeTrees (
             _state_: a Decode Scope State Record,
             _names_: a List of Strings,
-          ): a Original Scope Record
+          ): a List of either Original Scope Records or *null*
         </h1>
         <dl class="header"></dl>
+        <emu-grammar>
+          OriginalScopeTreeList : OriginalScopeTreeList `,` OriginalScopeTreeItem
+        </emu-grammar>
         <emu-alg>
-          1. Let _scope_ be a new Original Scope Record with all fields default initialized.
-          1. Perform DecodeOriginalScopeItem of _scopeTree_ with arguments _scope_, _state_ and _names_.
-          1. Append _scope_ to _state_.[[FlatScopes]].
-          1. Return _scope_.
+          1. Let _left_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+          1. Let _right_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeItem| with arguments _state_ and _names_.
+          1. Return the list-concatenation of _left_ and _right_.
+        </emu-alg>
+        <emu-grammar>
+          OriginalScopeTreeItem : OriginalScopeTree
+        </emu-grammar>
+        <emu-alg>
+          1. Set _state_.[[ScopeLine]].[[Index]] to 0.
+          1. Set _state_.[[ScopeLine]].[[Column]] to 0.
+          1. Return the DecodedOriginalScopeTrees of |OriginalScopeTree| with arguments _state_ and _names_.
+        </emu-alg>
+        <emu-grammar>
+          OriginalScopeTreeItem : [empty]
+        </emu-grammar>
+        <emu-alg>
+          1. Return « *null* ».
         </emu-alg>
 
-        <emu-clause id="sec-DecodeOriginalScopeItem" type="sdo">
+        <emu-clause id="sec-DecodedOriginalScopeTrees" type="sdo">
           <h1>
-            DecodeOriginalScopeItem (
-              _scope_: a Original Scope Record,
+            DecodedOriginalScopeTrees (
               _state_: a Decode Scope State Record,
               _names_: a List of Strings,
-            )
+            ): a List of Original Scope Records
           </h1>
           <dl class="header"></dl>
           <emu-grammar>
@@ -1785,129 +1819,145 @@
               OriginalScopeStart OriginalScopeVariablesItem? OriginalScopeItemList? `,` OriginalScopeEnd
           </emu-grammar>
           <emu-alg>
-            1. Perform DecodeOriginalScopeItem of |OriginalScopeStart| with arguments _scope_, _state_ and _names_.
-            1. If |OriginalScopeVariablesItem| is present, perform DecodeOriginalScopeItem of |OriginalScopeVariablesItem| with arguments _scope_, _state_ and _names_.
-            1. If |OriginalScopeItemList| is present, perform DecodeOriginalScopeItem of |OriginalScopeItemList| with arguments _scope_, _state_ and _names_.
-            1. Perform DecodeOriginalScopeItem of |OriginalScopeEnd| with arguments _scope_, _state_ and _names_.
+            1. Let _start_ be the OriginalScopePosition of |OriginalScopeStart| with arguments _state_.[[ScopeLine]] and _state_.[[ScopeColumn]].
+            1. Let _name_ be the OriginalScopeName of |OriginalScopeStart| with arguments _state_.[[ScopeNameIndex]] and _names_.
+            1. Let _kind_ be the OriginalScopeKind of |OriginalScopeStart| with arguments _state_.[[ScopeKindIndex]] and _names_.
+            1. Let _flags_ be the VLQUnsignedValue of |OriginalScopeStart|'s |ScopeFlags| nonterminal.
+            1. Let _originalScope_ be the Original Scope Record { [[Start]]: _start_, [[End]]: _start_, [[Name]]: _name_, [[Kind]]: _kind_, [[Variables]]: « », [[Children]]: « », [[IsStackFrame]]: *false* }.
+            1. Append _originalScope_ to _state_.[[FlatOriginalScopes]].
+            1. If _flags_ & 0x4 = 0x4, set _originalScope_.[[IsStackFrame]] to *true*.
+            1. If |OriginalScopeVariablesItem| is present, then
+              1. Set _originalScope_.[[Variables]] to the OriginalScopeVariables of |OriginalScopeVariablesItem| with arguments _state_.[[ScopeVariableIndex]] and _names_.
+            1. If |OriginalScopeItemList| is present, then
+              1. Set _originalScope_.[[Children]] to the DecodedOriginalScopeTrees of |OriginalScopeItemList| with arguments _state_ and _names_.
+            1. Set _state_.[[End]] to the OriginalScopePosition or |OriginalScopeEnd| with arguments _state_.[[ScopeLine]] and _state_.[[ScopeColumn]].
+            1. Return « _originalScope_ ».
           </emu-alg>
+          <emu-grammar>
+            OriginalScopeItemList : OriginalScopeItemList `,` OriginalScopeItem
+          </emu-grammar>
+          <emu-alg>
+            1. Let _left_ be the DecodedOriginalScopeTrees of |OriginalScopeItemList| with arguments _state_ and _names_.
+            1. Let _right_ be the DecodedOriginalScopeTrees of |OriginalScopeItem| with arguments _state_ and _names_.
+            1. Return the list-concatenation of _left_ and _right_.
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-OriginalScopePosition" type="sdo">
+          <h1>
+            OriginalScopePosition (
+              _lineAccumulator_: an Index Accumulator Record,
+              _columnAccumulator_: an Index Accumulator Record,
+            ): a Position Record
+          </h1>
+          <dl class="header"></dl>
+          <emu-grammar>
+            OriginalScopeStart :
+              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
+
+            OriginalScopeEnd :
+              `C` ScopeLine ScopeColumn
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeLine_ be the VLQUnsignedValue of |ScopeLine|.
+            1. Let _line_ be AccumulateIndex(_lineAccumulator_, _relativeLine_).
+            1. [id="step-reset-scope-column"] If _relativeLine_ > 0, set _columnAccumulator_.[[Index]] to 0.
+            1. Let _relativeColumn_ be the VLQUnsignedValue of |ScopeColumn|.
+            1. Let _column_ be AccumulateIndex(_columnAccumulator_, _relativeColumn_).
+            1. Return the Position Record { [[Line]]: _line_, [[Column]]: _column_ }.
+          </emu-alg>
+          <emu-note>
+            Step <emu-xref href="#step-reset-scope-column"></emu-xref> makes it so |ScopeColumn| is encoded relative if the preceding |OriginalScopeStart| or |OriginalScopeEnd| is on the same line (i.e. _relativeLine_ is 0), or absolute otherwise.
+          </emu-note>
+        </emu-clause>
+
+        <emu-clause id="sec-OriginalScopeName" type="sdo">
+          <h1>
+            OriginalScopeName (
+              _accumulator_: an Index Accumulator Record,
+              _names_: a List of Strings,
+            ): a String or *null*
+          </h1>
+          <dl class="header"></dl>
           <emu-grammar>
             OriginalScopeStart :
               `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
           </emu-grammar>
           <emu-alg>
-            1. Perform DecodeOriginalScopeItem of |ScopeLine| with arguments _scope_, _state_ and _names_.
-            1. Set _scope_.[[Start]].[[Line]] to _state_.[[ScopeLine]].
-            1. Perform DecodeOriginalScopeItem of |ScopeColumn| with arguments _scope_, _state_ and _names_.
-            1. Set _scope_.[[Start]].[[Column]] to _state_.[[ScopeColumn]].
             1. Let _flags_ be the VLQUnsignedValue of |ScopeFlags|.
-            1. If _flags_ & 0x3 = 0x1, then
-              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is not present.
-              1. DecodeOriginalScopeName(|ScopeNameOrKind|, _scope_, _state_, _names_).
-            1. Else if _flags_ & 0x3 = 0x2, then
-              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is not present.
-              1. DecodeOriginalScopeKind(|ScopeNameOrKind|, _scope_, _state_, _names_).
-            1. Else if _flags_ & 0x3 = 0x3, then
-              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is present.
-              1. DecodeOriginalScopeName(|ScopeNameOrKind|, _scope_, _state_, _names_).
-              1. DecodeOriginalScopeKind(|ScopeKind|, _scope_, _state_, _names_).
-            1. If _flags_ & 0x4 = 0x4, set _scope_.[[IsStackFrame]] to *true*.
-          </emu-alg>
-          <emu-grammar>
-            ScopeVariableList :
-              ScopeVariableList ScopeVariable
-          </emu-grammar>
-          <emu-alg>
-            1. Perform DecodeOriginalScopeItem of |ScopeVariableList| with arguments _scope_, _state_ and _names_.
-            1. Perform DecodeOriginalScopeItem of |ScopeVariable| with arguments _scope_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            OriginalScopeItemList :
-              OriginalScopeItemList `,` OriginalScopeItem
-          </emu-grammar>
-          <emu-alg>
-            1. Perform DecodeOriginalScopeItem of |OriginalScopeItemList| with arguments _scope_, _state_ and _names_.
-            1. Perform DecodeOriginalScopeItem of |OriginalScopeItem| with arguments _scope_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            OriginalScopeItem :
-              OriginalScopeTree
-          </emu-grammar>
-          <emu-alg>
-            1. Let _childScope_ be DecodeOriginalScope(|OriginalScopeTree|, _state_, _names_).
-            1. Append _childScope_ to _scope_.[[Children]].
-          </emu-alg>
-          <emu-grammar>
-            OriginalScopeEnd :
-              `C` ScopeLine ScopeColumn
-          </emu-grammar>
-          <emu-alg>
-            1. Perform DecodeOriginalScopeItem of |ScopeLine| with arguments _scope_, _state_ and _names_.
-            1. Set _scope_.[[End]].[[Line]] to _state_.[[ScopeLine]].
-            1. Perform DecodeOriginalScopeItem of |ScopeColumn| with arguments _scope_, _state_ and _names_.
-            1. Set _scope_.[[End]].[[Column]] to _state_.[[ScopeColumn]].
-          </emu-alg>
-          <emu-grammar>
-            ScopeLine :
-              Vlq
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeLine_ be the VLQUnsignedValue of |Vlq|.
-            1. Set _state_.[[ScopeLine]] to _state_.[[ScopeLine]] + _relativeLine_.
-            1. [id="step-reset-scope-column"] If _relativeLine_ > 0, set _state_.[[ScopeColumn]] to 0.
-          </emu-alg>
-          <emu-note>
-            Step <emu-xref href="#step-reset-scope-column"></emu-xref> makes it so |ScopeColumn| is encoded relative if the preceding |OriginalScopeStart| or |OriginalScopeEnd| is on the same line (i.e. _relativeLine_ is 0), or absolute otherwise.
-          </emu-note>
-          <emu-grammar>
-            ScopeColumn :
-              Vlq
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeColumn_ be the VLQUnsignedValue of |Vlq|.
-            1. Set _state_.[[ScopeColumn]] to _state_.[[ScopeColumn]] + _relativeColumn_.
-          </emu-alg>
-          <emu-grammar>
-            ScopeVariable :
-              Vlq
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeVariable_ be the VLQSignedValue of |Vlq|.
-            1. Set _state_.[[ScopeVariableIndex]] to _state_.[[ScopeVariableIndex]] + _relativeVariable_.
-            1. Append _names_[_state_.[[ScopeVariableIndex]]] to _scope_.[[Variables]].
+            1. If _flags_ & 0x1 ≠ 0x1, return *null*.
+            1. Assert: |ScopeNameOrKind| is present.
+            1. Return RelativeName(|ScopeNameOrKind|, _accumulator_, _names_).
           </emu-alg>
         </emu-clause>
 
-        <emu-clause id="sec-DecodeOriginalScopeName" type="abstract operation">
+        <emu-clause id="sec-OriginalScopeKind" type="sdo">
           <h1>
-            DecodeOriginalScopeName (
-              _name_: a |Vlq| Parse Node,
-              _scope_: a Original Scope Record,
-              _state_: a Decode Scope State Record,
+            OriginalScopeKind (
+              _accumulator_: an Index Accumulator Record,
               _names_: a List of Strings,
-            )
+            ): a String or *null*
           </h1>
           <dl class="header"></dl>
+          <emu-grammar>
+            OriginalScopeStart :
+              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
+          </emu-grammar>
           <emu-alg>
-            1. Let _relativeName_ be the VLQSignedValue of _name_.
-            1. Set _state_.[[ScopeNameIndex]] to _state_.[[ScopeNameIndex]] + _relativeName_.
-            1. Set _scope_.[[Name]] to _names_[_state_.[[ScopeNameIndex]]].
+            1. Let _flags_ be the VLQUnsignedValue of |ScopeFlags|.
+            1. If _flags_ & 0x2 ≠ 0x2, return *null*.
+            1. Assert: |ScopeNameOrKind| is present.
+            1. If _flags_ & 0x1 = 0x1, then
+              1. Assert: |ScopeKind| is present.
+              1. Return RelativeName(|ScopeKind|, _accumulator_, _names_).
+            1. Return RelativeName(|ScopeNameOrKind|, _accumulator_, _names_).
           </emu-alg>
         </emu-clause>
 
-        <emu-clause id="sec-DecodeOriginalScopeKind" type="abstract operation">
+        <emu-clause id="sec-OriginalScopeVariables" type="sdo">
           <h1>
-            DecodeOriginalScopeKind (
-              _kind_: a |Vlq| Parse Node,
-              _scope_: a Original Scope Record,
-              _state_: a Decode Scope State Record,
+            OriginalScopeVariables (
+              _accumulator_: an Index Accumulator Record,
               _names_: a List of Strings,
-            )
+            ): a List of Strings
           </h1>
           <dl class="header"></dl>
+          <emu-grammar>
+            ScopeVariableList : ScopeVariableList ScopeVariable
+          </emu-grammar>
           <emu-alg>
-            1. Let _relativeKind_ be the VLQSignedValue of _kind_.
-            1. Set _state_.[[ScopeKindIndex]] to _state_.[[ScopeKindIndex]] + _relativeKind_.
-            1. Set _scope_.[[Kind]] to _names_[_state_.[[ScopeKindIndex]]].
+            1. Let _left_ be the OriginalScopeVariables of |ScopeVariableList| with arguments _accumulator_ and _names_.
+            1. Let _right_ be the OriginalScopeVariables of |ScopeVariable| with arguments _accumulator_ and _names_.
+            1. Return the list-concatenation of _left_ and _right_.
+          </emu-alg>
+          <emu-grammar>
+            ScopeVariable : Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. TODO: Handle *null* returned by RelativeName.
+            1. Return « RelativeName(|Vlq|, _accumulator_, _names_) ».
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-RelativeName" type="abstract operation">
+          <h1>
+            RelativeName (
+              _vlq_: a |Vlq| Parse Node,
+              _accumulator_: an Index Accumulator Record,
+              _names_: a List of Strings,
+            ): a String or *null*
+          </h1>
+          <dl class="header">
+            <dt>description</dt>
+            <dd>It returns the name referenced by _vlq_, considering it as a relative index in _names_.</dd>
+          </dl>
+          <emu-alg>
+            1. Let _relativeIndex_ be the VLQSignedValue of _vlq_.
+            1. Let _index_ be AccumulateIndex(_accumulator_, _relativeIndex_).
+            1. If _index_ >= the length of _names_, then
+              1. Optionally report an error.
+              1. Return *null*.
+            1. Return _names_[_index_].
           </emu-alg>
         </emu-clause>
       </emu-clause>
