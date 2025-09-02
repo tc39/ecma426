@@ -1744,7 +1744,7 @@
               OriginalScopeTreeList
           </emu-grammar>
           <emu-alg>
-            1. Let _originalScopes_ be the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+            1. Let _originalScopes_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
             1. Set _info_.[[Scopes]] to _originalScopes_.
           </emu-alg>
           <emu-grammar>
@@ -1752,7 +1752,7 @@
               OriginalScopeTreeList `,` TopLevelItemList
           </emu-grammar>
           <emu-alg>
-            1. Let _originalScopes_ be the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+            1. Let _originalScopes_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
             1. Set _info_.[[Scopes]] to _originalScopes_.
             1. Perform DecodeScopesInfoItem of |TopLevelItemList| with arguments _info_, _state_ and _names_.
           </emu-alg>
@@ -1775,9 +1775,9 @@
         </emu-clause>
       </emu-clause>
 
-      <emu-clause id="sec-DecodedOriginalScopeTrees" type="sdo">
+      <emu-clause id="sec-DecodedTopLevelOriginalScopeTrees" type="sdo">
         <h1>
-          DecodedOriginalScopeTrees (
+          DecodedTopLevelOriginalScopeTrees (
             _state_: a Decode Scope State Record,
             _names_: a List of Strings,
           ): a List of either Original Scope Records or *null*
@@ -1787,8 +1787,8 @@
           OriginalScopeTreeList : OriginalScopeTreeList `,` OriginalScopeTreeItem
         </emu-grammar>
         <emu-alg>
-          1. Let _left_ be the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
-          1. Let _right_ be the DecodedOriginalScopeTrees of |OriginalScopeTreeItem| with arguments _state_ and _names_.
+          1. Let _left_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+          1. Let _right_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeItem| with arguments _state_ and _names_.
           1. Return the list-concatenation of _left_ and _right_.
         </emu-alg>
         <emu-grammar>
@@ -1797,7 +1797,7 @@
         <emu-alg>
           1. Set _state_.[[ScopeLine]].[[Index]] to 0.
           1. Set _state_.[[ScopeLine]].[[Column]] to 0.
-          1. Return the DecodedInnerOriginalScopeTrees of |OriginalScopeTree| with arguments _state_ and _names_.
+          1. Return the DecodedOriginalScopeTrees of |OriginalScopeTree| with arguments _state_ and _names_.
         </emu-alg>
         <emu-grammar>
           OriginalScopeTreeItem : [empty]
@@ -1806,9 +1806,9 @@
           1. Return « *null* ».
         </emu-alg>
 
-        <emu-clause id="sec-DecodedInnerOriginalScopeTrees" type="sdo">
+        <emu-clause id="sec-DecodedOriginalScopeTrees" type="sdo">
           <h1>
-            DecodedInnerOriginalScopeTrees (
+            DecodedOriginalScopeTrees (
               _state_: a Decode Scope State Record,
               _names_: a List of Strings,
             ): a List of Original Scope Records
