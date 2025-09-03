@@ -1575,7 +1575,7 @@
 
       <emu-clause id="sec-invalid-item-grammar">
         <h1>Invalid item grammar</h1>
-        <p>Complying implementations are expected to decode but ignore items with invalid tags. This allows the specification to add new items in the future, without breaking existing decoders.</p>
+        <p>Complying source map consumers are expected to decode but ignore |InvalidItem| items. Complying source map generators are expected to never emit |InvalidItem| items. This allows the specification to add new items in the future, without breaking existing decoders.</p>
         <emu-grammar type="definition">
           InvalidItem :
             Tag
