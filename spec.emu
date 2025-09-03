@@ -1556,7 +1556,7 @@ return lastURL;</code></pre>
       GetOriginalPosition (
         _sourceMapRecord_: a Decoded Source Map Record,
         _generatedPosition_: a Position Record,
-      ): a Decoded Mapping Record or *null*
+      ): an Original Position Record or *null*
     </h1>
     <dl class="header"></dl>
     <emu-alg>
@@ -1564,10 +1564,10 @@ return lastURL;</code></pre>
       1. Let _closest_ be *null*.
       1. For each element _mapping_ of _mappings_, do
         1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~greater~, then
-          1. Return _closest_.
+          1. Return _closest_.[[OriginalPosition]].
         1. Else,
           1. Set _closest_ to _mapping_.
-      1. Return _closest_.
+      1. Return _closest_.[[OriginalPosition]].
     </emu-alg>
   </emu-clause>
 </emu-clause>
