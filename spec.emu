@@ -1343,12 +1343,12 @@
           InvalidItem
       </emu-grammar>
 
-      <p>The number of |OriginalScopeTreeItem|s in the |OriginalScopeTreeList| is expected to match the length of the sources field. The n-th |OriginalScopeTreeItem| describes the scope tree of the n-th authored source file in the sources field. If no scope information is available for a particular source URL, an empty item can be used.</p>
+      <p>The number of |OriginalScopeTreeItem|s in the |OriginalScopeTreeList| is expected to match the length of the sources field. The n-th |OriginalScopeTreeItem| describes the scope tree of the n-th authored source file in the sources field. If no scope information is available for a particular source URL, an |EmptyItem| must be used.</p>
 
       <emu-note example>
         <p>A source map with three authored sources where only the first and third source file have scope information available would be encoded as:</p>
         <pre>
-          "scopes": "&lt;OriginalScopeTree&gt;,,&lt;OriginalScopeTree&gt;,&lt;GeneratedRangeTree&gt;"
+          "scopes": "&lt;OriginalScopeTree&gt;,A,&lt;OriginalScopeTree&gt;,&lt;GeneratedRangeTree&gt;"
         </pre>
       </emu-note>
 
