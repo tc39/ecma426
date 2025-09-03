@@ -1328,7 +1328,10 @@
 
         OriginalScopeTreeItem :
           OriginalScopeTree
-          [empty]
+          EmptyItem
+
+        EmptyItem :
+          `A`
 
         TopLevelItemList :
           TopLevelItem
@@ -1559,7 +1562,7 @@
             Tag UnknownVlqList
 
           Tag :
-            Vlq but not `B` `C` `D` `E` `F` `G` `H` `I`
+            Vlq but not `A` `B` `C` `D` `E` `F` `G` `H` `I`
 
           UnknownVlqList :
             Vlq
@@ -1800,7 +1803,7 @@
           1. Return the DecodedOriginalScopeTrees of |OriginalScopeTree| with arguments _state_ and _names_.
         </emu-alg>
         <emu-grammar>
-          OriginalScopeTreeItem : [empty]
+          OriginalScopeTreeItem : EmptyItem
         </emu-grammar>
         <emu-alg>
           1. Return « *null* ».
