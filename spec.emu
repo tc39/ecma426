@@ -1339,7 +1339,8 @@
 
         TopLevelItem :
           GeneratedRangeTree
-          UnknownItem
+          VendorExtensionItem
+          InvalidItem
       </emu-grammar>
 
       <p>The number of |OriginalScopeTreeItem|s in the |OriginalScopeTreeList| is expected to match the length of the sources field. The n-th |OriginalScopeTreeItem| describes the scope tree of the n-th authored source file in the sources field. If no scope information is available for a particular source URL, an empty item can be used.</p>
@@ -1374,7 +1375,8 @@
 
           OriginalScopeItem :
             OriginalScopeTree
-            UnknownItem
+            VendorExtensionItem
+            InvalidItem
 
           OriginalScopeStart :
             `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
@@ -1460,7 +1462,8 @@
           GeneratedRangeItem :
             GeneratedSubRangeBinding
             GeneratedRangeTree
-            UnknownItem
+            VendorExtensionItem
+            InvalidItem
 
           GeneratedRangeStart :
             `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
@@ -1553,24 +1556,34 @@
         </emu-table>
       </emu-clause>
 
-      <emu-clause id="sec-unknown-item-grammar">
-        <h1>Unknown item grammar</h1>
-        <p>Complying implementations are expected to decode but ignore items with unknown tags. This allows the specification to add new items in the future, without breaking existing decoders.</p>
+      <emu-clause id="sec-vendor-extension-item-grammar">
+        <h1>Vendor extension item grammar</h1>
+        <p>The specification reserves the `/` tag for vendor-specific extension items. |VendorExtensionName| must be interpreted with VLQUnsignedValue and is an absolute index into the <emu-xref href="#json-names">names</emu-xref> array. The corresponding string identifies the vendor-specific item.</p>
         <emu-grammar type="definition">
-          UnknownItem :
+          VendorExtensionItem :
+            `/` VendorExtensionName
+            `/` VendorExtensionName VlqList
+
+          VendorExtensionName :
+            Vlq
+
+          VlqList :
+            Vlq
+            VlqList Vlq
+        </emu-grammar>
+      </emu-clause>
+
+      <emu-clause id="sec-invalid-item-grammar">
+        <h1>Invalid item grammar</h1>
+        <p>Complying source map consumers are expected to decode but ignore |InvalidItem| items. Complying source map generators are expected to never emit |InvalidItem| items. This allows the specification to add new items in the future, without breaking existing decoders.</p>
+        <emu-grammar type="definition">
+          InvalidItem :
             Tag
-            Tag UnknownVlqList
+            Tag VlqList
 
           Tag :
-            Vlq but not `A` `B` `C` `D` `E` `F` `G` `H` `I`
-
-          UnknownVlqList :
-            Vlq
-            UnknownVlqList Vlq
+            Vlq but not `A` `B` `C` `D` `E` `F` `G` `H` `I` `/`
         </emu-grammar>
-        <emu-note>
-          The specification reserves all tags for future use. Vendors wanting to experiment are encouraged to use high enough tag numbers for vendor specific items.
-        </emu-note>
       </emu-clause>
     </emu-clause>
 
