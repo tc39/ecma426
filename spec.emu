@@ -1561,13 +1561,13 @@ return lastURL;</code></pre>
     <dl class="header"></dl>
     <emu-alg>
       1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
-      1. Let _closest_ be *null*.
+      1. Let _last_ be *null*.
       1. For each element _mapping_ of _mappings_, do
         1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~greater~, then
-          1. Return _closest_.[[OriginalPosition]].
+          1. Return _last_.[[OriginalPosition]].
         1. Else,
-          1. Set _closest_ to _mapping_.
-      1. Return _closest_.[[OriginalPosition]].
+          1. Set _last_ to _mapping_.
+      1. Return _last_.[[OriginalPosition]].
     </emu-alg>
   </emu-clause>
 </emu-clause>
