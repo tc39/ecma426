@@ -1846,7 +1846,7 @@
               1. Set _originalScope_.[[Variables]] to the OriginalScopeVariables of |OriginalScopeVariablesItem| with arguments _state_.[[ScopeVariableIndex]] and _names_.
             1. If |OriginalScopeItemList| is present, then
               1. Set _originalScope_.[[Children]] to the DecodedOriginalScopeTrees of |OriginalScopeItemList| with arguments _state_ and _names_.
-            1. Set _state_.[[End]] to the OriginalScopePosition or |OriginalScopeEnd| with arguments _state_.[[ScopeLine]] and _state_.[[ScopeColumn]].
+            1. Set _originalScope_.[[End]] to the OriginalScopePosition of |OriginalScopeEnd| with arguments _state_.[[ScopeLine]] and _state_.[[ScopeColumn]].
             1. Return « _originalScope_ ».
           </emu-alg>
           <emu-grammar>
