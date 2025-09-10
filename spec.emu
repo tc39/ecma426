@@ -1632,14 +1632,9 @@
               <td>This is a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the [[Scopes]] field in the Scope Info Record. The |RangeDefinition| is an index into this List.</td>
             </tr>
             <tr>
-              <td>[[ScopeLine]]</td>
-              <td>an Index Accumulator Record</td>
-              <td>|ScopeLine|</td>
-            </tr>
-            <tr>
-              <td>[[ScopeColumn]]</td>
-              <td>an Index Accumulator Record</td>
-              <td>|ScopeColumn|</td>
+              <td>[[ScopePosition]]</td>
+              <td>a Position Accumulator Record</td>
+              <td>|ScopeLine| and |ScopeColumn|</td>
             </tr>
             <tr>
               <td>[[ScopeNameIndex]]</td>
@@ -1722,6 +1717,48 @@
               1. Optionally report an error.
               1. Set _accumulator_.[[Index]] to 0.
             1. Return _accumulator_.[[Index]].
+          </emu-alg>
+        </emu-clause>
+
+        <p>A <dfn>Position Accumulator Record</dfn> is used to keep track of a line and column number pair that is expressed in consecutive relative increments. It has the following fields:</p>
+        <emu-table id="table-position-accumulator-record-fields" caption="Position Accumulator Record Fields">
+          <table>
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>[[Line]]</td>
+              <td>a non-negative integer</td>
+            </tr>
+            <tr>
+              <td>[[Column]]</td>
+              <td>a non-negative integer</td>
+            </tr>
+          </table>
+        </emu-table>
+
+        <emu-clause id="sec-AccumulatePosition" type="abstract operation">
+          <h1>
+            AccumulatePosition (
+              _accumulator_: a Position Accumulator Record,
+              _lineIncrement_: a non-negative integer,
+              _columnIncrement_: a non-negative integer,
+            ): a Position Record
+          </h1>
+          <dl class="header">
+            <dt>description</dt>
+            <dd>Adds _lineIncrement_ and _columnIncrement_ to the _accumulator_. If _lineIncrement_ is non-zero, _columnIncrement_ is not relative but becomes the new [[Column]].</dd>
+          </dl>
+          <emu-alg>
+            1. Set _accumulator_.[[Line]] to _accumulator_.[[Line]] + _lineIncrement_.
+            1. If _lineIncrement_ = 0, then
+              1. Set _accumulator_.[[Column]] to _accumulator_.[[Column]] + _columnIncrement_.
+            1. Else,
+              1. Set _accumulator_.[[Column]] to _columnIncrement_.
+            1. Return { [[Line]]: _accumulator_.[[Line]], [[Column]]: _accumulator_.[[Column]] }.
           </emu-alg>
         </emu-clause>
       </emu-clause>
@@ -1811,8 +1848,8 @@
           OriginalScopeTreeItem : OriginalScopeTree
         </emu-grammar>
         <emu-alg>
-          1. Set _state_.[[ScopeLine]].[[Index]] to 0.
-          1. Set _state_.[[ScopeLine]].[[Column]] to 0.
+          1. Set _state_.[[ScopePosition]].[[Line]] to 0.
+          1. Set _state_.[[ScopePosition]].[[Column]] to 0.
           1. Return the DecodedOriginalScopeTrees of |OriginalScopeTree| with arguments _state_ and _names_.
         </emu-alg>
         <emu-grammar>
@@ -1835,7 +1872,7 @@
               OriginalScopeStart OriginalScopeVariablesItem? OriginalScopeItemList? `,` OriginalScopeEnd
           </emu-grammar>
           <emu-alg>
-            1. Let _start_ be the OriginalScopePosition of |OriginalScopeStart| with arguments _state_.[[ScopeLine]] and _state_.[[ScopeColumn]].
+            1. Let _start_ be the DecodedPosition of |OriginalScopeStart| with argument _state_.[[ScopePosition]].
             1. Let _name_ be the OriginalScopeName of |OriginalScopeStart| with arguments _state_.[[ScopeNameIndex]] and _names_.
             1. Let _kind_ be the OriginalScopeKind of |OriginalScopeStart| with arguments _state_.[[ScopeKindIndex]] and _names_.
             1. Let _flags_ be the VLQUnsignedValue of |OriginalScopeStart|'s |ScopeFlags| nonterminal.
@@ -1846,7 +1883,7 @@
               1. Set _originalScope_.[[Variables]] to the OriginalScopeVariables of |OriginalScopeVariablesItem| with arguments _state_.[[ScopeVariableIndex]] and _names_.
             1. If |OriginalScopeItemList| is present, then
               1. Set _originalScope_.[[Children]] to the DecodedOriginalScopeTrees of |OriginalScopeItemList| with arguments _state_ and _names_.
-            1. Set _originalScope_.[[End]] to the OriginalScopePosition of |OriginalScopeEnd| with arguments _state_.[[ScopeLine]] and _state_.[[ScopeColumn]].
+            1. Set _originalScope_.[[End]] to the DecodedPosition of |OriginalScopeEnd| with argument _state_.[[ScopePosition]].
             1. Return « _originalScope_ ».
           </emu-alg>
           <emu-grammar>
@@ -1859,11 +1896,10 @@
           </emu-alg>
         </emu-clause>
 
-        <emu-clause id="sec-OriginalScopePosition" type="sdo">
+        <emu-clause id="sec-DecodedPosition" type="sdo">
           <h1>
-            OriginalScopePosition (
-              _lineAccumulator_: an Index Accumulator Record,
-              _columnAccumulator_: an Index Accumulator Record,
+            DecodedPosition (
+              _accumulator_: a Position Accumulator Record,
             ): a Position Record
           </h1>
           <dl class="header"></dl>
@@ -1876,15 +1912,9 @@
           </emu-grammar>
           <emu-alg>
             1. Let _relativeLine_ be the VLQUnsignedValue of |ScopeLine|.
-            1. Let _line_ be AccumulateIndex(_lineAccumulator_, _relativeLine_).
-            1. [id="step-reset-scope-column"] If _relativeLine_ > 0, set _columnAccumulator_.[[Index]] to 0.
             1. Let _relativeColumn_ be the VLQUnsignedValue of |ScopeColumn|.
-            1. Let _column_ be AccumulateIndex(_columnAccumulator_, _relativeColumn_).
-            1. Return the Position Record { [[Line]]: _line_, [[Column]]: _column_ }.
+            1. Return AccumulatePosition(_accumulator_, _relativeLine_, _relativeColumn_).
           </emu-alg>
-          <emu-note>
-            Step <emu-xref href="#step-reset-scope-column"></emu-xref> makes it so |ScopeColumn| is encoded relative if the preceding |OriginalScopeStart| or |OriginalScopeEnd| is on the same line (i.e. _relativeLine_ is 0), or absolute otherwise.
-          </emu-note>
         </emu-clause>
 
         <emu-clause id="sec-OriginalScopeName" type="sdo">
