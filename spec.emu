@@ -936,6 +936,12 @@
           1. Perform DecodeMappingsField of |LineList| with arguments _state_, _mappings_, _names_ and _sources_.
         </emu-alg>
         <emu-grammar>
+          Line : [empty]
+        </emu-grammar>
+        <emu-alg>
+          1. Return.
+        </emu-alg>
+        <emu-grammar>
           MappingList :
             Mapping `,` MappingList
         </emu-grammar>
