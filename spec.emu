@@ -272,6 +272,19 @@
       <p>zero-based indexed offset within a line of the generated code, computed as UTF-16 code units for JavaScript and CSS source maps, and as byte indices in the binary content (represented as a single line) for WebAssembly source maps.</p>
       <emu-note>That means that "A" (`LATIN CAPITAL LETTER A`) measures as 1 code unit, and "🔥" (`FIRE`) measures as 2 code units. Source maps for other content types may diverge from this.</emu-note>
     </dd>
+
+    <ins class="block">
+      <dt><dfn id="sec-terms-and-definitions-original-scope" variants="original scopes">original scope</dfn></dt>
+      <dd>
+        <p>a lexical scope in an original source file.</p>
+      </dd>
+
+      <dt><dfn id="sec-terms-and-definitions-generated-range" variants="generated ranges">generated range</dfn></dt>
+      <dd>
+        <p>a code range in generated code.</p>
+        <emu-note>The term <em>range</em> is chosen deliberately: a range does not necessarily correspond to a lexical JavaScript/WASM scope, e.g. when function bodies were inlined by a compiler.</emu-note>
+      </dd>
+    </ins>
   </dl>
 </emu-clause>
 
@@ -563,7 +576,8 @@
   <h1>Source map format</h1>
 
   <p>A source map is a JSON document containing a top-level JSON object with the following structure:</p>
-  <pre><code class="json">
+  <ins class="block">
+    <pre><code class="json">
   {
     "version" : 3,
     "file": "out.js",
@@ -572,9 +586,11 @@
     "sourcesContent": [null, null],
     "names": ["src", "maps", "are", "fun"],
     "mappings": "A,AAAB;;ABCDE",
-    "ignoreList": [0]
+    "ignoreList": [0],
+    "scopes":"BCCAQ,BHAAAC,BCCaC,CDC,CCA,CCY,EDBAA,EGAC,ECvBC,FW,FJ,FI"
   }
   </code></pre>
+  </ins>
   <ul>
     <li>The <dfn id="json-version"><code>version</code> field</dfn> shall always be the number 3 as an integer. The source map may be rejected if the field has any other value.</li>
     <li>The <dfn id="json-file"><code>file</code> field</dfn> is an optional name of the generated code that this source map is associated with. It's not specified if this can be an URL, relative path name, or just a base name. Source map generators may choose the appropriate interpretation for their contexts of use.</li>
@@ -584,6 +600,7 @@
     <li>The <dfn id="json-names"><code>names</code> field</dfn> is an optional list of symbol names which may be used by the mappings field.</li>
     <li>The <dfn id="json-mappings"><code>mappings</code> field</dfn> is a string with the encoded mapping data (see section <emu-xref href="#sec-mappings"></emu-xref>).</li>
     <li>The <dfn id="json-ignoreList"><code>ignoreList</code> field</dfn> is an optional list of indices of files that should be considered third party code, such as framework code or bundler-<emu-not-ref>generated code</emu-not-ref>. This allows developer tools to avoid code that developers likely don't want to see or step through, without requiring developers to configure this beforehand. It refers to the sources field and lists the indices of all the known third-party sources in the source map. Some browsers may also use the deprecated `x_google_ignoreList` field if `ignoreList` is not present.</li>
+    <li><ins>The <dfn id="json-scopes"><code>scopes</code> field</dfn> is an optional string with encoded scopes data (see section <emu-xref href="#sec-scopes"></emu-xref>)</ins></li>
   </ul>
 
   <emu-clause id="sec-decoding-source-maps">
@@ -614,6 +631,10 @@
           <td>[[Mappings]]</td>
           <td>a List of Decoded Mapping Records</td>
         </tr>
+        <tr>
+          <td><ins>[[Ranges]]</ins></td>
+          <td><ins>a List of Generated Range Records</ins></td>
+        </tr>
       </table>
     </emu-table>
 
@@ -641,6 +662,10 @@
         <tr>
           <td>[[Ignored]]</td>
           <td>a Boolean</td>
+        </tr>
+        <tr>
+          <td><ins>[[Scope]]</ins></td>
+          <td><ins>a Original Scope Record or *null*</ins></td>
         </tr>
       </table>
     </emu-table>
@@ -680,10 +705,12 @@
         1. Let _sourcesField_ be GetOptionalListOfOptionalStrings(_json_, *"sources"*).
         1. Let _sourcesContentField_ be GetOptionalListOfOptionalStrings(_json_, *"sourcesContent"*).
         1. Let _ignoreListField_ be GetOptionalListOfArrayIndexes(_json_, *"ignoreList"*).
-        1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
-        1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
-        1. Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
+        1. <ins>Let _scopesField_ be GetOptionalString(_json_, *"scopes"*).</ins>
+        1. <ins>Let _scopesAndRanges_ be DecodeScopesInfo(_scopesField_, _namesField_).</ins>
+        1. <ins>Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_, _scopesAndRanges_.[[Scopes]]).</ins>
+        1. <ins>Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).</ins>
+        1. <ins>Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_, [[Ranges]]: _scopesAndRanges_.[[Ranges]] }.</ins>
       </emu-alg>
 
       <emu-clause id="sec-GetOptionalString" type="abstract operation">
@@ -1120,6 +1147,969 @@
     </emu-clause>
   </emu-clause>
 
+  <emu-clause id="sec-scopes">
+    <h1>Scopes structure</h1>
+
+    <p>The scope information is split across two data structures: original scopes and generated ranges. Original scopes describe the scope tree for original sources. Generated ranges describe where these scopes are found in the generated code. The scope information includes location information, for both original scopes and generated ranges, the type and name of a scope, as well as the original names of variables and how to retrieve their values in the generated code.</p>
+
+    <p>The scopes field is a comma (`,`) separated list of items. Each item is a list of base64 VLQs. The first base64 VLQ in each item is a tag that specifies which item is described by the rest of the VLQs. Both original scopes and generated ranges are trees. Each node in these trees are described by a respective "start" and "end" item. "start" items appear in pre-order and "end" items appear in post-order. Any items other then "start" or "end" describe the "current" scope or range. The "current" scope or range is defined by the last seen "start" item.</p>
+
+    <emu-clause id="sec-original-scope-record-type">
+      <h1>Original Scope Record</h1>
+      <p>A original scope is described by a <dfn variants="Original Scope Records">Original Scope Record</dfn>:</p>
+      <emu-table id="table-original-scope-record-fields" caption="Original Scope Record Fields">
+        <table>
+          <thead>
+            <tr>
+              <th>Field Name</th>
+              <th>Value</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tr>
+            <td>[[Start]]</td>
+            <td>a Position Record</td>
+            <td>The line and column (inclusive) where this scope starts.</td>
+          </tr>
+          <tr>
+            <td>[[End]]</td>
+            <td>a Position Record</td>
+            <td>The line and column (exclusive) where this scope ends.</td>
+          </tr>
+          <tr>
+            <td>[[Name]]</td>
+            <td>a String or *null*</td>
+            <td>The original name of this scope. E.g. the original class or function name.</td>
+          </tr>
+          <tr>
+            <td>[[Kind]]</td>
+            <td>a String or *null*</td>
+            <td>Debuggers may use [[Kind]] to label this scope in a scope view UI. It is purely informative for users.</td>
+          </tr>
+          <tr>
+            <td>[[IsStackFrame]]</td>
+            <td>a Boolean</td>
+            <td>Signifies whether this scope is something that when run would introduce a new frame in the call stack, such as a function or method.</td>
+          </tr>
+          <tr>
+            <td>[[Variables]]</td>
+            <td>a List of Strings</td>
+            <td>The original variable names declared in this scope.</td>
+          </tr>
+          <tr>
+            <td>[[Children]]</td>
+            <td>a List of Original Scope Records</td>
+            <td>The child scopes of this scope.</td>
+          </tr>
+        </table>
+      </emu-table>
+      <p>A root Original Scope Record describes the lexical scope tree of a original source file.</p>
+      <emu-note>
+        In case the original source language is JavaScript or JavaScript-like, source map generators are encouraged to use the terms <em>Block</em>, <em>Function</em>, <em>Script</em>/<em>Module</em> and <em>Global</em> for the [[Kind]] field where it makes sense.
+      </emu-note>
+    </emu-clause>
+
+    <emu-clause id="sec-generated-range-record-type">
+      <h1>Generated Range Record</h1>
+      <p>A generated range is described by a <dfn variants="Generated Range Records">Generated Range Record</dfn>:</p>
+      <emu-table id="table-generated-range-record-fields" caption="Generated Range Record Fields">
+        <table>
+          <thead>
+            <tr>
+              <th>Field Name</th>
+              <th>Value</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tr>
+            <td>[[Start]]</td>
+            <td>a Position Record</td>
+            <td>The line and column (inclusive) where this range starts.</td>
+          </tr>
+          <tr>
+            <td>[[End]]</td>
+            <td>a Position Record</td>
+            <td>The line and column (exclusive) where this range ends.</td>
+          </tr>
+          <tr>
+            <td>[[Definition]]</td>
+            <td>a Original Scope Record or *null*</td>
+            <td>The corresponding original scope</td>
+          </tr>
+          <tr>
+            <td>[[StackFrameType]]</td>
+            <td>~none~, ~original~, or ~hidden~</td>
+            <td>~original~ signifies that this generated range is a JavaScript/Wasm function. ~hidden~ signifies that this generated range is a compiler/transpiler inserted JavaScript/Wasm function even though [[Definition]] is not *null*. E.g. a original block scope was transpiled to a JS function. ~none~ signifies that this generated range is not a JavaScript/WASM function.</td>
+          </tr>
+          <tr>
+            <td>[[Bindings]]</td>
+            <td>a List of Lists of Binding Records</td>
+            <td>[[Bindings]] contains one or more JavaScript expressions for each variable, that when evaluated in this generated range, retrieves the value for that variable.</td>
+          </tr>
+          <tr>
+            <td>[[CallSite]]</td>
+            <td>a Original Position Record or *null*</td>
+            <td>[[CallSite]] is not *null* when this generated range represents an inlined original scope body.</td>
+          </tr>
+          <tr>
+            <td>[[Children]]</td>
+            <td>a List of Generated Range Records</td>
+            <td>The child ranges of this range.</td>
+          </tr>
+        </table>
+      </emu-table>
+      <p>A root Generated Range Record describes a distinct part of the generated code. Each Generated Range Record may be associated with a Original Scope Record as indicated by the presence of the [[Definition]] field.</p>
+      <p>[[Bindings]] are intended for debuggers to retrieve the values of original variables. The length of [[Bindings]] must be equal to [[Variables]] of the corresponding Original Scope Record. Given an index _i_, [[Binding]][_i_] describes how to retrieve the value for the original variable [[Variables]][_i_].</p>
+      <p>[[Binding]][_i_] is a List of Binding Records, as there might be different expressions required in different parts of the generated range to retrieve a variables' value. In the common case, [[Binding]][_i_] will either be an empty List, in which case the variable is unavailable throughout the range. Or a single element list where [[Binding]][_i_][0].[[From]] matches [[Start]] and [[Binding]][_i_][0].[[Binding]] is JavaScript expression.</p>
+      <emu-note example>
+        Let _range_ be a Generated Range Record that starts at "0:0" (line 0, column 0) and ends at "0:30". The corresponding Original Scope Record contains a single variable "foo". The value of "foo" can be retrieved via the expression "a" in the range ["0:0", "0:10"). "foo" is unavailable in the range ["0:10", "0:20") and in the range ["0:20", "0:30") the expression "b" must be used. Then _range_ looks like:
+        <pre><code>
+          {
+            [[Start]]: { [[Line]]: 0, [[Column]]: 0 },
+            [[End]]: { [[Line]]: 0, [[Column]]: 30 },
+            [[Definition]]: { ... }
+            [[Bindings]]: [[
+              {
+                [{From]]: { [[Line]]: 0, [[Column]]: 0 },
+                [[Binding]]: "a",
+              },
+              {
+                [[From]]: { [[Line]]: 0, [[Column]]: 10 },
+                [[Binding]]: *null*,
+              },
+              {
+                [[From]]: { [[Line]]: 0, [[Column]]: 20 },
+                [[Binding]]: "b",
+              },
+            ]],
+          }
+        </code></pre>
+      </emu-note>
+      <p>A non-*null* [[CallSite]] field marks the generated range as an inlined scope. If the [[CallSite]] field of a generated range is not *null*, then:</p>
+      <ul>
+        <li>[[Definition]] must not be *null*.</li>
+        <li>[[Definition]].[[IsStackFrame]] must be *true*.</li>
+        <li>[[StackFrameType]] must be ~NONE~.</li>
+      </ul>
+
+      <emu-clause id="sec-binding-record-type">
+        <h1>The Binding Record</h1>
+        <p>The <dfn variant="Binding Records">Binding Record</dfn> describes a JavaScript expression that must be used for the given position to retrieve a specific variables' value.</p>
+        <emu-table id="table-binding-record-fields" caption="Binding Record Fields">
+          <table>
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Value</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>[[From]]</td>
+              <td>a Position Record</td>
+              <td>Use [[Binding]] from this position until either the next [[From]] or the ranges' [[End]] position to retrieve this variables' value.</td>
+            </tr>
+            <tr>
+              <td>[[Binding]]</td>
+              <td>a String or *null*</td>
+              <td>The expression to use to retrieve this variables' value, or *null* if the variable is unavailable.</td>
+            </tr>
+          </table>
+        </emu-table>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-scopes-grammar">
+      <h1>Scopes grammar</h1>
+      <p>The scopes field is described by the following <em>context-sensitive</em> grammar starting at the |Scopes| goal symbol:</p>
+      <emu-grammar type="definition">
+        Scopes :
+          OriginalScopeTreeList
+          TopLevelItemList
+          OriginalScopeTreeList `,` TopLevelItemList
+
+        OriginalScopeTreeList :
+          OriginalScopeTreeItem
+          OriginalScopeTreeList `,` OriginalScopeTreeItem
+
+        OriginalScopeTreeItem :
+          OriginalScopeTree
+          [empty]
+
+        TopLevelItemList :
+          TopLevelItem
+          TopLevelItemList `,` TopLevelItem
+
+        TopLevelItem :
+          GeneratedRangeTree
+          UnknownItem
+      </emu-grammar>
+
+      <p>The number of |OriginalScopeTreeItem|s in the |OriginalScopeTreeList| is expected to match the length of the sources field. The n-th |OriginalScopeTreeItem| describes the scope tree of the n-th authored source file in the sources field. If no scope information is available for a particular source URL, an empty item can be used.</p>
+
+      <emu-note example>
+        <p>A source map with three authored sources where only the first and third source file have scope information available would be encoded as:</p>
+        <pre>
+          "scopes": "&lt;OriginalScopeTree&gt;,,&lt;OriginalScopeTree&gt;,&lt;GeneratedRangeTree&gt;"
+        </pre>
+      </emu-note>
+
+      <emu-clause id="sec-original-scope-grammar">
+        <h1>Original scope grammar</h1>
+        <p>Each original scope consists of:</p>
+        <ul>
+          <li>a |OriginalScopeStart| item describing the start location and general scope information.</li>
+          <li>an optional |OriginalScopeVariablesItem| describing the original names of the variables this scope declares.</li>
+          <li>an optional list of |OriginalScopeTree|s describing child scopes.</li>
+          <li>a |OriginalScopeEnd| item describing the end location.</li>
+        </ul>
+        <p>In grammar form:</p>
+        <emu-grammar type="definition">
+          OriginalScopeTree :
+            OriginalScopeStart OriginalScopeVariablesItem? OriginalScopeItemList? `,` OriginalScopeEnd
+
+          OriginalScopeVariablesItem :
+            `,` OriginalScopeVariables
+
+          OriginalScopeItemList :
+            `,` OriginalScopeItem
+            OriginalScopeItemList `,` OriginalScopeItem
+
+          OriginalScopeItem :
+            OriginalScopeTree
+            UnknownItem
+
+          OriginalScopeStart :
+            `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
+
+          OriginalScopeEnd :
+            `C` ScopeLine ScopeColumn
+
+          OriginalScopeVariables :
+            `D` ScopeVariableList
+
+          ScopeVariableList :
+            ScopeVariable
+            ScopeVariableList ScopeVariable
+
+          ScopeFlags :
+            Vlq
+
+          ScopeLine :
+            Vlq
+
+          ScopeColumn :
+            Vlq
+
+          ScopeNameOrKind :
+            Vlq
+
+          ScopeKind :
+            Vlq
+
+          ScopeVariable :
+            Vlq
+        </emu-grammar>
+        <p>The VLQUnsignedValue of |ScopeFlags| encodes the presence of |ScopeNameOrKind| and |ScopeKind| and marks the scope as a function:</p>
+        <emu-table id="table-scope-flags" caption="|ScopeFlags| bits">
+          <table>
+            <thead>
+              <tr>
+                <th>Bit Mask</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>0x1</td>
+              <td>|ScopeNameOrKind| is present and contains the scope's name.</td>
+            </tr>
+            <tr>
+              <td>0x2</td>
+              <td>If 0x1 is also set, |ScopeKind| is present and contains the scope's kind. If 0x1 is not set, then |ScopeNameOrKind| is present and contains the scope's kind.</td>
+            </tr>
+            <tr>
+              <td>0x4</td>
+              <td>Mark this scope as something callable. That is the [[IsStackFrame]] field is set to *true*.</td>
+            </tr>
+          </table>
+        </emu-table>
+      </emu-clause>
+
+      <emu-clause id="sec-generated-range-grammar">
+        <h1>Generated range grammar</h1>
+        <p>Each generated range consists of:</p>
+        <ul>
+          <li>a |GeneratedRangeStart| item describing the start location and general range information.</li>
+          <li>an optional |GeneratedRangeCallSiteItem|. The presence marks this generated range as an inlined function body and the |GeneratedRangeCallSite| describes the location where this function was called in the original source.</li>
+          <li>an optional |GeneratedRangeBindingsItem| containing the JavaScript expressions to retrieve the values of the corresponding scopes' variables.</li>
+          <li>an optional list of |GeneratedSubRangeBinding|s. A variable might require different JavaScript expression to retrieve its value throughout this generated range. Or a variable might not be available in only parts of a range.</li>
+          <li>an optional list of |GeneratedRangeTree|s describing child ranges.</li>
+        </ul>
+        <p>In grammar form:</p>
+        <emu-grammar type="definition">
+          GeneratedRangeTree :
+            GeneratedRangeStart GeneratedRangeBindingsItem? GeneratedRangeCallSiteItem? GeneratedRangeItemList? `,` GeneratedRangeEnd
+
+          GeneratedRangeBindingsItem :
+            `,` GeneratedRangeBindings
+
+          GeneratedRangeCallSiteItem :
+            `,` GeneratedRangeCallSite
+
+          GeneratedRangeItemList :
+            `,` GeneratedRangeItem
+            GeneratedRangeItemList `,` GeneratedRangeItem
+
+          GeneratedRangeItem :
+            GeneratedSubRangeBinding
+            GeneratedRangeTree
+            UnknownItem
+
+          GeneratedRangeStart :
+            `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
+
+          GeneratedRangeEnd :
+            `F` RangeLine? RangeColumn
+
+          GeneratedRangeBindings :
+            `G` RangeBindingsList
+
+          RangeBindingsList :
+            RangeBinding
+            RangeBindingsList RangeBinding
+
+          GeneratedSubRangeBinding :
+            `H` VariableIndex BindingFromList
+
+          BindingFromList :
+            BindingFrom
+            BindingFromList BindingFrom
+
+          BindingFrom :
+            BindingLine BindingColumn BindingExpression
+
+          GeneratedRangeCallSite :
+            `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
+
+          RangeFlags :
+            Vlq
+
+          RangeLine :
+            Vlq
+
+          RangeColumn :
+            Vlq
+
+          RangeDefinition :
+            Vlq
+
+          RangeBinding :
+            Vlq
+
+          VariableIndex :
+            Vlq
+
+          BindingLine :
+            Vlq
+
+          BindingColumn :
+            Vlq
+
+          BindingExpression :
+            Vlq
+
+          CallSiteSourceIdx :
+            Vlq
+
+          CallSiteLine :
+            Vlq
+
+          CallSiteColumn :
+            Vlq
+        </emu-grammar>
+        <p>The VLQUnsignedValue of |RangeFlags| encodes the presence of |RangeLine| and |RangeDefinition|. All used bits:</p>
+        <emu-table id="table-range-flags" caption="|RangeFlags| bits">
+          <table>
+            <thead>
+              <tr>
+                <th>Bit Mask</th>
+                <th>Meaning</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>0x1</td>
+              <td>Set if |RangeLine| is present.</td>
+            </tr>
+            <tr>
+              <td>0x2</td>
+              <td>Set if |RangeDefinition| is present.</td>
+            </tr>
+            <tr>
+              <td>0x4</td>
+              <td>If set, then this range as a JavaScript/WASM function in the generated code. This includes methods, accessors, arrow functions, constructors, etc. Any JavaScript language construct that can be called and will result in a stack frame. If set, the [[StackFrameType]] field is set to either ~original~ or ~hidden~, depending on the bit 0x8.</td>
+            </tr>
+            <tr>
+              <td>0x8</td>
+              <td>Only valid if the bit 0x4 is also set. Marks this range as a outlined function. E.g. a transpiler translated a block scope into a function. Any call to this range should be hidden in translated stack traces. If set, the [[StackFrameType]] field is set to ~hidden~. If not set, but the bit 0x4 is set, then the [[StackFrameType]] field is set to ~original~.</td>
+            </tr>
+          </table>
+        </emu-table>
+      </emu-clause>
+
+      <emu-clause id="sec-unknown-item-grammar">
+        <h1>Unknown item grammar</h1>
+        <p>Complying implementations are expected to decode but ignore items with unknown tags. This allows the specification to add new items in the future, without breaking existing decoders.</p>
+        <emu-grammar type="definition">
+          UnknownItem :
+            Tag
+            Tag UnknownVlqList
+
+          Tag :
+            Vlq but not `B` `C` `D` `E` `F` `G` `H` `I`
+
+          UnknownVlqList :
+            Vlq
+            UnknownVlqList Vlq
+        </emu-grammar>
+        <emu-note>
+          The specification reserves all tags for future use. Vendors wanting to experiment are encouraged to use high enough tag numbers for vendor specific items.
+        </emu-note>
+      </emu-clause>
+    </emu-clause>
+
+    <emu-clause id="sec-decoding-scopes">
+      <h1>Decoding scopes</h1>
+      <p>The scopes grammar defined in <emu-xref href="#sec-scopes-grammar"></emu-xref> is context-sensitive and heavily utilizes relative numbers to reduce the bytes required for the encoded scope information. As such, the grammar alone is not enough to describe how a |Scopes| parse node is turned into Original Scope Records and Generated Range Records.</p>
+
+      <emu-clause id="sec-scope-info-record-type">
+        <h1>Scope Info Record</h1>
+        <p>The <dfn>Scope Info Record</dfn> is a specification type and is the result of decoding the scopes field.</p>
+        <emu-table id="table-scope-info-record-fields" caption="Scope Info Record Fields">
+          <table>
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Value Type</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>[[Scopes]]</td>
+              <td>a List of either Original Scope Records or *null*</td>
+            </tr>
+            <tr>
+              <td>[[Ranges]]</td>
+              <td>a List of Generated Range Records</td>
+            </tr>
+          </table>
+        </emu-table>
+      </emu-clause>
+
+      <emu-clause id="sec-decode-scope-state-record-type">
+        <h1>Decode Scope State Record</h1>
+        <p>The <dfn>Decode Scope State Record</dfn> is a specification type that tracks absolute values of decoded fields.</p>
+        <emu-table id="table-decode-scope-state-record-fields" caption="Decode Scope State Record Fields">
+          <table>
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Value</th>
+                <th>Meaning / Production</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>[[FlatOriginalScopes]]</td>
+              <td>a List of Original Scope Records</td>
+              <td>This is a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the [[Scopes]] field in the Scope Info Record. The |RangeDefinition| is an index into this List.</td>
+            </tr>
+            <tr>
+              <td>[[ScopeLine]]</td>
+              <td>a non-negative Number</td>
+              <td>|ScopeLine|</td>
+            </tr>
+            <tr>
+              <td>[[ScopeColumn]]</td>
+              <td>a non-negative Number</td>
+              <td>|ScopeColumn|</td>
+            </tr>
+            <tr>
+              <td>[[ScopeNameIndex]]</td>
+              <td>a non-negative Number</td>
+              <td>|ScopeNameOrKind|</td>
+            </tr>
+            <tr>
+              <td>[[ScopeKindIndex]]</td>
+              <td>a non-negative Number</td>
+              <td>|ScopeNameOrKind| and |ScopeKind|</td>
+            </tr>
+            <tr>
+              <td>[[ScopeVariableIndex]]</td>
+              <td>a non-negative Number</td>
+              <td>|ScopeVariable|</td>
+            </tr>
+            <tr>
+              <td>[[RangeLine]]</td>
+              <td>a non-negative Number</td>
+              <td>|RangeLine|</td>
+            </tr>
+            <tr>
+              <td>[[RangeColumn]]</td>
+              <td>a non-negative Number</td>
+              <td>|RangeColumn|</td>
+            </tr>
+            <tr>
+              <td>[[RangeDefinitionIndex]]</td>
+              <td>a non-negative Number</td>
+              <td>|RangeDefinition|</td>
+            </tr>
+            <tr>
+              <td>[[SubRangeLine]]</td>
+              <td>a non-negative Number</td>
+              <td>|BindingLine|</td>
+            </tr>
+            <tr>
+              <td>[[SubRangeColumn]]</td>
+              <td>a non-negative Number</td>
+              <td>|BindingColumn|</td>
+            </tr>
+            <tr>
+              <td>[[SubRangeVariableIndex]]</td>
+              <td>a non-negative Number</td>
+              <td>Tracks the variable while decoding sub-range bindings.</td>
+            </tr>
+          </table>
+        </emu-table>
+      </emu-clause>
+
+      <emu-clause id="sec-DecodeScopesInfo" type="abstract operation">
+        <h1>
+          DecodeScopesInfo (
+            _scopes_: a String or *null*,
+            _names_: a List of Strings,
+          ): a Scope Info Record
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _result_ be a new Scope Info Record { [[Scopes]]: « », [[Records]]: « » }.
+          1. If _scopes_ is *null*, return _result_.
+          1. Let _parsedScopes_ be the root Parse Node when parsing _scopes_ using |Scopes| as the goal symbol.
+          1. If parsing failed, then
+            1. Optionally report an error.
+            1. Return _result_.
+          1. Let _state_ be a new Decode Scope State Record { [[FlatScopes]]: « », [[ScopeLine]]: 0, [[ScopeColumn]]: 0, [[ScopeNameIndex]]: 0, [[ScopeKindIndex]]: 0, [[ScopeVariableIndex]]: 0, [[RangeLine]]: 0, [[RangeColumn]]: 0, [[RangeDefinitionIndex]]: 0, [[SubRangeLine]]: 0, [[SubRangeColumn]]: 0 }.
+          1. Perform DecodeScopesInfoItem of _parsedScopes_ with arguments _result_, _state_ and _names_.
+          1. Return _result_.
+        </emu-alg>
+
+        <emu-clause id="sec-DecodeScopesInfoItem" type="sdo">
+          <h1>
+            DecodeScopesInfoItem (
+              _info_: a Scope Info Record,
+              _state_: a Decode Scope State Record,
+              _names_: a List of Strings,
+            )
+          </h1>
+          <dl class="header"></dl>
+          <emu-grammar>
+            Scopes :
+              OriginalScopeTreeList `,` TopLevelItemList
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeScopesInfoItem of |OriginalScopeTreeList| with arguments _info_, _state_ and _names_.
+            1. Perform DecodeScopesInfoItem of |TopLevelItemList| with arguments _info_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            OriginalScopeTreeList :
+              OriginalScopeTreeList `,` OriginalScopeTreeItem
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeScopesInfoItem of |OriginalScopeTreeList| with arguments _info_, _state_ and _names_.
+            1. Perform DecodeScopesInfoItem of |OriginalScopeTreeItem| with arguments _info_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            OriginalScopeTreeItem :
+              OriginalScopeTree
+          </emu-grammar>
+          <emu-alg>
+            1. Set _state_.[[ScopeLine]] to 0.
+            1. Set _state_.[[ScopeColumn]] to 0.
+            1. Let _scope_ be DecodeOriginalScope(|OriginalScopeTree|, _state_, _names_).
+            1. Append _scope_ to _info_.[[Scopes]].
+          </emu-alg>
+          <emu-grammar>
+            OriginalScopeTreeItem :
+              [empty]
+          </emu-grammar>
+          <emu-alg>
+            1. Append *null* to _info_.[[Scopes]].
+          </emu-alg>
+          <emu-grammar>
+            TopLevelItemList :
+              TopLevelItemList `,` TopLevelItem
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeScopesInfoItem of |TopLevelItemList| with arguments _info_, _state_ and _names_.
+            1. Perform DecodeScopesInfoItem of |TopLevelItem| with arguments _info_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            TopLevelItem :
+              GeneratedRangeTree
+          </emu-grammar>
+          <emu-alg>
+            1. Let _range_ be DecodeGeneratedRange(|GeneratedRangeTree|, _state_, _names_).
+            1. Append _range_ to _info_.[[Ranges]].
+          </emu-alg>
+        </emu-clause>
+      </emu-clause>
+
+      <emu-clause id="sec-DecodeOriginalScope" type="abstract operation">
+        <h1>
+          DecodeOriginalScope (
+            _scopeTree_: a |OriginalScopeTree| Parse Node,
+            _state_: a Decode Scope State Record,
+            _names_: a List of Strings,
+          ): a Original Scope Record
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _scope_ be a new Original Scope Record with all fields default initialized.
+          1. Perform DecodeOriginalScopeItem of _scopeTree_ with arguments _scope_, _state_ and _names_.
+          1. Append _scope_ to _state_.[[FlatScopes]].
+          1. Return _scope_.
+        </emu-alg>
+
+        <emu-clause id="sec-DecodeOriginalScopeItem" type="sdo">
+          <h1>
+            DecodeOriginalScopeItem (
+              _scope_: a Original Scope Record,
+              _state_: a Decode Scope State Record,
+              _names_: a List of Strings,
+            )
+          </h1>
+          <dl class="header"></dl>
+          <emu-grammar>
+            OriginalScopeTree :
+              OriginalScopeStart OriginalScopeVariablesItem? OriginalScopeItemList? `,` OriginalScopeEnd
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeOriginalScopeItem of |OriginalScopeStart| with arguments _scope_, _state_ and _names_.
+            1. If |OriginalScopeVariablesItem| is present, perform DecodeOriginalScopeItem of |OriginalScopeVariablesItem| with arguments _scope_, _state_ and _names_.
+            1. If |OriginalScopeItemList| is present, perform DecodeOriginalScopeItem of |OriginalScopeItemList| with arguments _scope_, _state_ and _names_.
+            1. Perform DecodeOriginalScopeItem of |OriginalScopeEnd| with arguments _scope_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            OriginalScopeStart :
+              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeOriginalScopeItem of |ScopeLine| with arguments _scope_, _state_ and _names_.
+            1. Set _scope_.[[Start]].[[Line]] to _state_.[[ScopeLine]].
+            1. Perform DecodeOriginalScopeItem of |ScopeColumn| with arguments _scope_, _state_ and _names_.
+            1. Set _scope_.[[Start]].[[Column]] to _state_.[[ScopeColumn]].
+            1. Let _flags_ be the VLQUnsignedValue of |ScopeFlags|.
+            1. If _flags_ & 0x3 = 0x1, then
+              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is not present.
+              1. DecodeOriginalScopeName(|ScopeNameOrKind|, _scope_, _state_, _names_).
+            1. Else if _flags_ & 0x3 = 0x2, then
+              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is not present.
+              1. DecodeOriginalScopeKind(|ScopeNameOrKind|, _scope_, _state_, _names_).
+            1. Else if _flags_ & 0x3 = 0x3, then
+              1. Assert: |ScopeNameOrKind| is present and |ScopeKind| is present.
+              1. DecodeOriginalScopeName(|ScopeNameOrKind|, _scope_, _state_, _names_).
+              1. DecodeOriginalScopeKind(|ScopeKind|, _scope_, _state_, _names_).
+            1. If _flags_ & 0x4 = 0x4, set _scope_.[[IsStackFrame]] to *true*.
+          </emu-alg>
+          <emu-grammar>
+            ScopeVariableList :
+              ScopeVariableList ScopeVariable
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeOriginalScopeItem of |ScopeVariableList| with arguments _scope_, _state_ and _names_.
+            1. Perform DecodeOriginalScopeItem of |ScopeVariable| with arguments _scope_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            OriginalScopeItemList :
+              OriginalScopeItemList `,` OriginalScopeItem
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeOriginalScopeItem of |OriginalScopeItemList| with arguments _scope_, _state_ and _names_.
+            1. Perform DecodeOriginalScopeItem of |OriginalScopeItem| with arguments _scope_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            OriginalScopeItem :
+              OriginalScopeTree
+          </emu-grammar>
+          <emu-alg>
+            1. Let _childScope_ be DecodeOriginalScope(|OriginalScopeTree|, _state_, _names_).
+            1. Append _childScope_ to _scope_.[[Children]].
+          </emu-alg>
+          <emu-grammar>
+            OriginalScopeEnd :
+              `C` ScopeLine ScopeColumn
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeOriginalScopeItem of |ScopeLine| with arguments _scope_, _state_ and _names_.
+            1. Set _scope_.[[End]].[[Line]] to _state_.[[ScopeLine]].
+            1. Perform DecodeOriginalScopeItem of |ScopeColumn| with arguments _scope_, _state_ and _names_.
+            1. Set _scope_.[[End]].[[Column]] to _state_.[[ScopeColumn]].
+          </emu-alg>
+          <emu-grammar>
+            ScopeLine :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeLine_ be the VLQUnsignedValue of |Vlq|.
+            1. Set _state_.[[ScopeLine]] to _state_.[[ScopeLine]] + _relativeLine_.
+            1. [id="step-reset-scope-column"] If _relativeLine_ > 0, set _state_.[[ScopeColumn]] to 0.
+          </emu-alg>
+          <emu-note>
+            Step <emu-xref href="#step-reset-scope-column"></emu-xref> makes it so |ScopeColumn| is encoded relative if the preceding |OriginalScopeStart| or |OriginalScopeEnd| is on the same line (i.e. _relativeLine_ is 0), or absolute otherwise.
+          </emu-note>
+          <emu-grammar>
+            ScopeColumn :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeColumn_ be the VLQUnsignedValue of |Vlq|.
+            1. Set _state_.[[ScopeColumn]] to _state_.[[ScopeColumn]] + _relativeColumn_.
+          </emu-alg>
+          <emu-grammar>
+            ScopeVariable :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeVariable_ be the VLQSignedValue of |Vlq|.
+            1. Set _state_.[[ScopeVariableIndex]] to _state_.[[ScopeVariableIndex]] + _relativeVariable_.
+            1. Append _names_[_state_.[[ScopeVariableIndex]]] to _scope_.[[Variables]].
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-DecodeOriginalScopeName" type="abstract operation">
+          <h1>
+            DecodeOriginalScopeName (
+              _name_: a |Vlq| Parse Node,
+              _scope_: a Original Scope Record,
+              _state_: a Decode Scope State Record,
+              _names_: a List of Strings,
+            )
+          </h1>
+          <dl class="header"></dl>
+          <emu-alg>
+            1. Let _relativeName_ be the VLQSignedValue of _name_.
+            1. Set _state_.[[ScopeNameIndex]] to _state_.[[ScopeNameIndex]] + _relativeName_.
+            1. Set _scope_.[[Name]] to _names_[_state_.[[ScopeNameIndex]]].
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-DecodeOriginalScopeKind" type="abstract operation">
+          <h1>
+            DecodeOriginalScopeKind (
+              _kind_: a |Vlq| Parse Node,
+              _scope_: a Original Scope Record,
+              _state_: a Decode Scope State Record,
+              _names_: a List of Strings,
+            )
+          </h1>
+          <dl class="header"></dl>
+          <emu-alg>
+            1. Let _relativeKind_ be the VLQSignedValue of _kind_.
+            1. Set _state_.[[ScopeKindIndex]] to _state_.[[ScopeKindIndex]] + _relativeKind_.
+            1. Set _scope_.[[Kind]] to _names_[_state_.[[ScopeKindIndex]]].
+          </emu-alg>
+        </emu-clause>
+      </emu-clause>
+
+      <emu-clause id="sec-DecodeGeneratedRange" type="abstract operation">
+        <h1>
+          DecodeGeneratedRange (
+            _rangeTree_: a |GeneratedRangeTree| Parse Node,
+            _state_: a Decode Scope State Record,
+            _names_: a List of Strings,
+          ): a Generated Range Record
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. Let _range_ be a new Generated Range Record with all fields default initialized.
+          1. Perform DecodeGeneratedRangeItem of _rangeTree_ with arguments _range_, _state_ and _names_.
+          1. Return _range_.
+        </emu-alg>
+
+        <emu-clause id="sec-DecodeGeneratedRangeItem" type="sdo">
+          <h1>
+            DecodeGeneratedRangeItem (
+              _range_: a Generated Range Record,
+              _state_: a Decode Scope State Record,
+              _names_: a List of Strings,
+            )
+          </h1>
+          <dl class="header"></dl>
+          <emu-grammar>
+            GeneratedRangeTree :
+              GeneratedRangeStart GeneratedRangeBindingsItem? GeneratedRangeCallSiteItem? GeneratedRangeItemList? `,` GeneratedRangeEnd
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeGeneratedRangeItem of |GeneratedRangeStart| with arguments _range_, _state_ and _names_.
+            1. If |GeneratedRangeBindingsItem| is present, perform DecodeGeneratedRangeItem of |GeneratedRangeBindingsItem| with arguments _range_, _state_ and _names_.
+            1. If |GeneratedRangeCallSiteItem| is present, perform DecodeGeneratedRangeItem of |GeneratedRangeCallSiteItem| with arguments _range_, _state_ and _names_.
+            1. If |GeneratedRangeItemList| is present, perform DecodeGeneratedRangeItem of |GeneratedRangeItemList| with arguments _range_, _state_ and _names_.
+            1. Perform DecodeGeneratedRangeItem of |GeneratedRangeEnd| with arguments _range_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            GeneratedRangeItemList :
+              GeneratedRangeItemList `,` GeneratedRangeItem
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeGeneratedRangeItem of |GeneratedRangeItemList| with arguments _range_, _state_ and _names_.
+            1. Perform DecodeGeneratedRangeItem of |GeneratedRangeItem| with arguments _range_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            GeneratedRangeItem :
+              GeneratedRangeTree
+          </emu-grammar>
+          <emu-alg>
+            1. Let _childRange_ be DecodeGeneratedRange(|GeneratedRangeTree|, _state_, _names_).
+            1. Append _childRange_ to _range_.[[Children]].
+          </emu-alg>
+          <emu-grammar>
+            GeneratedRangeStart :
+              `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
+          </emu-grammar>
+          <emu-alg>
+            1. Let _flags_ be the VLQUnsignedValue of |RangeFlags|.
+            1. Assert: |RangeLine| is present if and only if, _flags_ & 0x1 = 0x1.
+            1. If |RangeLine| is present, perform DecodeGeneratedRangeItem of |RangeLine| with arguments _range_, _state_ and _names_.
+            1. Set _range_.[[Start]].[[Line]] to _state_.[[RangeLine]].
+            1. Perform DecodeGeneratedRangeItem of |RangeColumn| with arguments _range_, _state_ and _names_.
+            1. Set _range_.[[Start]].[[Column]] to _state_.[[RangeColumn]].
+            1. Assert: |RangeDefinition| is present if and only if, _flags_ & 0x2 = 0x2.
+            1. If |RangeDefinition| is present, perform DecodeGeneratedRangeItem of |RangeDefinition| with arguments _range_, _state_ and _names_.
+            1. If _flags_ & 0x4 = 0x4 and _flags_ & 0x8 = 0x8, set _range_.[[StackFrameType]] to ~hidden~.
+            1. Else if _flags_ & 0x8 = 0x8, optionally report an error.
+            1. Else if _flags_ & 0x4 = 0x4, set _range_.[[StackFrameType]] to ~original~.
+            1. Else, set _range_.[[StackFrameType]] to ~none~.
+          </emu-alg>
+          <emu-grammar>
+            GeneratedRangeEnd :
+              `F` RangeLine? RangeColumn
+          </emu-grammar>
+          <emu-alg>
+            1. If |RangeLine| is present, perform DecodeGeneratedRangeItem of |RangeLine| with arguments _range_, _state_ and _names_.
+            1. Set _range_.[[End]].[[Line]] to _state_.[[RangeLine]].
+            1. Perform DecodeGeneratedRangeItem of |RangeColumn| with arguments _range_, _state_ and _names_.
+            1. Set _range_.[[End]].[[Column]] to _state_.[[RangeColumn]].
+          </emu-alg>
+          <emu-grammar>
+            RangeBindingsList :
+              RangeBindingsList RangeBinding
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeGeneratedRangeItem of |RangeBindingsList| with arguments _range_, _state_ and _names_.
+            1. Perform DecodeGeneratedRangeItem of |RangeBindingsList| with arguments _range_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            GeneratedSubRangeBinding :
+              `H` VariableIndex BindingFromList
+          </emu-grammar>
+          <emu-alg>
+            1. [id="step-reset-subrange-line"] Set _state_.[[SubRangeLine]] to _range_.[[Start]].[[Line]].
+            1. [id="step-reset-subrange-column"] Set _state_.[[SubRangeColumn]] to _range_.[[Start]].[[Column]].
+            1. Let _variableIndex_ be the VLQUnsignedValue of |VariableIndex|.
+            1. Set _state_.[[SubRangeVariableIndex]] to _variableIndex_.
+            1. Perform DecodeGeneratedRangeItem of |BindingFromList| with arguments _range_, _state_ and _names_.
+          </emu-alg>
+          <emu-note>
+            Sub-range "from" positions are encoded relative to each other. Step <emu-xref href="#step-reset-subrange-line"></emu-xref> and <emu-xref href="#step-reset-subrange-line"></emu-xref> make it so that the first sub-range is relative to the ranges' start position.
+          </emu-note>
+          <emu-grammar>
+            GeneratedRangeCallSite :
+              `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
+          </emu-grammar>
+          <emu-alg>
+            1. Let _sourceIndex_ be the VLQUnsignedValue of |CallSiteSourceIdx|.
+            1. Let _line_ be the VLQUnsignedValue of |CallSiteLine|.
+            1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
+            1. Set _range_.[[CallSite]] to a new Original Position Record { [[SourceIndex]]: _sourceIndex_, [[Line]]: _line_, [[Column]]: _column_ }.
+          </emu-alg>
+          <emu-grammar>
+            RangeLine :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeLine_ be the VLQUnsignedValue of |Vlq|.
+            1. Set _state_.[[RangeLine]] to _state_.[[RangeLine]] + _relativeLine_.
+            1. [id="step-reset-range-column"] If _relativeLine_ > 0, set _state_.[[RangeColumn]] to 0.
+          </emu-alg>
+          <emu-note>
+            Step <emu-xref href="#step-reset-range-column"></emu-xref> makes it so |RangeColumn| is encoded relative if the preceding |GeneratedRangeStart| or |GeneratedRangeEnd| is on the same line (i.e. _relativeLine_ is 0), or absolute otherwise.
+          </emu-note>
+          <emu-grammar>
+            RangeColumn :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeColumn_ be the VLQUnsignedValue of |Vlq|.
+            1. Set _state_.[[RangeColumn]] to _state_.[[RangeColumn]] + _relativeColumn_.
+          </emu-alg>
+          <emu-grammar>
+            RangeDefinition :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeDefinition_ be the VLQSignedValue of |Vlq|.
+            1. Set _state_.[[RangeDefinitionIndex]] to _state_.[[RangeDefinitionIndex]] + _relativeDefinition_.
+            1. Set _range_.[[Definition]] to _state_.[[FlatOriginalScopes]][_state_.[[RangeDefinitionIndex]]].
+          </emu-alg>
+          <emu-grammar>
+            RangeBinding :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _bindings_ be a new empty List.
+            1. Let _binding_ be the VLQUnsignedValue of |Vlq|.
+            1. If _binding_ > 0, append { [[From]]: _range_.[[Start]], [[Binding]]: _names_[_binding_ - 1] } to _bindings_.
+            1. Append _bindings_ to _range_.[[Bindings]].
+          </emu-alg>
+          <emu-grammar>
+            BindingFromList :
+              BindingFromList BindingFrom
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeGeneratedRangeItem of |BindingFromList| with arguments _range_, _state_ and _names_.
+            1. Perform DecodeGeneratedRangeItem of |BindingFrom| with arguments _range_, _state_ and _names_.
+          </emu-alg>
+          <emu-grammar>
+            BindingFrom :
+              BindingLine BindingColumn BindingExpression
+          </emu-grammar>
+          <emu-alg>
+            1. Perform DecodeGeneratedRangeItem of |BindingLine| with arguments _range_, _state_ and _names_.
+            1. Perform DecodeGeneratedRangeItem of |BindingColumn| with arguments _range_, _state_ and _names_.
+            1. Let _bindingIndex_ be the VLQUnsignedValue of |BindingExpression|.
+            1. If _bindingIndex_ > 0, let _binding_ be _names_[_bindingIndex_ - 1].
+            1. Else, let _binding_ be *null*.
+            1. Append { [[From]]: { [[Line]]: _state_.[[SubRangeLine]], [[Column]]: _state_.[[SubRangeColumn]] }, [[Binding]]: _binding_ } to _range_.[[Bindings]][_state_.[[SubRangeVariableIndex]]].
+          </emu-alg>
+          <emu-grammar>
+            BindingLine :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeLine_ be the VLQUnsignedValue of |Vlq|.
+            1. Set _state_.[[SubRangeLine]] to _state_.[[SubRangeLine]] + _relativeLine_.
+            1. If _relativeLine_ > 0, set _state_.[[SubRangeColumn]] to 0.
+          </emu-alg>
+          <emu-grammar>
+            BindingColumn :
+              Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _relativeColumn_ be the VLQUnsignedValue of |Vlq|.
+            1. Set _state_.[[SubRangeColumn]] to _state_.[[SubRangeColumn]] + _relativeColumn_.
+          </emu-alg>
+        </emu-clause>
+      </emu-clause>
+    </emu-clause>
+  </emu-clause>
+
   <emu-clause id="sec-sources">
     <h1>Resolving sources</h1>
 
@@ -1133,6 +2123,7 @@
           _sources_: a List of either Strings or *null*,
           _sourcesContent_: a List of either Strings or *null*,
           _ignoreList_: a List of non-negative integers,
+          <ins>_scopes_: a List of either Original Scope Records or *null*,</ins>
         ): a Decoded Source Record
       </h1>
       <dl class="header"></dl>
@@ -1148,7 +2139,7 @@
         1. Let _index_ be 0.
         1. Repeat, while _index_ &lt; _sources_' length,
           1. Let _source_ be _sources_[_index_].
-          1. Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false* }.
+          1. <ins>Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false*, [[Scope]]: *null* }.</ins>
           1. If _source_ ≠ *null*, then
             1. Set _source_ to the string-concatenation of _sourceUrlPrefix_ and _source_.
             1. Let _sourceURL_ be the result of URL parsing _source_ with _baseURL_.
@@ -1156,6 +2147,8 @@
             1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
           1. If _ignoreList_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
           1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
+          1. <ins>If _index_ &lt; _scopes_' length, then</ins>
+            1. <ins>Set _decodedSource_.[[Scope]] to _scopes_.[_index_].</ins>
           1. Append _decodedSource_ to _decodedSources_.
         1. Return _decodedSources_.
       </emu-alg>
@@ -1542,6 +2535,386 @@ return lastURL;</code></pre>
         <pre><code class="json">{"version": 3, ...}</code></pre>
       </emu-note>
     </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-computing-original-stack-frames">
+  <h1>Computing original stack frames</h1>
+  <p></p>
+
+  <emu-clause id="sec-debugger-position-record-type">
+    <h1>Debugger Position Record</h1>
+    <p>A <dfn id="debugger-position-record">Debugger Position Record</dfn> is a tuple of a source URL and non-negative line and column numbers.</p>
+    <emu-table id="table-debugger-position-record-fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value Type</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[URL]]</td>
+          <td>a URL or *null*</td>
+        </tr>
+        <tr>
+          <td>[[Line]]</td>
+          <td>a non-negative integral Number</td>
+        </tr>
+        <tr>
+          <td>[[Column]]</td>
+          <td>a non-negative integral Number</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-debugger-bindings-record-type">
+    <h1>Debugger Bindings Records</h1>
+    <p>A <dfn id="debugger-bindings-record">Debugger Bindings Record</dfn> associates variable names to implementation-defined representations of javascript values in the debuggee or to ~unavailable~.</p>
+  </emu-clause>
+
+  <emu-clause id="sec-debugger-scope-record-type">
+    <h1>Debugger Scope Record</h1>
+    <p>A <dfn id="debugger-scope-record" variants="Debugger Scope Records">Debugger Scope Record</dfn> is a tuple of start and end positions and a Debugger Bindings Record.</p>
+    <emu-table id="table-debugger-scope-record-fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[Start]]</td>
+          <td>A Debugger Position Record</td>
+          <td>The line and column (inclusive) where the scope starts.</td>
+        </tr>
+        <tr>
+          <td>[[End]]</td>
+          <td>A Debugger Position Record</td>
+          <td>The line and column (exclusive) where the scope ends.</td>
+        </tr>
+        <tr>
+          <td>[[Bindings]]</td>
+          <td>A Debugger Bindings Record</td>
+          <td>The bindings of the scope.</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-debugger-frame-record-type">
+    <h1>Debugger Frame Record</h1>
+    <p>A <dfn id="debugger-frame-record" variants="Debugger Frame Records">Debugger Frame Record</dfn> is a tuple of a position, a list of scopes and an optional name.</p>
+    <emu-table id="table-debugger-frame-record-fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[Position]]</td>
+          <td>A Debugger Position Record</td>
+          <td>The position where execution was paused.</td>
+        </tr>
+        <tr>
+          <td>[[Scopes]]</td>
+          <td>A List of Debugger Scope Records</td>
+          <td>The scopes of the frame, starting with the innermost scope.</td>
+        </tr>
+        <tr>
+          <td>[[Name]]</td>
+          <td>A String or *null*</td>
+          <td>The name of the frame.</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-sourcemapped-frame-record-type">
+    <h1>SourceMapped Frame Record</h1>
+    <p>A <dfn id="sourcemapped-frame-record" variants="SourceMapped Frame Records">SourceMapped Frame Record</dfn> contains the name and position of an original frame and the index of its corresponding generated frame.</p>
+    <emu-table id="table-sourcemapped-frame-record-fields">
+      <table>
+        <thead>
+          <tr>
+            <th>Field Name</th>
+            <th>Value</th>
+            <th>Meaning</th>
+          </tr>
+        </thead>
+        <tr>
+          <td>[[Name]]</td>
+          <td>A String or *null*</td>
+          <td>The name of the original frame.</td>
+        </tr>
+        <tr>
+          <td>[[OriginalPosition]]</td>
+          <td>A Debugger Position Record</td>
+          <td>The position of the original frame.</td>
+        </tr>
+        <tr>
+          <td>[[GeneratedFrameIndex]]</td>
+          <td>a non-negative integral Number</td>
+          <td>The index of the corresponding generated frame.</td>
+        </tr>
+      </table>
+    </emu-table>
+  </emu-clause>
+
+  <emu-clause id="sec-EvaluateInScope" type="abstract operation">
+    <h1>
+      EvaluateInScope (
+        _frameIndex_: a non-negative integral Number,
+        _scopeIndex_: a non-negative integral Number,
+        _expression_: a String,
+      )
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>
+        The debugger must provide an operation for evaluating an expression in the frame and scope from the current stack indicated by their indices.
+        EvaluateInScope(0, 0, _expression_) evaluates _expression_ in the innermost scope of the current top frame.
+      </dd>
+    </dl>
+  </emu-clause>
+
+  <emu-clause id="sec-FindInnermostGeneratedRange" type="abstract operation">
+    <h1>
+      FindInnermostGeneratedRange (
+        _ranges_: a List of Generated Range Records,
+        _position_: a Debugger Position Record,
+      ): a Generated Range Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. For each Generated Range Record _range_ of _ranges_, do
+        1. If ComparePositions(_range_.[[Start]], _position_) is not ~greater~ and ComparePositions(_range_.[[End]], _position_) is ~greater~, then
+          1. Let _descendantRange_ be FindInnermostGeneratedRange(_range_.[[Children]], _position_).
+          1. If _descendantRange_ is not *null*, then
+            1. Return _descendantRange_.
+          1. Else,
+            1. return _range_.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindInnermostOriginalScope" type="abstract operation">
+    <h1>
+      FindInnermostOriginalScope (
+        _scope_: an Original Scope Record,
+        _position_: a Debugger Position Record,
+      ): an Original Scope Record
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. For each Original Scope Record _childScope_ of _scope_.[[Children]], do
+        1. If ComparePositions(_childScope_.[[Start]], _position_) is not ~greater~ and ComparePositions(_childScope_.[[End]], _position_) is ~greater~, then
+          1. return FindInnermostOriginalScope(_childScope_, _position_).
+      1. Return _scope_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindSourceForURL" type="abstract operation">
+    <h1>
+      FindSourceForURL (
+        _sources_: a List of Decoded Source Records,
+        _URL_: a URL,
+      ): a Decoded Source Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. For each Decoded Source Record _source_ of _sources_, do
+        1. If _source_.[[URL]] is _URL_, then
+          1. Return _source_.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindAncestorRangeForDefinition" type="abstract operation">
+    <h1>
+      FindAncestorRangeForDefinition (
+        _range_: a Generated Range Record,
+        _definition_: an Original Scope Record,
+      ): a Generated Range Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Repeat, while _range_ is not *null*,
+        1. If _range_.[[Definition]] is _definition_, then
+          1. Return _range_.
+        1. Set _range_ to its parent or *null* if it has no parent.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindFunctionName" type="abstract operation">
+    <h1>
+      FindFunctionName (
+        _scope_: an Original Scope Record,
+      ): String or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. If _scope_.[[IsStackFrame]], then
+        1. Return _scope_.[[Name]].
+      1. Let _parentScope_ be the parent of _scope_ or *null* if it has no parent.
+      1. If _parentScope_ is not *null*, then
+        1. Return FindFunctionName(_parentScope_).
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindDebuggerScopeIndexForRange" type="abstract operation">
+    <h1>
+      FindDebuggerScopeIndexForRange (
+        _debuggerScopes_: a List of Debugger Scope Records,
+        _start_: a Debugger Position Record,
+        _end_: a Debugger Position Record,
+      ): a non-negative integral Number or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _index_ be 0.
+      1. Repeat, while _index_ is smaller than the length of _debuggerScopes_,
+        1. Let _scope_ be _debuggerScopes_[_index_].
+        1. If ComparePositions(_scope_.[[Start]], _start_) is not ~greater~ and ComparePositions(_scope_.[[End]], _end_) is not ~less~, then
+          1. Return _index_.
+        1. Set _index_ to _index_ + 1.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-FindBindingRecord" type="abstract operation">
+    <h1>
+      FindBindingRecord (
+        _subRangeBindings_: a List of Binding Records,
+        _position_: a Debugger Position Record,
+      ): a Binding Record or *null*
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. For each Binding Record _subRangeBinding_ in _subRangeBindings_, in reverse List order, do
+        1. If ComparePositions(_subRangeBinding_.[[From]], _position_) is not ~greater~, then
+          1. Return _subRangeBinding_.
+      1. Return *null*.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-GetOriginalPosition" type="abstract operation">
+    <h1>
+      GetOriginalPosition (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _generatedPosition_: a Position Record,
+      ): a Decoded Mapping Record or *null*
+    </h1>
+    <dl class="header">TODO: to be added in https://github.com/tc39/ecma426/pull/195</dl>
+  </emu-clause>
+
+  <emu-clause id="sec-ComputeOriginalFrames" type="abstract operation">
+    <h1>
+      ComputeOriginalFrames (
+        _sourceMap_: a Decoded Source Map Record,
+        _generatedFrames_: a List of Debugger Frame Records,
+      ): a List of Debugger Frame Records
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _framePositions_ be a new empty List.
+      1. For each Debugger Frame Record _frame_ of _generatedFrames_, do
+        1. Append _frame_.[[Position]] to _framePositions_.
+      1. Let _sourceMappedFrames_ be SymbolizeStackTrace(_sourceMap_, _framePositions_).
+      1. Let _originalFrames_ be a new empty List.
+      1. For each SourceMapped Frame Record _sourceMappedFrame_ of _sourceMappedFrames_, do
+        1. Let _generatedFrameIndex_ be _sourceMappedFrame_.[[GeneratedFrameIndex]].
+        1. Let _generatedFrame_ be _generatedFrames_[_generatedFrameIndex_].
+        1. Let _originalPosition_ be _sourceMappedFrame_.[[OriginalPosition]].
+        1. Let _originalScopes_ be BuildScopeChain(_sourceMap_, _generatedFrame_.[[Scopes]], _generatedFrame_.[[Position]], _generatedFrameIndex_, _originalPosition_).
+        1. Append { [[Position]]: _originalPosition_, [[Scopes]]: _originalScopes_, [[Name]]: _sourceMappedFrame_.[[Name]] } to _originalFrames_.
+      1. Return _originalFrames_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-SymbolizeStackTrace" type="abstract operation">
+    <h1>
+      SymbolizeStackTrace (
+        _sourceMap_: a Decoded Source Map Record,
+        _framePositions_: a List of Debugger Position Records,
+      ): a List of SourceMapped Frame Records
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _sourceMappedFrames_ be a new empty List.
+      1. Let _i_ be 0.
+      1. Repeat, while _i_ is smaller than the length of _framePositions_,
+        1. Let _generatedPosition_ be _framePositions_[i].
+        1. Let _mapping_ be GetOriginalPosition(_sourceMap_, _generatedPosition_).
+        1. Assert: _mapping_ is not *null*.
+        1. Let _originalPosition_ be _mapping_.[[OriginalPosition]].
+        1. Let _originalSource_ be FindSourceForURL(_sourceMap_.[[Sources]], _originalPosition_.[[URL]]).
+        1. Assert: _originalSource_ is not *null*.
+        1. Let _originalScope_ be FindInnermostOriginalScope(_originalSource_.[[Scope]], _originalPosition_).
+        1. Let _name_ be FindFunctionName(_originalScope_).
+        1. Append { [[Name]]: _name_, [[OriginalPosition]]: _originalPosition_, [[GeneratedFrameIndex]]: _i_ } to _sourceMappedFrames_.
+        1. Let _generatedRange_ be FindInnermostGeneratedRange(_sourceMap_, _generatedPosition_).
+        1. Repeat, while _generatedRange_ is not *null* and _generatedRange_.[[StackFrameType]] is ~none~,
+          1. Let _callSite_ be _generatedRange_.[[CallSite]].
+          1. If _callSite_ is not *null*, then
+            1. Let _callSiteSource_ be _callSite_.[[Source]].
+            1. Let _callSiteScope_ be FindInnermostOriginalScope(_callSiteSource_.[[Scope]], _callSite_).
+            1. Let _callSiteName_ be FindFunctionName(_callSiteScope_).
+            1. Append { [[Name]]: _callSiteName_, [[OriginalPosition]]: _callSite_, [[GeneratedFrameIndex]]: _i_ } to _sourceMappedFrames_.
+          1. Set _generatedRange_ to its parent or *null* if it has no parent.
+      1. Return _sourceMappedFrames_.
+    </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-BuildScopeChain" type="abstract operation">
+    <h1>
+      BuildScopeChain (
+        _sourceMap_: a Decoded Source Map Record,
+        _debuggerScopes_: a List of Debugger Scope Records,
+        _generatedPosition_: a Debugger Position Record,
+        _generatedFrameIndex_: a non-negative integral Number,
+        _originalPosition_: a Debugger Position Record,
+      ): a Debugger Frame Record
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _innermostGeneratedRange_ be FindInnermostGeneratedRange(_sourceMap_.[[Ranges]], _generatedPosition_).
+      1. Assert: _innermostGeneratedRange_ is not *null*.
+      1. Let _originalSource_ be FindSourceForURL(_sourceMap_.[[Sources]], _originalPosition_.[[URL]]).
+      1. Assert: _originalSource_ is not *null*.
+      1. Let _originalScope_ be FindInnermostOriginalScope(_originalSource_.[[Scope]], _originalPosition_).
+      1. Let _name_ be FindFunctionName(_originalScope_).
+      1. Let _originalDebuggerScopes_ be a new empty List.
+      1. Repeat, while _originalScope_ is not *null*,
+        1. Let _generatedRange_ be FindAncestorRangeForDefinition(_innermostGeneratedRange_, _originalScope_).
+        1. Let _originalBindings_ be a new empty Debugger Bindings Record.
+        1. If _generatedRange_ is not *null*, then
+          1. Assert: The length of _originalScope_.[[Variables]] is equal to the length of _generatedRange_.[[Bindings]].
+          1. Let _scopeIndex_ be FindDebuggerScopeIndexForRange(_debuggerScopes_, _generatedRange_.[[Start]], _generatedRange_.[[End]]).
+          1. Let _i_ be 0.
+          1. Repeat, while _i_ is smaller than the length of _originalScope_.[[Variables]],
+            1. Let _variable_ be _originalScope_.[[Variables]][i].
+            1. Let _binding_ be FindBindingRecord(_generatedRange_.[[Bindings]][i], _generatedPosition_).
+            1. Assert: _binding_ is not *null*.
+            1. Let _value_ be ~unavailable~.
+            1. If _binding_.[[Binding]] is not *null*, then
+              1. Set _value_ to EvaluateInScope(_generatedFrameIndex_, _scopeIndex_, __binding_.[[Binding]]).
+            1. Set the value of _variable_ in _originalBindings_ to _value_.
+            1. Set _i_ to _i_ + 1.
+          1. Else,
+            1. For each String _variable_ of _originalScope_.[[Variables]], do
+              1. Set the value of _variable_ in _originalBindings_ to ~unavailable~.
+        1. Append { [[Start]]: _originalScope_.[[Start]], [[End]]: _originalScope_.[[End]], [[Bindings]]: _originalBindings_ } to _originalDebuggerScopes_.
+      1. Return { [[Position]]: _originalPosition_, [[Scopes]]: _originalDebuggerScopes_, [[Name]]: _name_ }.
+    </emu-alg>
   </emu-clause>
 </emu-clause>
 
