@@ -1564,8 +1564,8 @@ return lastURL;</code></pre>
       1. Let _last_ be *null*.
       1. Let _originalPositions_ be a new empty List.
       1. For each element _mapping_ of _mappings_, in reverse List order, do
-        1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~lesser~ or ~equal~, then
-          1. If _last_ is *null*, then
+        1. If _last_ is *null*, then
+          1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~lesser~ or ~equal~, then
             1. Set _last_ to _mapping_.
       1. If _last_ is not *null*, then
         1. For each element _mapping_ of _mappings_, do
