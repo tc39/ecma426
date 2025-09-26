@@ -489,7 +489,7 @@
 
   <emu-clause id="sec-position-record-type">
     <h1>Position Record</h1>
-    <p>A <dfn>Position Record</dfn> is a tuple of a non-negative line and non-negative column number:</p>
+    <p>A <dfn variants="Position Records">Position Record</dfn> is a tuple of a non-negative line and non-negative column number:</p>
     <emu-table id="table-position-record-fields" caption="Position Record Fields">
       <table>
         <thead>
@@ -683,6 +683,7 @@
         1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
+        1. [declared="a,b"] Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
         1. Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
       </emu-alg>
 
@@ -1270,8 +1271,7 @@
               1. Append _mapping_ to _offsetMappings_.
             1. Set _sourceMap_.[[Mappings]] to the list-concatenation of _sourceMap_.[[Mappings]] and _offsetMappings_.
             1. Set _previousOffsetPosition_ to _offsetPosition_.
-            1. [declared="a,b"] Let _sortedMappings_ be a copy of _offsetMappings_, sorted in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
-            1. If _sortedMappings_ is not empty, set _previousLastMapping_ to the last element of _sortedMappings_.
+            1. If _offsetMappings_ is not empty, set _previousLastMapping_ to the last element of _offsetMappings_.
         1. Return _sourceMap_.
     </emu-alg>
 
@@ -1542,6 +1542,37 @@ return lastURL;</code></pre>
         <pre><code class="json">{"version": 3, ...}</code></pre>
       </emu-note>
     </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-operations-on-source-map-records">
+  <h1>Operations on source map records</h1>
+
+  <p>After decoding a source map, source map consumers can use the resulting Decoded Source Map Records to look up position information for debugging or other use cases. This section describes the behaviour of typical operations that may be supported by source map consumers.</p>
+  <p>The GetOriginalPositions operation may be used to query the positions in an original source that correspond to a position in the generated code. For example, this can be used in a debugger to navigate from the generated code to the original source based on a user's mouse click.</p>
+
+  <emu-clause id="sec-GetOriginalPositions" type="abstract operation">
+    <h1>
+      GetOriginalPositions (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _generatedPosition_: a Position Record,
+      ): a List of Original Position Records
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
+      1. Let _last_ be *null*.
+      1. Let _originalPositions_ be a new empty List.
+      1. For each element _mapping_ of _mappings_, in reverse List order, do
+        1. If _last_ is *null*, then
+          1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~lesser~ or ~equal~, then
+            1. Set _last_ to _mapping_.
+      1. If _last_ is not *null*, then
+        1. For each element _mapping_ of _mappings_, do
+          1. If the result of performing ComparePositions(_last_.[[GeneratedPosition]], _mapping_.[[GeneratedPosition]]) is ~equal~, then
+            1. Append _mapping_.[[OriginalPosition]] to _originalPositions_.
+      1. Return _originalPositions_.
+    </emu-alg>
   </emu-clause>
 </emu-clause>
 
