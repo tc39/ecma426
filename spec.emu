@@ -1091,7 +1091,7 @@
         <li>The original source language construct maps semantically to the generated JavaScript code.</li>
         <li>The original source language construct has a name.</li>
       </ul>
-      <p>Then the [[Name]] of the <emu-xref href="#decoded-mapping-record">mapping</emu-xref> entry should be the name of the original source language construct. A <emu-xref href="#decoded-mapping-record">mapping</emu-xref> with a non-null [[Name]] is called a <dfn variant="named mappings">named mapping</dfn>.</p>
+      <p>Then the [[Name]] of the <emu-xref href="#decoded-mapping-record">mapping</emu-xref> entry should be the name of the original source language construct. A <emu-xref href="#decoded-mapping-record">mapping</emu-xref> with a non-null [[Name]] is called a <dfn variants="named mappings">named mapping</dfn>.</p>
 
       <emu-note example>
         A minifier renaming functions and variables or removing function names from immediately invoked function expressions.
@@ -1288,7 +1288,7 @@
 
       <emu-clause id="sec-binding-record-type">
         <h1>The Binding Record</h1>
-        <p>The <dfn variant="Binding Records">Binding Record</dfn> describes a JavaScript expression that must be used for the given position to retrieve a specific variables' value.</p>
+        <p>The <dfn variants="Binding Records">Binding Record</dfn> describes a JavaScript expression that must be used for the given position to retrieve a specific variables' value.</p>
         <emu-table id="table-binding-record-fields" caption="Binding Record Fields">
           <table>
             <thead>
@@ -1472,11 +1472,11 @@
             `F` RangeLine? RangeColumn
 
           GeneratedRangeBindings :
-            `G` RangeBindingsList
+            `G` BindingExpressionList
 
-          RangeBindingsList :
-            RangeBinding
-            RangeBindingsList RangeBinding
+          BindingExpressionList :
+            BindingExpression
+            BindingExpressionList BindingExpression
 
           GeneratedSubRangeBinding :
             `H` VariableIndex BindingFromList
@@ -1501,9 +1501,6 @@
             Vlq
 
           RangeDefinition :
-            Vlq
-
-          RangeBinding :
             Vlq
 
           VariableIndex :
@@ -1652,34 +1649,14 @@
               <td>|ScopeVariable|</td>
             </tr>
             <tr>
-              <td>[[RangeLine]]</td>
-              <td>a non-negative Number</td>
-              <td>|RangeLine|</td>
-            </tr>
-            <tr>
-              <td>[[RangeColumn]]</td>
-              <td>a non-negative Number</td>
-              <td>|RangeColumn|</td>
+              <td>[[RangePosition]]</td>
+              <td>a Position Accumulator Record</td>
+              <td>|RangeLine| and |RangeColumn|</td>
             </tr>
             <tr>
               <td>[[RangeDefinitionIndex]]</td>
-              <td>a non-negative Number</td>
+              <td>an Index Accumulator Record</td>
               <td>|RangeDefinition|</td>
-            </tr>
-            <tr>
-              <td>[[SubRangeLine]]</td>
-              <td>a non-negative Number</td>
-              <td>|BindingLine|</td>
-            </tr>
-            <tr>
-              <td>[[SubRangeColumn]]</td>
-              <td>a non-negative Number</td>
-              <td>|BindingColumn|</td>
-            </tr>
-            <tr>
-              <td>[[SubRangeVariableIndex]]</td>
-              <td>a non-negative Number</td>
-              <td>Tracks the variable while decoding sub-range bindings.</td>
             </tr>
           </table>
         </emu-table>
@@ -1807,23 +1784,8 @@
           <emu-alg>
             1. Let _originalScopes_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
             1. Set _info_.[[Scopes]] to _originalScopes_.
-            1. Perform DecodeScopesInfoItem of |TopLevelItemList| with arguments _info_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            TopLevelItemList :
-              TopLevelItemList `,` TopLevelItem
-          </emu-grammar>
-          <emu-alg>
-            1. Perform DecodeScopesInfoItem of |TopLevelItemList| with arguments _info_, _state_ and _names_.
-            1. Perform DecodeScopesInfoItem of |TopLevelItem| with arguments _info_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            TopLevelItem :
-              GeneratedRangeTree
-          </emu-grammar>
-          <emu-alg>
-            1. Let _range_ be DecodeGeneratedRange(|GeneratedRangeTree|, _state_, _names_).
-            1. Append _range_ to _info_.[[Ranges]].
+            1. Let _generatedRanges_ be the DecodedGeneratedRangeTrees of |TopLevelItemList| with arguments _state_ and _names_.
+            1. Set _info_.[[Ranges]] to _generatedRanges_.
           </emu-alg>
         </emu-clause>
       </emu-clause>
@@ -1913,6 +1875,18 @@
           <emu-alg>
             1. Let _relativeLine_ be the VLQUnsignedValue of |ScopeLine|.
             1. Let _relativeColumn_ be the VLQUnsignedValue of |ScopeColumn|.
+            1. Return AccumulatePosition(_accumulator_, _relativeLine_, _relativeColumn_).
+          </emu-alg>
+          <emu-grammar>
+            GeneratedRangeStart :
+              `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
+
+            GeneratedRangeEnd :
+              `F` RangeLine? RangeColumn
+          </emu-grammar>
+          <emu-alg>
+            1. If |RangeLine| is present, let _relativeLine_ be the VLQUnsignedValue of |RangeLine|, otherwise let _relativeLine_ be 0.
+            1. Let _relativeColumn_ be the VLQUnsignedValue of |RangeColumn|.
             1. Return AccumulatePosition(_accumulator_, _relativeLine_, _relativeColumn_).
           </emu-alg>
         </emu-clause>
@@ -2008,107 +1982,90 @@
         </emu-clause>
       </emu-clause>
 
-      <emu-clause id="sec-DecodeGeneratedRange" type="abstract operation">
+      <emu-clause id="sec-DecodedGeneratedRangeTrees" type="sdo">
         <h1>
-          DecodeGeneratedRange (
-            _rangeTree_: a |GeneratedRangeTree| Parse Node,
+          DecodedGeneratedRangeTrees (
             _state_: a Decode Scope State Record,
             _names_: a List of Strings,
-          ): a Generated Range Record
+          ): a List of Generated Range Records
         </h1>
         <dl class="header"></dl>
+        <emu-grammar>
+          TopLevelItemList : TopLevelItemList `,` TopLevelItem
+        </emu-grammar>
         <emu-alg>
-          1. Let _range_ be a new Generated Range Record with all fields default initialized.
-          1. Perform DecodeGeneratedRangeItem of _rangeTree_ with arguments _range_, _state_ and _names_.
-          1. Return _range_.
+          1. Let _left_ be the DecodedGeneratedRangeTrees of |TopLevelItemList| with arguments _state_ and _names_.
+          1. Let _right_ be the DecodedGeneratedRangeTrees of |TopLevelItem| with arguments _state_ and _names_.
+          1. Return the list-concatenation of _left_ and _right_.
+        </emu-alg>
+        <emu-grammar>
+          GeneratedRangeTree :
+            GeneratedRangeStart GeneratedRangeBindingsItem? GeneratedRangeCallSiteItem? GeneratedRangeItemList? `,` GeneratedRangeEnd
+        </emu-grammar>
+        <emu-alg>
+          1. Let _start_ be the DecodedPosition of |GeneratedRangeStart| with argument _state_.[[RangePosition]].
+          1. Let _definition_ be the GeneratedRangeDefinition of |GeneratedRangeStart| with arguments _state_.[[RangeDefinition]] and _state_.[[FlatOriginalScopes]].
+          1. Let _flags_ be the VLQUnsignedValue of |GeneratedRangeStart|'s |RangeFlags| nonterminal.
+          1. If _flags_ & 0xc = 0xc, let _stackFrameType_ be ~hidden~.
+          1. Else if _flags_ & 0x4 = 0x4, let _stackFrameType_ be ~original~.
+          1. Else, let _stackFrameType_ be ~none~.
+          1. If |GeneratedRangeBindingsItem| is present, then
+            1. Let _bindings_ be the GeneratedRangeBindings of |GeneratedRangeBindingsItem| with arguments _start_ and _names_.
+          1. Else,
+            1. Let _bindings_ be « ».
+          1. If |GeneratedRangeCallSiteItem| is present, then
+            1. Let _callSite_ be the GeneratedRangeCallSite of |GeneratedRangeCallSiteItem|.
+          1. Else,
+            1. Let _callSite_ be *null*.
+          1. If |GeneratedRangeItemList| is present, then
+            1. Let _children_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItemList| with arguments _state_ and _names_.
+          1. Else,
+            1. Let _children_ be « ».
+          1. If |GeneratedRangeItemList| is present, then
+            1. Let _subRangeBindings_ be the GeneratedSubRangeBindings of |GeneratedRangeItemList| with arguments _start_ and _names_.
+            1. For each Sub-Range Binding Record _subRangeBinding_ of _subRangeBindings_, do
+              1. Let _index_ be _subRangeBinding_.[[VariableIndex]].
+              1. If _index_ < the length of _bindings_, then
+                1. Set _bindings_[_index_] to the list-concatenation of _bindings_[_index_] and _subRangeBinding_.[[Bindings]].
+              1. Else,
+                1. Optionally report an error.
+          1. Let _end_ be the DecodedPosition of |GeneratedRangeEnd| with argument _state_.[[RangePosition]].
+          1. Return « Generated Range Record { [[Start]]: _start_, [[End]]: _end_, [[Definition]]: _definition_, [[StackFrameType]]: _stackFrameType_, [[Bindings]]: _bindings_, [[CallSite]]: _callSite_, [[Children]]: _children_ } ».
+        </emu-alg>
+        <emu-grammar>
+          GeneratedRangeItemList : GeneratedRangeItemList `,` GeneratedRangeItem
+        </emu-grammar>
+        <emu-alg>
+          1. Let _left_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItemList| with arguments _state_ and _names_.
+          1. Let _right_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItem| with arguments _state_ and _names_.
+          1. Return the list-concatenation of _left_ and _right_.
         </emu-alg>
 
-        <emu-clause id="sec-DecodeGeneratedRangeItem" type="sdo">
+        <emu-clause id="sec-GeneratedRangeDefinition" type="sdo">
           <h1>
-            DecodeGeneratedRangeItem (
-              _range_: a Generated Range Record,
-              _state_: a Decode Scope State Record,
-              _names_: a List of Strings,
-            )
+            GeneratedRangeDefinition (
+              _accumulator_: an Index Accumulator Record,
+              _scopes_: a List of Original Scope Records,
+            ): a Original Scope Record or *null*
           </h1>
           <dl class="header"></dl>
-          <emu-grammar>
-            GeneratedRangeTree :
-              GeneratedRangeStart GeneratedRangeBindingsItem? GeneratedRangeCallSiteItem? GeneratedRangeItemList? `,` GeneratedRangeEnd
-          </emu-grammar>
-          <emu-alg>
-            1. Perform DecodeGeneratedRangeItem of |GeneratedRangeStart| with arguments _range_, _state_ and _names_.
-            1. If |GeneratedRangeBindingsItem| is present, perform DecodeGeneratedRangeItem of |GeneratedRangeBindingsItem| with arguments _range_, _state_ and _names_.
-            1. If |GeneratedRangeCallSiteItem| is present, perform DecodeGeneratedRangeItem of |GeneratedRangeCallSiteItem| with arguments _range_, _state_ and _names_.
-            1. If |GeneratedRangeItemList| is present, perform DecodeGeneratedRangeItem of |GeneratedRangeItemList| with arguments _range_, _state_ and _names_.
-            1. Perform DecodeGeneratedRangeItem of |GeneratedRangeEnd| with arguments _range_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            GeneratedRangeItemList :
-              GeneratedRangeItemList `,` GeneratedRangeItem
-          </emu-grammar>
-          <emu-alg>
-            1. Perform DecodeGeneratedRangeItem of |GeneratedRangeItemList| with arguments _range_, _state_ and _names_.
-            1. Perform DecodeGeneratedRangeItem of |GeneratedRangeItem| with arguments _range_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            GeneratedRangeItem :
-              GeneratedRangeTree
-          </emu-grammar>
-          <emu-alg>
-            1. Let _childRange_ be DecodeGeneratedRange(|GeneratedRangeTree|, _state_, _names_).
-            1. Append _childRange_ to _range_.[[Children]].
-          </emu-alg>
           <emu-grammar>
             GeneratedRangeStart :
               `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
           </emu-grammar>
           <emu-alg>
             1. Let _flags_ be the VLQUnsignedValue of |RangeFlags|.
-            1. Assert: |RangeLine| is present if and only if, _flags_ & 0x1 = 0x1.
-            1. If |RangeLine| is present, perform DecodeGeneratedRangeItem of |RangeLine| with arguments _range_, _state_ and _names_.
-            1. Set _range_.[[Start]].[[Line]] to _state_.[[RangeLine]].
-            1. Perform DecodeGeneratedRangeItem of |RangeColumn| with arguments _range_, _state_ and _names_.
-            1. Set _range_.[[Start]].[[Column]] to _state_.[[RangeColumn]].
-            1. Assert: |RangeDefinition| is present if and only if, _flags_ & 0x2 = 0x2.
-            1. If |RangeDefinition| is present, perform DecodeGeneratedRangeItem of |RangeDefinition| with arguments _range_, _state_ and _names_.
-            1. If _flags_ & 0x4 = 0x4 and _flags_ & 0x8 = 0x8, set _range_.[[StackFrameType]] to ~hidden~.
-            1. Else if _flags_ & 0x8 = 0x8, optionally report an error.
-            1. Else if _flags_ & 0x4 = 0x4, set _range_.[[StackFrameType]] to ~original~.
-            1. Else, set _range_.[[StackFrameType]] to ~none~.
+            1. If _flags_ & 0x2 ≠ 0x2, return *null*.
+            1. Assert: |RangeDefinition| is present.
+            1. Let _relativeDefinition_ be the VLQSignedValue of |RangeDefinition|.
+            1. Let _scopeIndex_ be AccumulateIndex(_accumulator_, _relativeDefinition_).
+            1. Return _scopes_[_scopeIndex_].
           </emu-alg>
-          <emu-grammar>
-            GeneratedRangeEnd :
-              `F` RangeLine? RangeColumn
-          </emu-grammar>
-          <emu-alg>
-            1. If |RangeLine| is present, perform DecodeGeneratedRangeItem of |RangeLine| with arguments _range_, _state_ and _names_.
-            1. Set _range_.[[End]].[[Line]] to _state_.[[RangeLine]].
-            1. Perform DecodeGeneratedRangeItem of |RangeColumn| with arguments _range_, _state_ and _names_.
-            1. Set _range_.[[End]].[[Column]] to _state_.[[RangeColumn]].
-          </emu-alg>
-          <emu-grammar>
-            RangeBindingsList :
-              RangeBindingsList RangeBinding
-          </emu-grammar>
-          <emu-alg>
-            1. Perform DecodeGeneratedRangeItem of |RangeBindingsList| with arguments _range_, _state_ and _names_.
-            1. Perform DecodeGeneratedRangeItem of |RangeBindingsList| with arguments _range_, _state_ and _names_.
-          </emu-alg>
-          <emu-grammar>
-            GeneratedSubRangeBinding :
-              `H` VariableIndex BindingFromList
-          </emu-grammar>
-          <emu-alg>
-            1. [id="step-reset-subrange-line"] Set _state_.[[SubRangeLine]] to _range_.[[Start]].[[Line]].
-            1. [id="step-reset-subrange-column"] Set _state_.[[SubRangeColumn]] to _range_.[[Start]].[[Column]].
-            1. Let _variableIndex_ be the VLQUnsignedValue of |VariableIndex|.
-            1. Set _state_.[[SubRangeVariableIndex]] to _variableIndex_.
-            1. Perform DecodeGeneratedRangeItem of |BindingFromList| with arguments _range_, _state_ and _names_.
-          </emu-alg>
-          <emu-note>
-            Sub-range "from" positions are encoded relative to each other. Step <emu-xref href="#step-reset-subrange-line"></emu-xref> and <emu-xref href="#step-reset-subrange-line"></emu-xref> make it so that the first sub-range is relative to the ranges' start position.
-          </emu-note>
+        </emu-clause>
+
+        <emu-clause id="sec-GeneratedRangeCallSite" type="sdo">
+          <h1>GeneratedRangeCallSite ( ): a Original Position Record</h1>
+          <dl class="header"></dl>
           <emu-grammar>
             GeneratedRangeCallSite :
               `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
@@ -2117,83 +2074,138 @@
             1. Let _sourceIndex_ be the VLQUnsignedValue of |CallSiteSourceIdx|.
             1. Let _line_ be the VLQUnsignedValue of |CallSiteLine|.
             1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
-            1. Set _range_.[[CallSite]] to a new Original Position Record { [[SourceIndex]]: _sourceIndex_, [[Line]]: _line_, [[Column]]: _column_ }.
+            1. Return a new Original Position Record { [[SourceIndex]]: _sourceIndex_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-GeneratedRangeBindings" type="sdo">
+          <h1>
+            GeneratedRangeBindings (
+              _start_: a Position Record,
+              _names_: a List of Strings,
+            ): a List of Lists of Binding Records
+          </h1>
+          <dl class="header"></dl>
           <emu-grammar>
-            RangeLine :
-              Vlq
+            BindingExpressionList : BindingExpressionList BindingExpression
           </emu-grammar>
           <emu-alg>
-            1. Let _relativeLine_ be the VLQUnsignedValue of |Vlq|.
-            1. Set _state_.[[RangeLine]] to _state_.[[RangeLine]] + _relativeLine_.
-            1. [id="step-reset-range-column"] If _relativeLine_ > 0, set _state_.[[RangeColumn]] to 0.
-          </emu-alg>
-          <emu-note>
-            Step <emu-xref href="#step-reset-range-column"></emu-xref> makes it so |RangeColumn| is encoded relative if the preceding |GeneratedRangeStart| or |GeneratedRangeEnd| is on the same line (i.e. _relativeLine_ is 0), or absolute otherwise.
-          </emu-note>
-          <emu-grammar>
-            RangeColumn :
-              Vlq
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeColumn_ be the VLQUnsignedValue of |Vlq|.
-            1. Set _state_.[[RangeColumn]] to _state_.[[RangeColumn]] + _relativeColumn_.
+            1. Let _left_ be the GeneratedRangeBindings of |BindingExpressionList| with arguments _start_ and _names_.
+            1. Let _right_ be the GeneratedRangeBindings of |BindingExpression| with arguments _start_ and _names_.
+            1. Return the list-concatenation of _left_ and _right_.
           </emu-alg>
           <emu-grammar>
-            RangeDefinition :
-              Vlq
+            BindingExpression : Vlq
           </emu-grammar>
           <emu-alg>
-            1. Let _relativeDefinition_ be the VLQSignedValue of |Vlq|.
-            1. Set _state_.[[RangeDefinitionIndex]] to _state_.[[RangeDefinitionIndex]] + _relativeDefinition_.
-            1. Set _range_.[[Definition]] to _state_.[[FlatOriginalScopes]][_state_.[[RangeDefinitionIndex]]].
+            1. Let _binding_ be the BindingExpression of |BindingExpression| with argument _names_.
+            1. Return « « { [[From]]: _start_, [[Binding]]: _binding_ } » ».
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-BindingExpression" type="sdo">
+          <h1>
+            BindingExpression (
+              _names_: a List of Strings,
+            ): a String or *null*
+          </h1>
+          <dl class="header"></dl>
+          <emu-grammar>
+            BindingExpression : Vlq
+          </emu-grammar>
+          <emu-alg>
+            1. Let _unadjustedBindingIndex_ be the VLQUnsignedValue of |Vlq|.
+            1. If _unadjustedBindingIndex_ = 0, return *null*.
+            1. Let _bindingIndex_ be _unadjustedBindingIndex_ - 1.
+            1. If _bindingIndex_ >= the length of _names_, then
+              1. Optionally report an error.
+              1. Return *null*.
+            1. Return _names_[_bindingIndex_].
+          </emu-alg>
+        </emu-clause>
+
+        <p>A <dfn variants="Sub-Range Binding Records">Sub-Range Binding Record</dfn> is the result of decoding a |GeneratedSubRangeBinding|. It has the following fields:</p>
+        <emu-table id="table-sub-range-binding-record-fields" caption="Sub-Range Binding Record Fields">
+          <table>
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Type</th>
+              </tr>
+            </thead>
+            <tr>
+              <td>[[VariableIndex]]</td>
+              <td>a non-negative integer</td>
+            </tr>
+            <tr>
+              <td>[[Bindings]]</td>
+              <td>a List of Binding Records</td>
+            </tr>
+          </table>
+        </emu-table>
+
+        <emu-clause id="sec-GeneratedSubRangeBindings" type="sdo">
+          <h1>
+            GeneratedSubRangeBindings (
+              _start_: a Position Record,
+              _names_: a List of Strings,
+            ): a List of Sub-Range Binding Records
+          </h1>
+          <dl class="header"></dl>
+          <emu-grammar>
+            GeneratedRangeItemList : GeneratedRangeItemList `,` GeneratedRangeItem
+          </emu-grammar>
+          <emu-alg>
+            1. Let _left_ be the GeneratedSubRangeBindings of |GeneratedRangeItemList| with arguments _start_ and _names_.
+            1. Let _right_ be the GeneratedSubRangeBindings of |GeneratedRangeItem| with arguments _start_ and _names_.
+            1. Return the list-concatenation of _left_ and _right_.
           </emu-alg>
           <emu-grammar>
-            RangeBinding :
-              Vlq
+            GeneratedRangeItem :
+              GeneratedRangeTree
+              VendorExtensionItem
+              InvalidItem
           </emu-grammar>
           <emu-alg>
-            1. Let _bindings_ be a new empty List.
-            1. Let _binding_ be the VLQUnsignedValue of |Vlq|.
-            1. If _binding_ > 0, append { [[From]]: _range_.[[Start]], [[Binding]]: _names_[_binding_ - 1] } to _bindings_.
-            1. Append _bindings_ to _range_.[[Bindings]].
+            1. Return « ».
           </emu-alg>
           <emu-grammar>
-            BindingFromList :
-              BindingFromList BindingFrom
+            GeneratedSubRangeBinding :
+              `H` VariableIndex BindingFromList
           </emu-grammar>
           <emu-alg>
-            1. Perform DecodeGeneratedRangeItem of |BindingFromList| with arguments _range_, _state_ and _names_.
-            1. Perform DecodeGeneratedRangeItem of |BindingFrom| with arguments _range_, _state_ and _names_.
+            1. Let _variableIndex_ be the VLQUnsignedValue of |VariableIndex|.
+            1. Let _from_ be a new Position Accumulator Record { [[Line]]: _start_.[[Line]], [[Column]]: _start_.[[Column]] }.
+            1. Let _bindings_ be the SubRangeBindingList of |BindingFromList| with arguments _from_ and _names_.
+            1. Return « { [[VariableIndex]]: _variableIndex_, [[Bindings]]: _bindings_ } ».
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-SubRangeBindingList" type="sdo">
+          <h1>
+            SubRangeBinding (
+              _from_: a Position Accumulator Record,
+              _names_: a List of Strings,
+            ): a List of Binding Records
+          </h1>
+          <dl class="header"></dl>
+          <emu-grammar>
+            BindingFromList : BindingFromList BindingFrom
+          </emu-grammar>
+          <emu-alg>
+            1. Let _left_ be the GeneratedSubRangeBindings of |GeneratedRangeItemList| with arguments _from_ and _names_.
+            1. Let _right_ be the GeneratedSubRangeBindings of |GeneratedRangeItem| with arguments _from_ and _names_.
+            1. Return the list-concatenation of _left_ and _right_.
           </emu-alg>
           <emu-grammar>
-            BindingFrom :
-              BindingLine BindingColumn BindingExpression
+            BindingFrom : BindingLine BindingColumn BindingExpression
           </emu-grammar>
           <emu-alg>
-            1. Perform DecodeGeneratedRangeItem of |BindingLine| with arguments _range_, _state_ and _names_.
-            1. Perform DecodeGeneratedRangeItem of |BindingColumn| with arguments _range_, _state_ and _names_.
-            1. Let _bindingIndex_ be the VLQUnsignedValue of |BindingExpression|.
-            1. If _bindingIndex_ > 0, let _binding_ be _names_[_bindingIndex_ - 1].
-            1. Else, let _binding_ be *null*.
-            1. Append { [[From]]: { [[Line]]: _state_.[[SubRangeLine]], [[Column]]: _state_.[[SubRangeColumn]] }, [[Binding]]: _binding_ } to _range_.[[Bindings]][_state_.[[SubRangeVariableIndex]]].
-          </emu-alg>
-          <emu-grammar>
-            BindingLine :
-              Vlq
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeLine_ be the VLQUnsignedValue of |Vlq|.
-            1. Set _state_.[[SubRangeLine]] to _state_.[[SubRangeLine]] + _relativeLine_.
-            1. If _relativeLine_ > 0, set _state_.[[SubRangeColumn]] to 0.
-          </emu-alg>
-          <emu-grammar>
-            BindingColumn :
-              Vlq
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeColumn_ be the VLQUnsignedValue of |Vlq|.
-            1. Set _state_.[[SubRangeColumn]] to _state_.[[SubRangeColumn]] + _relativeColumn_.
+            1. Let _relativeLine_ be the VLQUnsignedValue of |BindingLine|.
+            1. Let _relativeColumn_ be the VLQUnsignedValue of |BindingColumn|.
+            1. Let _fromPosition_ be AccumulatePosition(_from_, _relativeLine_, _relativeColumn_).
+            1. Let _binding_ be the BindingExpression of |BindingExpression| with argument _names_.
+            1. Return « { [[From]]: _fromPosition_, [[Binding]]: _binding_ } ».
           </emu-alg>
         </emu-clause>
       </emu-clause>
