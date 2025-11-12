@@ -685,7 +685,6 @@
         1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
         1. <ins>Let _rangeMappingsField_ be GetOptionalString(_json_, *"rangeMappings"*).</ins>
-        1. <ins>If _rangeMappingsField_ is *null*, set _rangeMappingsField_ to *""*.</ins>
         1. <ins>Let _rangeMappings_ be DecodeRangeMappings(_rangeMappingsField_).</ins>
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_, <ins>_rangeMappings_</ins>).
         1. [declared="a,b"] Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
@@ -1239,12 +1238,13 @@
         <emu-clause id="sec-DecodeRangeMappings" type="abstract operation">
           <h1>
             DecodeRangeMappings (
-              _rawRangeMappings_: a String,
+              _rawRangeMappings_: a String or *null*,
             ): a List of Decoded Range Mapping Offset Records
           </h1>
           <dl class="header"></dl>
           <emu-alg>
             1. Let _rangeMappings_ be a new empty List.
+            1. If _rawRangeMappings_ is *null*, set _rawRangeMappings_ to *""*.
             1. Let _rangeMappingsNode_ be the root Parse Node when parsing _rawRangeMappings_ using |RangeMappingsField| as the goal symbol.
             1. If parsing failed, then
               1. Optionally report an error.
