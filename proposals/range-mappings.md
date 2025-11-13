@@ -1,5 +1,7 @@
 # Range Mappings
 
+Draft spec: https://tc39.es/ecma426/branch/proposal-range-mappings/
+
 ## Current Status
 
 Source maps proposal at stage 2 of the process, see [Our process document](https://github.com/tc39/source-map/blob/main/PROCESS.md)
