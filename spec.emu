@@ -1257,10 +1257,12 @@
           <emu-alg>
             1. For each Decoded Range Mapping Offset Record _rangeMappingOffset_ of _rangeMappingsOffsets_, do
               1. Let _mapping_ be the result of FindMappingForRangeMappingOffset(_mappings_, _rangeMappingOffset_).
-              1. If _mapping_ is ~not-found~, optionally report an error.
-              1. If _mapping_.[[OriginalPosition]] is *null*, optionally report an error.
-              1. Assert: _mapping_.[[IsRangeMapping]] is *false*.
-              1. Set _mapping_.[[IsRangeMapping]] to *true*.
+              1. If _mapping_ is ~not-found~, then
+                1. Optionally report an error.
+              1. Else,
+                1. If _mapping_.[[OriginalPosition]] is *null*, optionally report an error.
+                1. Assert: _mapping_.[[IsRangeMapping]] is *false*.
+                1. Set _mapping_.[[IsRangeMapping]] to *true*.
           </emu-alg>
         </emu-clause>
 
