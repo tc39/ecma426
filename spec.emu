@@ -685,7 +685,6 @@
         1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
         1. <ins>Let _rangeMappingsField_ be GetOptionalString(_json_, *"rangeMappings"*).</ins>
-        1. <ins>If _rangeMappingsField_ is *null*, set _rangeMappingsField_ to *""*.</ins>
         1. <ins>Let _rangeMappings_ be DecodeRangeMappings(_rangeMappingsField_).</ins>
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_, <ins>_rangeMappings_</ins>).
         1. [declared="a,b"] Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
@@ -1002,7 +1001,7 @@
             1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
             1. If _state_.[[NameIndex]] &lt; 0 or _state_.[[NameIndex]] ≥ the number of elements of _names_, optionally report an error.
             1. Else, set _name_ to _names_[_state_.[[NameIndex]]].
-          1. <ins>Let _isRangeMapping_ be the result of performing LookupRangeMapping with arguments _rangeMappings_, _state.[[GeneratedLine]], and _state.[[MappingIndex]].</ins>
+          1. <ins>Let _isRangeMapping_ be the result of performing LookupRangeMapping with arguments _rangeMappings_, _state_.[[GeneratedLine]], and _state_.[[MappingIndex]].</ins>
           1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: _originalPosition_, [[Name]]: _name_, <ins>[[IsRangeMapping]]: _isRangeMapping_</ins> }.
           1. Append _decodedMapping_ to _mappings_.
           1. <ins>Set _state_.[[MappingIndex]] to _state_.[[MappingIndex]] + 1.</ins>
@@ -1220,7 +1219,7 @@
           </emu-grammar>
           <emu-alg>
             1. Perform DecodeRangeMappingsField of |RangeMapping| with arguments _state_ and _rangeMappings_.
-            1. Perform DecodeRangeMappingsField of |RangeMappingList| with arguments _state_, _rangeMappings_.
+            1. Perform DecodeRangeMappingsField of |RangeMappingList| with arguments _state_ and _rangeMappings_.
           </emu-alg>
           <emu-grammar>
             RangeMapping :
@@ -1239,12 +1238,13 @@
         <emu-clause id="sec-DecodeRangeMappings" type="abstract operation">
           <h1>
             DecodeRangeMappings (
-              _rawRangeMappings_: a String,
+              _rawRangeMappings_: a String or *null*,
             ): a List of Decoded Range Mapping Offset Records
           </h1>
           <dl class="header"></dl>
           <emu-alg>
             1. Let _rangeMappings_ be a new empty List.
+            1. If _rawRangeMappings_ is *null*, return _rangeMappings_.
             1. Let _rangeMappingsNode_ be the root Parse Node when parsing _rawRangeMappings_ using |RangeMappingsField| as the goal symbol.
             1. If parsing failed, then
               1. Optionally report an error.
