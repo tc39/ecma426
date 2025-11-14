@@ -684,9 +684,10 @@
         1. Let _ignoreListField_ be GetOptionalListOfArrayIndexes(_json_, *"ignoreList"*).
         1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
+        1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
         1. <ins>Let _rangeMappingsField_ be GetOptionalString(_json_, *"rangeMappings"*).</ins>
         1. <ins>Let _rangeMappings_ be DecodeRangeMappings(_rangeMappingsField_).</ins>
-        1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_, <ins>_rangeMappings_</ins>).
+        1. <ins>Perform UpdateMappingsForRangeMappings(_mappings_, _rangeMappings_).</ins>
         1. [declared="a,b"] Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
         1. Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
       </emu-alg>
@@ -921,10 +922,6 @@
             <td>[[NameIndex]]</td>
             <td>a non-negative integer</td>
           </tr>
-          <tr>
-            <td><ins>[[MappingIndex]]</ins></td>
-            <td><ins>a non-negative integer</ins></td>
-          </tr>
         </table>
       </emu-table>
 
@@ -935,7 +932,6 @@
             _mappings_: a List of Decoded Mapping Records,
             _names_: a List of Strings,
             _sources_: a List of Decoded Source Records,
-            <ins>_rangeMappings_: a List of of Decoded Range Mapping Offset Records,</ins>
           )
         </h1>
         <dl class="header"></dl>
@@ -944,11 +940,10 @@
             Line `;` LineList
         </emu-grammar>
         <emu-alg>
-          1. Perform DecodeMappingsField of |Line| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
+          1. Perform DecodeMappingsField of |Line| with arguments _state_, _mappings_, _names_ and _sources_.
           1. Set _state_.[[GeneratedLine]] to _state_.[[GeneratedLine]] + 1.
           1. Set _state_.[[GeneratedColumn]] to 0.
-          1. <ins>Set _state_.[[MappingIndex]] to 0.</ins>
-          1. Perform DecodeMappingsField of |LineList| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
+          1. Perform DecodeMappingsField of |LineList| with arguments _state_, _mappings_, _names_ and _sources_.
         </emu-alg>
         <emu-grammar>
           Line : [empty]
@@ -961,36 +956,35 @@
             Mapping `,` MappingList
         </emu-grammar>
         <emu-alg>
-          1. Perform DecodeMappingsField of |Mapping| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
-          1. Perform DecodeMappingsField of |MappingList| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
+          1. Perform DecodeMappingsField of |Mapping| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |MappingList| with arguments _state_, _mappings_, _names_ and _sources_.
         </emu-alg>
         <emu-grammar>
           Mapping :
             GeneratedColumn
         </emu-grammar>
         <emu-alg>
-          1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
+          1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
           1. If _state_.[[GeneratedColumn]] &lt; 0, then
             1. Optionally report an error.
             1. Return.
           1. Let _position_ be a new Position Record { [[Line]]: _state_.[[GeneratedLine]], [[Column]]: _state_.[[GeneratedColumn]] }.
           1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedPosition]]: _position_, [[OriginalPosition]]: *null*, [[Name]]: *null*, <ins>[[IsRangeMapping]]: *false*</ins> }.
           1. Append _decodedMapping_ to _mappings_.
-          1. <ins>Set _state_.[[MappingIndex]] to _state_.[[MappingIndex]] + 1.</ins>
         </emu-alg>
         <emu-grammar>
           Mapping :
             GeneratedColumn OriginalSource OriginalLine OriginalColumn Name?
         </emu-grammar>
         <emu-alg>
-          1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
+          1. Perform DecodeMappingsField of |GeneratedColumn| with arguments _state_, _mappings_, _names_ and _sources_.
           1. If _state_.[[GeneratedColumn]] &lt; 0, then
             1. Optionally report an error.
             1. Return.
           1. Let _generatedPosition_ be a new Position Record { [[Line]]: _state_.[[GeneratedLine]], [[Column]]: _state_.[[GeneratedColumn]] }.
-          1. Perform DecodeMappingsField of |OriginalSource| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
-          1. Perform DecodeMappingsField of |OriginalLine| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
-          1. Perform DecodeMappingsField of |OriginalColumn| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
+          1. Perform DecodeMappingsField of |OriginalSource| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |OriginalLine| with arguments _state_, _mappings_, _names_ and _sources_.
+          1. Perform DecodeMappingsField of |OriginalColumn| with arguments _state_, _mappings_, _names_ and _sources_.
           1. If _state_.[[SourceIndex]] &lt; 0 or _state_.[[SourceIndex]] ≥ the number of elements of _sources_ or _state_.[[OriginalLine]] &lt; 0 or _state_.[[OriginalColumn]] &lt; 0, then
             1. Optionally report an error.
             1. Let _originalPosition_ be *null*.
@@ -998,13 +992,11 @@
             1. Let _originalPosition_ be a new Original Position Record { [[Source]]: _sources_[_state_.[[SourceIndex]]], [[Line]]: _state_.[[OriginalLine]], [[Column]]: _state_.[[OriginalColumn]] }.
           1. Let _name_ be *null*.
           1. If |Name| is present, then
-            1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
+            1. Perform DecodeMappingsField of |Name| with arguments _state_, _mappings_, _names_ and _sources_.
             1. If _state_.[[NameIndex]] &lt; 0 or _state_.[[NameIndex]] ≥ the number of elements of _names_, optionally report an error.
             1. Else, set _name_ to _names_[_state_.[[NameIndex]]].
-          1. <ins>Let _isRangeMapping_ be the result of performing LookupRangeMapping with arguments _rangeMappings_, _state_.[[GeneratedLine]], and _state_.[[MappingIndex]].</ins>
-          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: _originalPosition_, [[Name]]: _name_, <ins>[[IsRangeMapping]]: _isRangeMapping_</ins> }.
+          1. Let _decodedMapping_ be a new DecodedMappingRecord { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: _originalPosition_, [[Name]]: _name_, <ins>[[IsRangeMapping]]: *false*</ins> }.
           1. Append _decodedMapping_ to _mappings_.
-          1. <ins>Set _state_.[[MappingIndex]] to _state_.[[MappingIndex]] + 1.</ins>
         </emu-alg>
         <emu-grammar>
           GeneratedColumn :
@@ -1055,7 +1047,6 @@
           _rawMappings_: a String,
           _names_: a List of Strings,
           _sources_: a List of Decoded Source Records,
-          <ins>_rangeMappings_: a List of Decoded Range Mapping Offset Records,</ins>
         ): a List of Decoded Mapping Record
       </h1>
       <dl class="header"></dl>
@@ -1066,7 +1057,7 @@
           1. Optionally report an error.
           1. Return _mappings_.
         1. Let _state_ be a new Decode Mapping State Record with all fields set to 0.
-        1. Perform DecodeMappingsField of _mappingsNode_ with arguments _state_, _mappings_, _names_<ins>,</ins> <del>and</del> _sources_ <ins>and _rangeMappings_</ins>.
+        1. Perform DecodeMappingsField of _mappingsNode_ with arguments _state_, _mappings_, _names_ and _sources_.
         1. Return _mappings_.
       </emu-alg>
     </emu-clause>
@@ -1255,21 +1246,46 @@
           </emu-alg>
         </emu-clause>
 
-        <emu-clause id="sec-LookupRangeMapping" type="abstract operation">
+        <emu-clause id="sec-UpdateMappingsForRangeMapping" type="abstract operation">
           <h1>
-            LookupRangeMapping (
-              _rangeMappings_: a List of Decoded Range Mapping Offset Records,
-              _generatedLine_: an integral Number,
-              _mappingIndex_: an integral Number,
-            ): a Boolean
+            UpdateMappingsForRangeMappings (
+              _mappings_: a List of Decoded Mapping Records,
+              _rangeMappingsOffsets_: a List of Decoded Range Mapping Offset Records,
+            ): ~unused~
           </h1>
           <dl class="header"></dl>
           <emu-alg>
-            1. Let _rangeMappingOffset_ be a new Decoded Range Mapping Offset Record { [[GeneratedLine]] : _generatedLine_, [[MappingIndex]]: _mappingIndex_ }.
-            1. If _rangeMappingOffset_ is an element of _rangeMappings_, then
-              1. Return *true*.
-            1. Else,
-              1. Return *false*.
+            1. For each Decoded Range Mapping Offset Record _rangeMappingOffset_ of _rangeMappingsOffsets_, do
+              1. Let _mapping_ be the result of FindMappingForRangeMappingOffset(_mappings_, _rangeMappingOffset_).
+              1. If _mapping_ is ~not-found~, then
+                1. Optionally report an error.
+              1. Else,
+                1. If _mapping_.[[OriginalPosition]] is *null*, optionally report an error.
+                1. Assert: _mapping_.[[IsRangeMapping]] is *false*.
+                1. Set _mapping_.[[IsRangeMapping]] to *true*.
+          </emu-alg>
+        </emu-clause>
+
+        <emu-clause id="sec-FindMappingForRangeMappingOffset" type="abstract operation">
+          <h1>
+            FindMappingForRangeMappingOffset (
+              _mappings_: a List of Decoded Mapping Records,
+              _offset_: a Decoded Range Mapping Offset Record,
+            ): a Decoded Mapping Record or ~not-found~
+          </h1>
+          <dl class="header"></dl>
+          <emu-alg>
+            1. Let _currentLine_ be *null*.
+            1. Let _currentIndex_ be 0.
+            1. For each Decoded Mapping Record _mapping_ of _mappings_, do
+              1. If _currentLine_ ≠ _mapping_.[[GeneratedLine]], then
+                1. Set _currentLine_ to _mapping_.[[GeneratedLine]].
+                1. Set _currentIndex_ to 0.
+              1. Else,
+                1. Set _currentIndex_ to _currentIndex_ + 1.
+              1. If _currentLine_ = _offset_.[[GeneratedLine]] and _currentIndex_ = _offset_.[[MappingIndex]], then
+                1. Return _mapping_.
+            1. Return ~not-found~.
           </emu-alg>
         </emu-clause>
       </emu-clause>
