@@ -1244,7 +1244,7 @@
           <dl class="header"></dl>
           <emu-alg>
             1. Let _rangeMappings_ be a new empty List.
-            1. If _rawRangeMappings_ is *null*, set _rawRangeMappings_ to *""*.
+            1. If _rawRangeMappings_ is *null*, return _rangeMappings_.
             1. Let _rangeMappingsNode_ be the root Parse Node when parsing _rawRangeMappings_ using |RangeMappingsField| as the goal symbol.
             1. If parsing failed, then
               1. Optionally report an error.
