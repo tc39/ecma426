@@ -1328,16 +1328,10 @@
         <p>The following JavaScript code links to a source map, but it does not do so <emu-xref href="#umambiguous-linking">unambiguously</emu-xref>:</p>
 
         <pre><code class="javascript">let a = &#x60;
-&#x2F;&#x2F;# sourceMappingURL=foo.js.map
-&#x2F;&#x2F;&#x60;</code></pre>
+// sourceMappingURL=foo.js.map
+// &#x60;</code></pre>
 
-        <p>Extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> gives *null*, while <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives `foo.js.map`.</p>
-      </emu-note>
-
-      <emu-note issue>
-        <p>Having multiple ways to extract a source map URL, that can lead to different results, can have negative security and privacy implications. Implementations that need to detect which source maps are potentially going to be loaded are strongly encouraged to always apply both algorithms, rather than just assuming that they will give the same result.</p>
-
-        <p>A fix to this problem is being worked on, and is expected to be included in a future version of the standard. It will likely involve early returning from the below algorithms whenever there is a comment (or comment-like) that contains the characters U+0060 (`), U+0022 ("), or U+0027 ('), or the the sequence U+002A U+002F (*/).</p>
+        <p>Extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> gives `foo.js.map`, while <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives *null*.</p>
       </emu-note>
 
       <emu-clause id="sec-JavaScriptExtractSourceMapURL" type="abstract operation">
@@ -1354,9 +1348,9 @@
         <p>To extract a source map URL <dfn id="sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</dfn>:</p>
 
         <emu-alg>
-          1. Let _tokens_ be the List of tokens obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
+          1. Let _tokens_ be the List of <emu-xref href="#sec-ecmascript-language-lexical-grammar">input elements</emu-xref> obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
           1. For each nonterminal _token_ in _tokens_, in reverse order, do
-            1. If _token_ is not |SingleLineComment| or |MultiLineComment|, return *null*.
+            1. If _token_ is not |SingleLineComment|, |WhiteSpace|, or |LineTerminatorSequence|, return *null*.
             1. Let _comment_ be the content of _token_.
             1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
             1. If _sourceMapURL_ is a String, return _sourceMapURL_.
@@ -1368,9 +1362,9 @@
 
         <emu-alg>
           1. Let _lines_ be StringSplit(_source_, « *"\u000D\u000A"*, *"\u000A"*, *"\u000D"*, *"\u2028"*, *"\u2029"* »).
-          1. NOTE: The regular expression above matches the |LineTerminatorSequence| production.
+          1. NOTE: The list of strings above matches the |LineTerminatorSequence| production.
           1. Let _lastURL_ be *null*.
-          1. For each String _lineStr_ in _lines_, do
+          1. For each String _lineStr_ in _lines_, in reverse List order, do
             1. Let _line_ be StringToCodePoints(_lineStr_).
             1. Let _position_ be 0.
             1. Let _lineLength_ be the length of _line_.
@@ -1382,65 +1376,23 @@
                 1. Set _position_ to _position_ + 1.
                 1. If _second_ is U+002F (SOLIDUS), then
                   1. Let _comment_ be the substring of _lineStr_ from _position_ to _lineLength_.
+                  1. If _comment_ contains one of the code points U+0022 (QUOTATION MARK), U+0027 (APOSTROPHE), or U+0060 (GRAVE ACCENT), then
+                    1. Return *null*.
+                  1. If _comment_ contains the code point U+002A (ASTERISK) immediately followed by the code point U+002F (SOLIDUS), then
+                    1. Return *null*.
                   1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
-                  1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
+                  1. If _sourceMapURL_ is a String, return _sourceMapURL_.
                   1. Set _position_ to _lineLength_.
-                1. Else if _second_ is U+002A (ASTERISK), then
-                  1. Let _commentCp_ be a new empty List.
-                  1. Repeat, while _position_ + 1 &lt; _lineLength_,
-                    1. Let _c1_ be _line_[_position_].
-                    1. Set _position_ to _position_ + 1.
-                    1. Let _c2_ be _line_[_position_].
-                    1. If _c1_ is U+002A (ASTERISK) and _c2_ is U+002F (SOLIDUS), then
-                      1. Set _position_ to _position_ + 1.
-                      1. Let _sourceMapURL_ be MatchSourceMapURL(CodePointsToString(_commentCp_)).
-                      1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
-                    1. Append _c1_ to _commentCp_.
                 1. Else,
-                  1. Set _lastURL_ to *null*.
-              1. Else if _first_ is not an ECMAScript |WhiteSpace|, then
-                1. Set _lastURL_ to *null*.
-              1. NOTE: We reset _lastURL_ to *null* whenever we find a non-comment code character.
+                  1. Return *null*.
+              1. Else if _first_ is an ECMAScript |WhiteSpace|, then
+                1. Set _position_ to _position_ + 1.
+              1. Else,
+                1. Return *null*.
           1. Return _lastURL_.
         </emu-alg>
         <emu-note>
-          The algorithm above has been designed so that the source lines can be iterated in reverse order, returning early after scanning through a line that contains a `sourceMappingURL` comment.
-        </emu-note>
-        <emu-note>
-          <p>The algorithm above is equivalent to the following JavaScript implementation:</p>
-
-          <pre><code class="javascript">const JS_NEWLINE = /^/m;
-
-// This RegExp will always match one of the following:
-// - single-line comments
-// - "single-line" multi-line comments
-// - unclosed multi-line comments
-// - just trailing whitespaces
-// - a code character
-// The loop below differentiates between all these cases.
-const JS_COMMENT =
-  /\s*(?:\/\/(?&lt;single&gt;.*)|\/\*(?&lt;multi&gt;.*?)\*\/|\/\*.*|$|(?&lt;code&gt;[^\/]+))/uym;
-
-const PATTERN = /^[@#]\s*sourceMappingURL=(\S*?)\s*$/;
-
-let lastURL = null;
-for (const line of source.split(JS_NEWLINE)) {
-  JS_COMMENT.lastIndex = 0;
-  while (JS_COMMENT.lastIndex &lt; line.length) {
-    let commentMatch = JS_COMMENT.exec(line).groups;
-    let comment = commentMatch.single ?? commentMatch.multi;
-    if (comment != null) {
-      let match = PATTERN.exec(comment);
-      if (match !== null) lastURL = match[1];
-    } else if (commentMatch.code != null) {
-      lastURL = null;
-    } else {
-      // We found either trailing whitespaces or an unclosed comment.
-      // Assert: JS_COMMENT.lastIndex === line.length
-    }
-  }
-}
-return lastURL;</code></pre>
+          <p>If _source_ can be parsed without error and extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives a non-*null* result, extracting it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> will give the same result.</p>
         </emu-note>
 
         <emu-clause type="abstract operation" id="sec-MatchSourceMapURL">
