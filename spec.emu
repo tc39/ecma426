@@ -1328,7 +1328,7 @@
         <p>The following JavaScript code links to a source map, but it does not do so <emu-xref href="#umambiguous-linking">unambiguously</emu-xref>:</p>
 
         <pre><code class="javascript">let a = &#x60;
-// sourceMappingURL=foo.js.map
+//# sourceMappingURL=foo.js.map
 // &#x60;</code></pre>
 
         <p>Extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> gives `foo.js.map`, while <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives *null*.</p>
@@ -1363,18 +1363,17 @@
         <emu-alg>
           1. Let _lines_ be StringSplit(_source_, « *"\u000D\u000A"*, *"\u000A"*, *"\u000D"*, *"\u2028"*, *"\u2029"* »).
           1. NOTE: The list of strings above matches the |LineTerminatorSequence| production.
-          1. Let _lastURL_ be *null*.
           1. For each String _lineStr_ in _lines_, in reverse List order, do
             1. Let _line_ be StringToCodePoints(_lineStr_).
             1. Let _position_ be 0.
             1. Let _lineLength_ be the length of _line_.
             1. Repeat, while _position_ &lt; _lineLength_,
               1. Let _first_ be _line_[_position_].
-              1. Set _position_ to _position_ + 1.
-              1. If _first_ is U+002F (SOLIDUS) and _position_ &lt; _lineLength_, then
-                1. Let _second_ be _line_[_position_].
+              1. If _first_ is U+002F (SOLIDUS) and _position_ + 1 &lt; _lineLength_, then
                 1. Set _position_ to _position_ + 1.
+                1. Let _second_ be _line_[_position_].
                 1. If _second_ is U+002F (SOLIDUS), then
+                  1. Set _position_ to _position_ + 1.
                   1. Let _comment_ be the substring of _lineStr_ from _position_ to _lineLength_.
                   1. If _comment_ contains one of the code points U+0022 (QUOTATION MARK), U+0027 (APOSTROPHE), or U+0060 (GRAVE ACCENT), then
                     1. Return *null*.
@@ -1389,7 +1388,7 @@
                 1. Set _position_ to _position_ + 1.
               1. Else,
                 1. Return *null*.
-          1. Return _lastURL_.
+          1. Return *null*.
         </emu-alg>
         <emu-note>
           <p>If _source_ can be parsed without error and extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives a non-*null* result, extracting it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> will give the same result.</p>
