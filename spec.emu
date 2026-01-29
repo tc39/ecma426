@@ -453,7 +453,7 @@
     <h1>
       StringSplit (
         _string_: a String,
-        _separators_: a List of String,
+        _separators_: a List of non-empty Strings,
       ): a List of Strings
     </h1>
     <dl class="header">
