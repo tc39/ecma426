@@ -2004,11 +2004,15 @@
         </emu-grammar>
         <emu-alg>
           1. Let _start_ be the DecodedPosition of |GeneratedRangeStart| with argument _state_.[[RangePosition]].
-          1. Let _definition_ be the GeneratedRangeDefinition of |GeneratedRangeStart| with arguments _state_.[[RangeDefinition]] and _state_.[[FlatOriginalScopes]].
+          1. Let _definition_ be the GeneratedRangeDefinition of |GeneratedRangeStart| with arguments _state_.[[RangeDefinitionIndex]] and _state_.[[FlatOriginalScopes]].
           1. Let _flags_ be the VLQUnsignedValue of |GeneratedRangeStart|'s |RangeFlags| nonterminal.
-          1. If _flags_ & 0xc = 0xc, let _stackFrameType_ be ~hidden~.
-          1. Else if _flags_ & 0x4 = 0x4, let _stackFrameType_ be ~original~.
-          1. Else, let _stackFrameType_ be ~none~.
+          1. If _flags_ & 0xc = 0xc, then
+            1. Let _stackFrameType_ be ~hidden~.
+          1. Else if _flags_ & 0x4 = 0x4, then
+            1. Let _stackFrameType_ be ~original~.
+          1. Else,
+            1. If _flags_ & 0x8 = 0x8, optionally report an error.
+            1. Let _stackFrameType_ be ~none~.
           1. If |GeneratedRangeBindingsItem| is present, then
             1. Let _bindings_ be the GeneratedRangeBindings of |GeneratedRangeBindingsItem| with arguments _start_ and _names_.
           1. Else,
@@ -2124,7 +2128,7 @@
           </emu-alg>
         </emu-clause>
 
-        <p>A <dfn variants="Sub-Range Binding Records">Sub-Range Binding Record</dfn> is the result of decoding a |GeneratedSubRangeBinding|. It has the following fields:</p>
+        <p>A <dfn id="sub-range-binding-records" variants="Sub-Range Binding Records">Sub-Range Binding Record</dfn> is the result of decoding a |GeneratedSubRangeBinding|. It has the following fields:</p>
         <emu-table id="table-sub-range-binding-record-fields" caption="Sub-Range Binding Record Fields">
           <table>
             <thead>
@@ -2176,12 +2180,12 @@
           <emu-alg>
             1. Let _variableIndex_ be the VLQUnsignedValue of |VariableIndex|.
             1. Let _from_ be a new Position Accumulator Record { [[Line]]: _start_.[[Line]], [[Column]]: _start_.[[Column]] }.
-            1. Let _bindings_ be the SubRangeBindingList of |BindingFromList| with arguments _from_ and _names_.
+            1. Let _bindings_ be the SubRangeBinding of |BindingFromList| with arguments _from_ and _names_.
             1. Return « { [[VariableIndex]]: _variableIndex_, [[Bindings]]: _bindings_ } ».
           </emu-alg>
         </emu-clause>
 
-        <emu-clause id="sec-SubRangeBindingList" type="sdo">
+        <emu-clause id="sec-SubRangeBinding" type="sdo">
           <h1>
             SubRangeBinding (
               _from_: a Position Accumulator Record,
@@ -2193,8 +2197,8 @@
             BindingFromList : BindingFromList BindingFrom
           </emu-grammar>
           <emu-alg>
-            1. Let _left_ be the GeneratedSubRangeBindings of |GeneratedRangeItemList| with arguments _from_ and _names_.
-            1. Let _right_ be the GeneratedSubRangeBindings of |GeneratedRangeItem| with arguments _from_ and _names_.
+            1. Let _left_ be the SubRangeBinding of |BindingFromList| with arguments _from_ and _names_.
+            1. Let _right_ be the SubRangeBinding of |BindingFrom| with arguments _from_ and _names_.
             1. Return the list-concatenation of _left_ and _right_.
           </emu-alg>
           <emu-grammar>
