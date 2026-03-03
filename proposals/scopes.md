@@ -1,5 +1,6 @@
 # Proposal for adding information about scopes and their bindings to source maps
 
+* **Draft spec**: https://tc39.es/ecma426/branch/proposal-scopes/
 * **Prototype**: https://github.com/hbenl/tc39-proposal-scope-mapping/
 * **Related**: https://github.com/tc39/source-map-rfc/blob/main/proposals/env.md
 

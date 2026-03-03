@@ -293,10 +293,10 @@
   <p>A <dfn id="sec-base64-vlq">base64 VLQ</dfn> is a <emu-xref href="#sec-references-informative">base64</emu-xref>-encoded variable-length quantity, where the most significant bit (the 6th bit) is used as the continuation bit, and the "digits" are encoded into the string least significant first, and where the least significant bit of the first digit is used as the sign bit.</p>
   <emu-note>The values that can be represented by the base64 VLQ encoding are limited to 32-bit quantities until some use case for larger values is presented. This means that values exceeding 32-bits are invalid and implementations may reject them. The sign bit is counted towards the limit, but the continuation bits are not.</emu-note>
   <emu-note example>
-    The string `"iB"` represents a base64 VLQ with two digits. The first digit `"i"` encodes the bit pattern `0x100010`, which has a continuation bit of `1` (the VLQ continues), a sign bit of `0` (non-negative), and the value bits `0x0001`. The second digit `B` encodes the bit pattern `0x000001`, which has a continuation bit of `0`, no sign bit, and value bits `0x00001`. The decoding of this VLQ string is the number 17.
+    The string `"iB"` represents a base64 VLQ with two digits. The first digit `"i"` encodes the bit pattern `0b100010`, which has a continuation bit of `1` (the VLQ continues), a sign bit of `0` (non-negative), and the value bits `0b0001`. The second digit `B` encodes the bit pattern `0b000001`, which has a continuation bit of `0`, no sign bit, and value bits `0b00001`. The decoding of this VLQ string is the number 17.
   </emu-note>
   <emu-note example>
-    The string `"V"` represents a base64 VLQ with one digit. The digit `"V"` encodes the bit pattern `0x010101`, which has a continuation bit of `0` (no continuation), a sign bit of `1` (negative), and the value bits `0x1010`. The decoding of this VLQ string is the number -10.
+    The string `"V"` represents a base64 VLQ with one digit. The digit `"V"` encodes the bit pattern `0b010101`, which has a continuation bit of `0` (no continuation), a sign bit of `1` (negative), and the value bits `0b1010`. The decoding of this VLQ string is the number -10.
   </emu-note>
   <p>A base64 VLQ adheres to the following lexical grammar:</p>
 
@@ -466,7 +466,7 @@
     <h1>
       StringSplit (
         _string_: a String,
-        _separators_: a List of String,
+        _separators_: a List of non-empty Strings,
       ): a List of Strings
     </h1>
     <dl class="header">
@@ -502,7 +502,7 @@
 
   <emu-clause id="sec-position-record-type">
     <h1>Position Record</h1>
-    <p>A <dfn>Position Record</dfn> is a tuple of a non-negative line and non-negative column number:</p>
+    <p>A <dfn variants="Position Records">Position Record</dfn> is a tuple of a non-negative line and non-negative column number:</p>
     <emu-table id="table-position-record-fields" caption="Position Record Fields">
       <table>
         <thead>
@@ -709,7 +709,8 @@
         1. <ins>Let _scopesField_ be GetOptionalString(_json_, *"scopes"*).</ins>
         1. <ins>Let _scopesAndRanges_ be DecodeScopesInfo(_scopesField_, _namesField_).</ins>
         1. <ins>Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_, _scopesAndRanges_.[[Scopes]]).</ins>
-        1. <ins>Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).</ins>
+        1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
+        1. [declared="a,b"] Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
         1. <ins>Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_, [[Ranges]]: _scopesAndRanges_.[[Ranges]] }.</ins>
       </emu-alg>
 
@@ -961,6 +962,12 @@
           1. Set _state_.[[GeneratedLine]] to _state_.[[GeneratedLine]] + 1.
           1. Set _state_.[[GeneratedColumn]] to 0.
           1. Perform DecodeMappingsField of |LineList| with arguments _state_, _mappings_, _names_ and _sources_.
+        </emu-alg>
+        <emu-grammar>
+          Line : [empty]
+        </emu-grammar>
+        <emu-alg>
+          1. Return.
         </emu-alg>
         <emu-grammar>
           MappingList :
@@ -2369,8 +2376,7 @@
               1. Append _mapping_ to _offsetMappings_.
             1. Set _sourceMap_.[[Mappings]] to the list-concatenation of _sourceMap_.[[Mappings]] and _offsetMappings_.
             1. Set _previousOffsetPosition_ to _offsetPosition_.
-            1. [declared="a,b"] Let _sortedMappings_ be a copy of _offsetMappings_, sorted in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
-            1. If _sortedMappings_ is not empty, set _previousLastMapping_ to the last element of _sortedMappings_.
+            1. If _offsetMappings_ is not empty, set _previousLastMapping_ to the last element of _offsetMappings_.
         1. Return _sourceMap_.
     </emu-alg>
 
@@ -2427,16 +2433,10 @@
         <p>The following JavaScript code links to a source map, but it does not do so <emu-xref href="#umambiguous-linking">unambiguously</emu-xref>:</p>
 
         <pre><code class="javascript">let a = &#x60;
-&#x2F;&#x2F;# sourceMappingURL=foo.js.map
-&#x2F;&#x2F;&#x60;</code></pre>
+//# sourceMappingURL=foo.js.map
+// &#x60;</code></pre>
 
-        <p>Extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> gives *null*, while <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives `foo.js.map`.</p>
-      </emu-note>
-
-      <emu-note issue>
-        <p>Having multiple ways to extract a source map URL, that can lead to different results, can have negative security and privacy implications. Implementations that need to detect which source maps are potentially going to be loaded are strongly encouraged to always apply both algorithms, rather than just assuming that they will give the same result.</p>
-
-        <p>A fix to this problem is being worked on, and is expected to be included in a future version of the standard. It will likely involve early returning from the below algorithms whenever there is a comment (or comment-like) that contains the characters U+0060 (`), U+0022 ("), or U+0027 ('), or the the sequence U+002A U+002F (*/).</p>
+        <p>Extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> gives `foo.js.map`, while <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives *null*.</p>
       </emu-note>
 
       <emu-clause id="sec-JavaScriptExtractSourceMapURL" type="abstract operation">
@@ -2453,9 +2453,9 @@
         <p>To extract a source map URL <dfn id="sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</dfn>:</p>
 
         <emu-alg>
-          1. Let _tokens_ be the List of tokens obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
+          1. Let _tokens_ be the List of <emu-xref href="#sec-ecmascript-language-lexical-grammar">input elements</emu-xref> obtained by parsing _source_ according to <emu-xref href="#sec-ecmascript-language-lexical-grammar">ECMA-262's lexical grammar</emu-xref>.
           1. For each nonterminal _token_ in _tokens_, in reverse order, do
-            1. If _token_ is not |SingleLineComment| or |MultiLineComment|, return *null*.
+            1. If _token_ is not |SingleLineComment|, |WhiteSpace|, or |LineTerminatorSequence|, return *null*.
             1. Let _comment_ be the content of _token_.
             1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
             1. If _sourceMapURL_ is a String, return _sourceMapURL_.
@@ -2467,79 +2467,36 @@
 
         <emu-alg>
           1. Let _lines_ be StringSplit(_source_, « *"\u000D\u000A"*, *"\u000A"*, *"\u000D"*, *"\u2028"*, *"\u2029"* »).
-          1. NOTE: The regular expression above matches the |LineTerminatorSequence| production.
-          1. Let _lastURL_ be *null*.
-          1. For each String _lineStr_ in _lines_, do
+          1. NOTE: The list of strings above matches the |LineTerminatorSequence| production.
+          1. For each String _lineStr_ in _lines_, in reverse List order, do
             1. Let _line_ be StringToCodePoints(_lineStr_).
             1. Let _position_ be 0.
             1. Let _lineLength_ be the length of _line_.
             1. Repeat, while _position_ &lt; _lineLength_,
               1. Let _first_ be _line_[_position_].
-              1. Set _position_ to _position_ + 1.
-              1. If _first_ is U+002F (SOLIDUS) and _position_ &lt; _lineLength_, then
-                1. Let _second_ be _line_[_position_].
+              1. If _first_ is U+002F (SOLIDUS) and _position_ + 1 &lt; _lineLength_, then
                 1. Set _position_ to _position_ + 1.
+                1. Let _second_ be _line_[_position_].
                 1. If _second_ is U+002F (SOLIDUS), then
+                  1. Set _position_ to _position_ + 1.
                   1. Let _comment_ be the substring of _lineStr_ from _position_ to _lineLength_.
+                  1. If _comment_ contains one of the code points U+0022 (QUOTATION MARK), U+0027 (APOSTROPHE), or U+0060 (GRAVE ACCENT), then
+                    1. Return *null*.
+                  1. If _comment_ contains the code point U+002A (ASTERISK) immediately followed by the code point U+002F (SOLIDUS), then
+                    1. Return *null*.
                   1. Let _sourceMapURL_ be MatchSourceMapURL(_comment_).
-                  1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
+                  1. If _sourceMapURL_ is a String, return _sourceMapURL_.
                   1. Set _position_ to _lineLength_.
-                1. Else if _second_ is U+002A (ASTERISK), then
-                  1. Let _commentCp_ be a new empty List.
-                  1. Repeat, while _position_ + 1 &lt; _lineLength_,
-                    1. Let _c1_ be _line_[_position_].
-                    1. Set _position_ to _position_ + 1.
-                    1. Let _c2_ be _line_[_position_].
-                    1. If _c1_ is U+002A (ASTERISK) and _c2_ is U+002F (SOLIDUS), then
-                      1. Set _position_ to _position_ + 1.
-                      1. Let _sourceMapURL_ be MatchSourceMapURL(CodePointsToString(_commentCp_)).
-                      1. If _sourceMapURL_ is a String, set _lastURL_ to _sourceMapURL_.
-                    1. Append _c1_ to _commentCp_.
                 1. Else,
-                  1. Set _lastURL_ to *null*.
-              1. Else if _first_ is not an ECMAScript |WhiteSpace|, then
-                1. Set _lastURL_ to *null*.
-              1. NOTE: We reset _lastURL_ to *null* whenever we find a non-comment code character.
-          1. Return _lastURL_.
+                  1. Return *null*.
+              1. Else if _first_ is an ECMAScript |WhiteSpace|, then
+                1. Set _position_ to _position_ + 1.
+              1. Else,
+                1. Return *null*.
+          1. Return *null*.
         </emu-alg>
         <emu-note>
-          The algorithm above has been designed so that the source lines can be iterated in reverse order, returning early after scanning through a line that contains a `sourceMappingURL` comment.
-        </emu-note>
-        <emu-note>
-          <p>The algorithm above is equivalent to the following JavaScript implementation:</p>
-
-          <pre><code class="javascript">const JS_NEWLINE = /^/m;
-
-// This RegExp will always match one of the following:
-// - single-line comments
-// - "single-line" multi-line comments
-// - unclosed multi-line comments
-// - just trailing whitespaces
-// - a code character
-// The loop below differentiates between all these cases.
-const JS_COMMENT =
-  /\s*(?:\/\/(?&lt;single&gt;.*)|\/\*(?&lt;multi&gt;.*?)\*\/|\/\*.*|$|(?&lt;code&gt;[^\/]+))/uym;
-
-const PATTERN = /^[@#]\s*sourceMappingURL=(\S*?)\s*$/;
-
-let lastURL = null;
-for (const line of source.split(JS_NEWLINE)) {
-  JS_COMMENT.lastIndex = 0;
-  while (JS_COMMENT.lastIndex &lt; line.length) {
-    let commentMatch = JS_COMMENT.exec(line).groups;
-    let comment = commentMatch.single ?? commentMatch.multi;
-    if (comment != null) {
-      let match = PATTERN.exec(comment);
-      if (match !== null) lastURL = match[1];
-    } else if (commentMatch.code != null) {
-      lastURL = null;
-    } else {
-      // We found either trailing whitespaces or an unclosed comment.
-      // Assert: JS_COMMENT.lastIndex === line.length
-    }
-  }
-}
-return lastURL;</code></pre>
+          <p>If _source_ can be parsed without error and extracting a source map URL from it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-without-parsing">without parsing</emu-xref> gives a non-*null* result, extracting it <emu-xref href="#sec-JavaScriptExtractSourceMapURL-through-parsing">through parsing</emu-xref> will give the same result.</p>
         </emu-note>
 
         <emu-clause type="abstract operation" id="sec-MatchSourceMapURL">
@@ -2641,6 +2598,37 @@ return lastURL;</code></pre>
         <pre><code class="json">{"version": 3, ...}</code></pre>
       </emu-note>
     </emu-clause>
+  </emu-clause>
+</emu-clause>
+
+<emu-clause id="sec-operations-on-source-map-records">
+  <h1>Operations on source map records</h1>
+
+  <p>After decoding a source map, source map consumers can use the resulting Decoded Source Map Records to look up position information for debugging or other use cases. This section describes the behaviour of typical operations that may be supported by source map consumers.</p>
+  <p>The GetOriginalPositions operation may be used to query the positions in an original source that correspond to a position in the generated code. For example, this can be used in a debugger to navigate from the generated code to the original source based on a user's mouse click.</p>
+
+  <emu-clause id="sec-GetOriginalPositions" type="abstract operation">
+    <h1>
+      GetOriginalPositions (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _generatedPosition_: a Position Record,
+      ): a List of Original Position Records
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
+      1. Let _last_ be *null*.
+      1. Let _originalPositions_ be a new empty List.
+      1. For each element _mapping_ of _mappings_, in reverse List order, do
+        1. If _last_ is *null*, then
+          1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~lesser~ or ~equal~, then
+            1. Set _last_ to _mapping_.
+      1. If _last_ is not *null*, then
+        1. For each element _mapping_ of _mappings_, do
+          1. If the result of performing ComparePositions(_last_.[[GeneratedPosition]], _mapping_.[[GeneratedPosition]]) is ~equal~, then
+            1. Append _mapping_.[[OriginalPosition]] to _originalPositions_.
+      1. Return _originalPositions_.
+    </emu-alg>
   </emu-clause>
 </emu-clause>
 
