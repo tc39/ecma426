@@ -1271,7 +1271,7 @@
             [[Definition]]: { ... }
             [[Bindings]]: [[
               {
-                [{From]]: { [[Line]]: 0, [[Column]]: 0 },
+                [[From]]: { [[Line]]: 0, [[Column]]: 0 },
                 [[Binding]]: "a",
               },
               {
@@ -1290,7 +1290,7 @@
       <ul>
         <li>[[Definition]] must not be *null*.</li>
         <li>[[Definition]].[[IsStackFrame]] must be *true*.</li>
-        <li>[[StackFrameType]] must be ~NONE~.</li>
+        <li>[[StackFrameType]] must be ~none~.</li>
       </ul>
 
       <emu-clause id="sec-binding-record-type">
@@ -1961,9 +1961,14 @@
             ScopeVariable : Vlq
           </emu-grammar>
           <emu-alg>
-            1. TODO: Handle *null* returned by RelativeName.
-            1. Return « RelativeName(|Vlq|, _accumulator_, _names_) ».
+            1. Let _variable_ be RelativeName(|Vlq|, _accumulator_, _names_).
+            1. If _variable_ is *null*, return « "" ».
+            1. Return _variable_.
           </emu-alg>
+
+          <emu-note>
+            |OriginalScopeVariables| preserves out-of-bounds indices with the empty string. Otherwise bindings cannot be matched to their respective variable.
+          </emu-note>
         </emu-clause>
 
         <emu-clause id="sec-RelativeName" type="abstract operation">
