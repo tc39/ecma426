@@ -2221,6 +2221,314 @@
         </emu-clause>
       </emu-clause>
     </emu-clause>
+
+    <emu-clause id="sec-generated-range-record-js">
+      <h1>Generated Range Records for JavaScript</h1>
+      <p>For generated JavaScript code, producers must emit generated ranges that do not partially overlap the syntax boundaries of ECMAScript grammatical productions that typically instantiate variable environments (e.g. function bodies and block statements). This ensures that consumers can unambiguously associate each generated range with the corresponding runtime environment.</p>
+
+      <p>To establish exact start and end positions, this specification defines precise <strong><dfn variants="Syntactic Scope">Syntactic Scopes</dfn></strong> for these constructs. A Syntactic Scope is a contiguous region of generated code spanning from the start of an <strong><dfn>Opening Boundary</dfn></strong> to the end of a <strong><dfn>Closing Boundary</dfn></strong>.</p>
+
+      <p>Generated Range Records and Syntactic Scopes must be strictly well-nested. For any Generated Range Record and any Syntactic Scope, the range must either be entirely contained within the Syntactic Scope, entirely contain it, or be entirely disjoint from it. It is illegal for a generated range to start inside a Syntactic Scope and end outside of it, or vice-versa. For the purposes of this requirement, the Syntactic Scope includes both its Opening and Closing Boundaries.</p>
+
+      <emu-note>[[End]] of generated range record is exclusive. It is valid for [[End]] to point at the character following right after the closing boundary.</emu-note>
+
+      <p>A Syntactic Scope is <dfn id="sec-callable-syntactic-scope">callable</dfn> if its corresponding ECMAScript production results in a new execution context (e.g., functions, methods, or class constructors).</p>
+
+      <p>If a Generated Range Record is associated with a callable Syntactic Scope, it must have the 0x4 flag (JavaScript/WASM function) set in its |RangeFlags|. Furthermore, to ensure that the evaluation of default parameters is correctly attributed to the function's stack frame, the Generated Range Record must start <strong>inside</strong> the <strong>Opening Boundary</strong> defined in the table below. This ensures that the start of the range precedes the evaluation of default parameters, allowing debuggers to provide accurate stack traces during parameter initialization.</p>
+
+      <p>The following table defines the specific Opening and Closing Boundaries of Syntactic Scopes for ECMAScript productions. It also indicates whether a Syntactic Scope is callable.</p>
+
+      <emu-table id="table-js-syntactic-scopes" caption="JavaScript Syntactic Scopes">
+        <table>
+          <thead>
+            <tr>
+              <th>ECMA-262 Production</th>
+              <th>Opening Boundary</th>
+              <th>Closing Boundary</th>
+              <th>Callable</th>
+            </tr>
+          </thead>
+          <tr>
+            <td data-simulate-tagname="emu-clause"> <!-- Prevent 'inline' CSS class on emu-production -->
+              <emu-grammar>
+                ArrowFunction :
+                  ArrowParameters `=>` ConciseBody
+              </emu-grammar>
+            </td>
+            <td>From the start of `ArrowParameters` to the `=>` terminal</td>
+            <td>The end of `ConciseBody`</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                AsyncArrowFunction :
+                  `async` AsyncArrowBindingIdentifier `=>` AsyncConciseBody
+              </emu-grammar>
+            </td>
+            <td>From the start of `async` to the `=>` terminal</td>
+            <td>The end of `AsyncConciseBody`</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                AsyncArrowFunction :
+                  `async` ArrowFormalParameters `=>` AsyncConciseBody
+              </emu-grammar>
+            </td>
+            <td>From the start of `async` to the `(` terminal</td>
+            <td>The end of `AsyncConciseBody`</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                AsyncFunctionDeclaration :
+                  `async` `function` BindingIdentifier `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+                  `async` `function` `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+              </emu-grammar>
+            </td>
+            <td>From the start of `async` to the `(` terminal</td>
+            <td>The `}` terminal</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                AsyncFunctionExpression :
+                  `async` `function` BindingIdentifier? `(` FormalParameters `)` `{` AsyncFunctionBody `}`
+              </emu-grammar>
+            </td>
+            <td>From the start of `async` to the `(` terminal</td>
+            <td>The `}` terminal</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                AsyncGeneratorDeclaration :
+                  `async` `function` `*` BindingIdentifier `(` FormalParameters `)` `{` AsyncGeneratorBody `}`
+                  `async` `function` `*` `(` FormalParameters `)` `{` AsyncGeneratorBody `}`
+              </emu-grammar>
+            </td>
+            <td>From the start of `async` to the `(` terminal</td>
+            <td>The `}` terminal</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                AsyncGeneratorExpression :
+                  `async` `function` `*` BindingIdentifier? `(` FormalParameters `)` `{` AsyncGeneratorBody `}`
+              </emu-grammar>
+            </td>
+            <td>From the start of `async` to the `(` terminal</td>
+            <td>The `}` terminal</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                BlockStatement :
+                  Block
+              </emu-grammar>
+            </td>
+            <td>The `{` terminal inside `Block`</td>
+            <td>The `}` terminal inside `Block`</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                Catch :
+                  `catch` `(` CatchParameter `)` Block
+                  `catch` Block
+              </emu-grammar>
+            </td>
+            <td>The start of `catch`</td>
+            <td>The `}` terminal inside `Block`</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                ClassDeclaration :
+                  `class` BindingIdentifier ClassTail
+                  `class` ClassTail
+              </emu-grammar>
+            </td>
+            <td>The start of `class` to the `{` terminal inside `ClassTail`</td>
+            <td>The `}` terminal inside `ClassTail`</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                ClassExpression :
+                  `class` BindingIdentifier? ClassTail
+              </emu-grammar>
+            </td>
+            <td>The start of `class` to the `{` terminal inside `ClassTail`</td>
+            <td>The `}` terminal inside `ClassTail`</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                ClassElement :
+                  MethodDefinition
+              </emu-grammar>
+            </td>
+            <td>From the start of `MethodDefinition` until the `(` terminal</td>
+            <td>The end of `MethodDefinition`</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                ClassElement :
+                  `static` MethodDefinition
+              </emu-grammar>
+            </td>
+            <td>From the start of `static` until the `(` terminal</td>
+            <td>The end of `MethodDefinition`</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                ClassStaticBlock :
+                  `static` `{` ClassStaticBlockBody `}`
+              </emu-grammar>
+            </td>
+            <td>The start of `static`</td>
+            <td>The `}` terminal</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                ForInOfStatement :
+                  `for` `(` ForDeclaration `in` Expression `)` Statement
+                  `for` `(` LeftHandSideExpression `in` Expression `)` Statement
+                  `for` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+                  `for` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+                  `for` `await` `(` ForDeclaration `of` AssignmentExpression `)` Statement
+                  `for` `await` `(` LeftHandSideExpression `of` AssignmentExpression `)` Statement
+              </emu-grammar>
+            </td>
+            <td>The start of `for`</td>
+            <td>The end of `Statement`</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                ForStatement :
+                  `for` `(` LexicalDeclaration Expression? `;` Expression? `)` Statement
+                  `for` `(` `var` VariableDeclarationList `;` Expression? `;` Expression? `)` Statement
+                  `for` `(` Expression? `;` Expression? `;` Expression? `)` Statement
+              </emu-grammar>
+            </td>
+            <td>The start ofe `for`</td>
+            <td>The end of `Statement`</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                FunctionDeclaration :
+                  `function` BindingIdentifier `(` FormalParameters `)` `{` FunctionBody `}`
+                  `function` `(` FormalParameters `)` `{` FunctionBody `}`
+              </emu-grammar>
+            </td>
+            <td>From the start of `function` to the `(` terminal</td>
+            <td>The `}` terminal</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                FunctionExpression :
+                  `function` BindingIdentifier? `(` FormalParameters `)` `{` FunctionBody `}`
+              </emu-grammar>
+            </td>
+            <td>From the start of `function` to the `(` terminal</td>
+            <td>The `}` terminal</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                GeneratorDeclaration :
+                  `function` `*` BindingIdentifier `(` FormalParameters `)` `{` GeneratorBody `}`
+                  `function` `*` `(` FormalParameters `)` `{` GeneratorBody `}`
+              </emu-grammar>
+            </td>
+            <td>From the start of `function` to the `(` terminal</td>
+            <td>The `}` terminal</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                GeneratorExpression :
+                  `function` `*` BindingIdentifier? `(` FormalParameters `)` `{` GeneratorBody `}`
+              </emu-grammar>
+            </td>
+            <td>From the start of `function` to the `(` terminal</td>
+            <td>The `}` terminal</td>
+            <td>Yes</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                SwitchStatement :
+                  `switch` `(` Expression `)` CaseBlock
+              </emu-grammar>
+            </td>
+            <td>The start of `switch`</td>
+            <td>The `}` terminal inside `CaseBlock`</td>
+            <td>No</td>
+          </tr>
+          <tr>
+            <td data-simulate-tagname="emu-clause">
+              <emu-grammar>
+                WithStatement :
+                  `with` `(` Expression `)` Statement
+              </emu-grammar>
+            </td>
+            <td>The `)` terminal</td>
+            <td>The end of `Statement`</td>
+            <td>No</td>
+          </tr>
+        </table>
+      </emu-table>
+
+      <emu-note>
+        The |Expression| or |AssignmentExpression| in the |ForInOfStatement| production should be it's own generated range record that belongs to the parent scope.
+        <emu-note example>
+          <pre><code class="javascript">
+            function someFunction(arg) {
+              for (const element of arg) {
+                console.log(element);
+              }
+            }
+          </code></pre>
+          <p>This example should have 3 nested generated range records:</p>
+          <ul>
+            <li>A generated range record for `someFunction`</li>
+            <li>A generated range record for the `for-of` loop</li>
+            <li>A generated range record for `arg` in `for (const element of arg)`. This range should have the original scope record of `someFunction` as it's [[Definition]]</li>
+          </ul>
+        </emu-note>
+      </emu-note>
+
+      <emu-note>
+        The `)` terminal for |WithStatement| is intentional. |Expression| belongs to the parent scope, not the "block scope" that |Statement| may open.
+      </emu-note>
+    </emu-clause>
   </emu-clause>
 
   <emu-clause id="sec-sources">
