@@ -1139,7 +1139,7 @@
       <dl class="header"></dl>
       <emu-alg>
         1. Let _decodedSources_ be a new empty List.
-        1. Let _sourcesContentCount_ be the the number of elements in _sourcesContent_.
+        1. Let _sourcesContentCount_ be the number of elements in _sourcesContent_.
         1. Let _sourceUrlPrefix_ be *""*.
         1. If _sourceRoot_ ≠ *null*, then
           1. If _sourceRoot_ ends with the code point U+002F (SOLIDUS), then
