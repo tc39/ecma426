@@ -1134,7 +1134,7 @@
           _sources_: a List of either Strings or *null*,
           _sourcesContent_: a List of either Strings or *null*,
           _ignoreList_: a List of non-negative integers,
-        ): a Decoded Source Record
+        ): a List of Decoded Source Record
       </h1>
       <dl class="header"></dl>
       <emu-alg>
