@@ -1157,6 +1157,7 @@
           1. If _ignoreList_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
           1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
           1. Append _decodedSource_ to _decodedSources_.
+          1. Set _index_ to _index_ + 1.
         1. Return _decodedSources_.
       </emu-alg>
 
