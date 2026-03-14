@@ -769,11 +769,10 @@
             1. Optionally report an error.
             1. Return _list_.
           1. For each element _item_ of JSONArrayIterate(_values_), do
-            1. If _item_ is an integral Number, _item_ ≠ *+0*<sub>𝔽</sub>, and _item_ ≥ *+0*<sub>𝔽</sub>, then
+            1. If _item_ is an integral Number, and _item_ ≥ *+0*<sub>𝔽</sub>, then
               1. Append ℝ(_item_) to _list_.
             1. Else,
-              1. If _item_ ≠ *null*, optionally report an error.
-              1. Append *null* to _list_.
+              1. Optionally report an error.
           1. Return _list_.
         </emu-alg>
         <!--
