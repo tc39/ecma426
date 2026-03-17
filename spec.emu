@@ -1756,13 +1756,19 @@
         </h1>
         <dl class="header"></dl>
         <emu-alg>
-          1. Let _result_ be a new Scope Info Record { [[Scopes]]: « », [[Records]]: « » }.
+          1. Let _result_ be a new Scope Info Record { [[Scopes]]: « », [[Ranges]]: « » }.
           1. If _scopes_ is *null*, return _result_.
           1. Let _parsedScopes_ be the root Parse Node when parsing _scopes_ using |Scopes| as the goal symbol.
           1. If parsing failed, then
             1. Optionally report an error.
             1. Return _result_.
-          1. Let _state_ be a new Decode Scope State Record { [[FlatScopes]]: « », [[ScopeLine]]: 0, [[ScopeColumn]]: 0, [[ScopeNameIndex]]: 0, [[ScopeKindIndex]]: 0, [[ScopeVariableIndex]]: 0, [[RangeLine]]: 0, [[RangeColumn]]: 0, [[RangeDefinitionIndex]]: 0, [[SubRangeLine]]: 0, [[SubRangeColumn]]: 0 }.
+          1. Let _scopePosition_ be a new Position Accumulator Record { [[Line]]: 0, [[Column]]: 0 }.
+          1. Let _scopeNameIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+          1. Let _scopeKindIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+          1. Let _scopeVariableIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+          1. Let _rangePosition_ be a new Position Accumulator Record { [[Line]]: 0, [[Column]]: 0 }.
+          1. Let _rangeDefinitionIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+          1. Let _state_ be a new Decode Scope State Record { [[FlatOriginalScopes]]: « », [[ScopePosition]]: _scopePosition_, [[ScopeNameIndex]]: _scopeNameIndex_, [[ScopeKindIndex]]: _scopeKindIndex_, [[ScopeVariableIndex]]: _scopeVariableIndex_, [[RangePosition]]: _rangePosition_, [[RangeDefinitionIndex]]: _rangeDefinitionIndex_ }.
           1. Perform DecodeScopesInfoItem of _parsedScopes_ with arguments _result_, _state_ and _names_.
           1. Return _result_.
         </emu-alg>
