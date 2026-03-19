@@ -2227,6 +2227,31 @@
         </emu-clause>
       </emu-clause>
     </emu-clause>
+
+    <emu-clause id="sec-mappings-relationship">
+      <h1>Relationship with mappings</h1>
+      <p>The Decoded Mapping Records of a Decoded Source Map Record must be consistent with respect to the Generated Range Records and Original Scope Records of the same Decoded Source Map Record. Informally, mappings and scopes information must not disagree on how they map from generated code to original code. Formally, for a Decoded Source Map Record _sourceMap_, the following steps must return *true*:</p>
+      <emu-alg>
+        1. For each Decoded Mapping Record _mapping_ of _sourceMap_.[[Mappings]], do
+          1. Let _originalPosition_ be _mapping_.[[OriginalPosition]].
+          1. If _originalPosition_ is not *null*, then
+            1. Let _range_ be the inner-most Generated Range Record of _sourceMap_.[[Ranges]] containing _mapping_.[[GeneratedPosition]].
+            1. If _range_ is not *null* and _range_.[[Definition]] is not *null*, then
+              1. Let _definition_ be _range_.[[Definition]].
+              1. Let _sourceScope_ be _originalPosition_.[[Source]].[[Scope]].
+              1. If _sourceScope_ is *null*, return *false*.
+              1. If _definition_ is not _sourceScope_ and _definition_ is not a descendant of _sourceScope_, return *false*.
+              1. If ComparePositions(_definition_.[[Start]], _originalPosition_) is ~greater~, return *false*.
+              1. If ComparePositions(_originalPosition_, _definition_.[[End]]) is not ~lesser~, return *false*.
+        1. Return *true*.
+      </emu-alg>
+      <emu-note>
+        TODO: Specify abstract operations for "inner-most Generated Range Record" and "IsDescendant".
+      </emu-note>
+      <emu-note>
+        The specification allows either the mapping or the generated range to be "unmapped", but if both map to original code, they need to do so consistently.
+      </emu-note>
+    </emu-clause>
   </emu-clause>
 
   <emu-clause id="sec-sources">
