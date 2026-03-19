@@ -1668,7 +1668,7 @@
           </table>
         </emu-table>
 
-        <p>An <dfn>Index Accumulator Record</dfn> is used to keep track of an index that is expressed in consecutive relative increments. It has the following fields:</p>
+        <p>An <dfn id="index-accumulator-record">Index Accumulator Record</dfn> is used to keep track of an index that is expressed in consecutive relative increments. It has the following fields:</p>
         <emu-table id="table-index-accumulator-record-fields" caption="Index Accumulator Record Fields">
           <table>
             <thead>
@@ -1704,7 +1704,7 @@
           </emu-alg>
         </emu-clause>
 
-        <p>A <dfn>Position Accumulator Record</dfn> is used to keep track of a line and column number pair that is expressed in consecutive relative increments. It has the following fields:</p>
+        <p>A <dfn id="position-accumulator-record">Position Accumulator Record</dfn> is used to keep track of a line and column number pair that is expressed in consecutive relative increments. It has the following fields:</p>
         <emu-table id="table-position-accumulator-record-fields" caption="Position Accumulator Record Fields">
           <table>
             <thead>
