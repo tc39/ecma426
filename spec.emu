@@ -572,7 +572,7 @@
     "sourcesContent": [null, null],
     "names": ["src", "maps", "are", "fun"],
     "mappings": "A,AAAB;;ABCDE",
-    "rangeMappings": "C;;B",
+    "rangeMappings": "B;;A",
     "ignoreList": [0]
   }
   </code></pre>
@@ -1218,10 +1218,10 @@
           </emu-grammar>
           <emu-alg>
             1. Let _relativeIndex_ be the VLQUnsignedValue of |Vlq|.
-            1. If _relativeIndex_ is 0, then
+            1. If _relativeIndex_ = 0 and _state_.[[MappingIndex]] ≠ 0, then
               1. Optionally report an error.
             1. Set _state_.[[MappingIndex]] to _state_.[[MappingIndex]] + _relativeIndex_.
-            1. Let _rangeMappingOffset_ be a new Decoded Range Mapping Offset Record { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[MappingIndex]]: _state_.[[MappingIndex]] - 1 }.
+            1. Let _rangeMappingOffset_ be a new Decoded Range Mapping Offset Record { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[MappingIndex]]: _state_.[[MappingIndex]] }.
             1. Append _rangeMappingOffset_ to _rangeMappings_.
           </emu-alg>
         </emu-clause>
