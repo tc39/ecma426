@@ -1246,7 +1246,7 @@
           </emu-grammar>
           <emu-alg>
             1. Let _relativeIndex_ be the VLQUnsignedValue of |Vlq|.
-            1. If _relativeIndex_ = 0 and _state_.[[MappingIndex]] ≠ ~none~, then
+            1. If _relativeIndex_ = 0 and _state_.[[MappingIndex]] is not ~none~, then
               1. Optionally report an error.
             1. If _state_.[[MappingIndex]] is ~none~, then
               1. Set _state_.[[MappingIndex]] to _relativeIndex_.
