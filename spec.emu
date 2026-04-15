@@ -572,7 +572,7 @@
     "sourcesContent": [null, null],
     "names": ["src", "maps", "are", "fun"],
     "mappings": "A,AAAB;;ABCDE",
-    "rangeMappings": "C;;B",
+    "rangeMappings": "B;;A",
     "ignoreList": [0]
   }
   </code></pre>
@@ -1160,7 +1160,29 @@
           </table>
         </emu-table>
 
-        <p>A <dfn id="decode-range-mappings-state-record" variants="Decode Range Mappings State Records">Decode Range Mappings State Record</dfn> has the same fields as a Decoded Range Mapping Offset Record.</p>
+        <p>A <dfn id="decode-range-mappings-state-record" variants="Decode Range Mappings State Records">Decode Range Mappings State Record</dfn> has the following fields.</p>
+        <emu-table id="table-decode-range-mapping-state-record-fields" caption="Fields of Decode Range Mappings State Records">
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  Field Name
+                </th>
+                <th>
+                  Value Type
+                </th>
+              </tr>
+            </thead>
+            <tr>
+              <td>[[GeneratedLine]]</td>
+              <td>a non-negative integer</td>
+            </tr>
+            <tr>
+              <td>[[MappingIndex]]</td>
+              <td>a non-negative integer or ~none~</td>
+            </tr>
+          </table>
+        </emu-table>
 
         <emu-clause id="sec-range-mappings-grammar">
           <h1>Range mappings grammar</h1>
@@ -1201,8 +1223,14 @@
           <emu-alg>
             1. Perform DecodeRangeMappingsField of |RangeMappingLine| with arguments _state_ and _rangeMappings_.
             1. Set _state_.[[GeneratedLine]] to _state_.[[GeneratedLine]] + 1.
-            1. Set _state_.[[MappingIndex]] to 0.
+            1. Set _state_.[[MappingIndex]] to ~none~.
             1. Perform DecodeRangeMappingsField of |RangeMappingLineList| with arguments _state_ and _rangeMappings_.
+          </emu-alg>
+          <emu-grammar>
+            RangeMappingLine : [empty]
+          </emu-grammar>
+          <emu-alg>
+            1. Return.
           </emu-alg>
           <emu-grammar>
             RangeMappingList :
@@ -1218,10 +1246,13 @@
           </emu-grammar>
           <emu-alg>
             1. Let _relativeIndex_ be the VLQUnsignedValue of |Vlq|.
-            1. If _relativeIndex_ is 0, then
+            1. If _relativeIndex_ = 0 and _state_.[[MappingIndex]] is not ~none~, then
               1. Optionally report an error.
-            1. Set _state_.[[MappingIndex]] to _state_.[[MappingIndex]] + _relativeIndex_.
-            1. Let _rangeMappingOffset_ be a new Decoded Range Mapping Offset Record { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[MappingIndex]]: _state_.[[MappingIndex]] - 1 }.
+            1. If _state_.[[MappingIndex]] is ~none~, then
+              1. Set _state_.[[MappingIndex]] to _relativeIndex_.
+            1. Else,
+              1. Set _state_.[[MappingIndex]] to _state_.[[MappingIndex]] + _relativeIndex_.
+            1. Let _rangeMappingOffset_ be a new Decoded Range Mapping Offset Record { [[GeneratedLine]]: _state_.[[GeneratedLine]], [[MappingIndex]]: _state_.[[MappingIndex]] }.
             1. Append _rangeMappingOffset_ to _rangeMappings_.
           </emu-alg>
         </emu-clause>
@@ -1240,7 +1271,7 @@
             1. If parsing failed, then
               1. Optionally report an error.
               1. Return _rangeMappings_.
-            1. Let _state_ be a new Decode Range Mappings State Record with all fields set to 0.
+            1. Let _state_ be a new Decode Range Mappings State Record { [[GeneratedLine]]: 0, [[MappingIndex]]: ~none~ }.
             1. Perform DecodeRangeMappingsField of _rangeMappingsNode_ with arguments _state_ and _rangeMappings_.
             1. Return _rangeMappings_.
           </emu-alg>
