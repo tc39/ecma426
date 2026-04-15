@@ -1227,6 +1227,12 @@
             1. Perform DecodeRangeMappingsField of |RangeMappingLineList| with arguments _state_ and _rangeMappings_.
           </emu-alg>
           <emu-grammar>
+            RangeMappingLine : [empty]
+          </emu-grammar>
+          <emu-alg>
+            1. Return.
+          </emu-alg>
+          <emu-grammar>
             RangeMappingList :
               RangeMapping RangeMappingList
           </emu-grammar>
