@@ -211,14 +211,14 @@
         </emu-clause>
       </blockquote>
 
-      <p>All calls to abstract operations that return completion records are implicitly assumed to be wrapped by a ReturnIfAbrupt macro, unless they are explicitly wrapped by an explicit Completion call. For example:</p>
+      <p>All calls to abstract operations that return completion records are implicitly assumed to be wrapped by ECMA-262's `?` <a href="https://tc39.es/ecma262/#sec-shorthands-for-unwrapping-completion-records">shorthand for unwrapping completion records</a>, unless they are wrapped by an explicit Completion call. For example:</p>
       <emu-alg example>
         1. Let _result_ be GetTheAnswer(_value_).
         1. Let _second_ be Completion(GetTheAnswer(_value_)).
       </emu-alg>
       <p>is equivalent to:</p>
       <emu-alg example>
-        1. Let _result_ be ReturnIfAbrupt(GetTheAnswer(_value_)).
+        1. Let _result_ be ? GetTheAnswer(_value_).
         1. Let _second_ be Completion(GetTheAnswer(_value_)).
       </emu-alg>
     </emu-clause>
