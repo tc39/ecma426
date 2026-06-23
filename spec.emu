@@ -667,7 +667,7 @@
         </tr>
         <tr>
           <td><ins>[[FlatScopes]]</ins></td>
-          <td><ins>a List of Original Scope Records or *null*. </ins></td>
+          <td><ins>a List of Original Scope Records or *null*.</ins></td>
         </tr>
       </table>
     </emu-table>
@@ -1634,7 +1634,8 @@
               <td>[[FlatOriginalScopes]]</td>
               <td>a List of Original Scope Records</td>
               <td><ins>*TODO*: Replace with abstract operation on Decoded Source Record?</ins>
-                <p>This is a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the scope trees. The |DefinitionScopeIdx| of |RangeDefinition| is used to index into this List.</p></td>
+                <p>This is a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the scope trees. The |DefinitionScopeIdx| of |RangeDefinition| is used to index into this List.</p>
+              </td>
             </tr>
             <tr>
               <td>[[ScopePosition]]</td>
@@ -1777,8 +1778,7 @@
           <dt>description</dt>
           <dd>It returns a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the scope trees. The |DefinitionScopeIdx| of |RangeDefinition| is used to index into this List.
             <p>*TODO*: It might be cleaner to describe the flattening as an abstract operation. Operations like looking up a scope by source and scope-within-source would operate on the flattened abstraction, which would generally be implemented by caching the flattened list on the Decoded Source Record.</p>
-            <emu-note>There is a chicken-and-egg situation for the generator. Not all scopes in the original program will need to be present in the final source map. The generator will want to emit ranges that encode the scope index into this list, but the index will not be known until the until the surviving (i.e. referenced) scopes are known and the unreferenced scopes removed.</emu-note>
-          </dd>
+            <emu-note>There is a chicken-and-egg situation for the generator. Not all scopes in the original program will need to be present in the final source map. The generator will want to emit ranges that encode the scope index into this list, but the index will not be known until the until the surviving (i.e. referenced) scopes are known and the unreferenced scopes removed.</emu-note></dd>
         </dl>
 
         <emu-alg>
@@ -1800,7 +1800,7 @@
         <h1>
           DecodeGeneratedRanges (
             _ranges_: a String or *null*,
-            _sources_ : a List of Decoded Source Records,
+            _sources_: a List of Decoded Source Records,
             _names_: a List of Strings,
           ): a List of Generated Range Records
         </h1>
@@ -1830,7 +1830,9 @@
         </h1>
         <dl class="header">
           <dt>description</dt>
-          <dd><p>*FIX*: We don't currently use the result (a list of top-level Original Scope Records). Perhaps we should store the top-level list instead, and specify the lookup in terms of the flattened tree and leave it up to the implementation to determine if some intermediate is cached.</p></dd>
+          <dd>
+            <p>*FIX*: We don't currently use the result (a list of top-level Original Scope Records). Perhaps we should store the top-level list instead, and specify the lookup in terms of the flattened tree and leave it up to the implementation to determine if some intermediate is cached.</p>
+          </dd>
         </dl>
         <emu-grammar>
           Scopes :
@@ -2134,7 +2136,8 @@
           <h1>
             GeneratedRangeCallSite (
               _sources_: a List of Decoded Source Record,
-            ): a Original Position Record</h1>
+            ): a Original Position Record
+          </h1>
           <dl class="header"></dl>
           <emu-grammar>
             GeneratedRangeCallSite :
