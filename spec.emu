@@ -587,7 +587,8 @@
     "names": ["src", "maps", "are", "fun"],
     "mappings": "A,AAAB;;ABCDE",
     "ignoreList": [0],
-    "scopes":"BCCAQ,BHAAAC,BCCaC,CDC,CCA,CCY,EDBAA,EGAC,ECvBC,FW,FJ,FI"
+    "scopes": ["BCCAQ,BHAAAC,BCCaC,CDC,CCA,CCY", ""],
+    "ranges": "EDBAA,EGAC,ECvBC,FW,FJ,FI",
   }
   </code></pre>
   </ins>
@@ -600,7 +601,8 @@
     <li>The <dfn id="json-names"><code>names</code> field</dfn> is an optional list of symbol names which may be used by the mappings field.</li>
     <li>The <dfn id="json-mappings"><code>mappings</code> field</dfn> is a string with the encoded mapping data (see section <emu-xref href="#sec-mappings"></emu-xref>).</li>
     <li>The <dfn id="json-ignoreList"><code>ignoreList</code> field</dfn> is an optional list of indices of files that should be considered third party code, such as framework code or bundler-<emu-not-ref>generated code</emu-not-ref>. This allows developer tools to avoid code that developers likely don't want to see or step through, without requiring developers to configure this beforehand. It refers to the sources field and lists the indices of all the known third-party sources in the source map. Some browsers may also use the deprecated `x_google_ignoreList` field if `ignoreList` is not present.</li>
-    <li><ins>The <dfn id="json-scopes"><code>scopes</code> field</dfn> is an optional string with encoded scopes data (see section <emu-xref href="#sec-scopes"></emu-xref>)</ins></li>
+    <li><ins>The <dfn id="json-scopes"><code>scopes</code> field</dfn> is an optional list of strings with encoded scope data (see section <emu-xref href="#sec-scopes"></emu-xref>). The encoded scope data strings correspond to source files and are listed in the same order as in the sources field</ins></li>
+    <li><ins>The <dfn id="json-ranges"><code>ranges</code> field</dfn> is an optional string with encoded ranges data (see section <emu-xref href="#sec-scopes"></emu-xref>).</ins></li>
   </ul>
 
   <emu-clause id="sec-decoding-source-maps">
@@ -664,8 +666,8 @@
           <td>a Boolean</td>
         </tr>
         <tr>
-          <td><ins>[[Scope]]</ins></td>
-          <td><ins>a Original Scope Record or *null*</ins></td>
+          <td><ins>[[FlatScopes]]</ins></td>
+          <td><ins>a List of Original Scope Records or *null*. </ins></td>
         </tr>
       </table>
     </emu-table>
@@ -706,12 +708,13 @@
         1. Let _sourcesContentField_ be GetOptionalListOfOptionalStrings(_json_, *"sourcesContent"*).
         1. Let _ignoreListField_ be GetOptionalListOfArrayIndexes(_json_, *"ignoreList"*).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
-        1. <ins>Let _scopesField_ be GetOptionalString(_json_, *"scopes"*).</ins>
-        1. <ins>Let _scopesAndRanges_ be DecodeScopesInfo(_scopesField_, _namesField_).</ins>
-        1. <ins>Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_, _scopesAndRanges_.[[Scopes]]).</ins>
+        1. <ins>Let _scopesField_ be GetOptionalListOfStrings(_json_, *"scopes"*).</ins>
+        1. <ins>Let _rangesField_ be GetOptionalString(_json_, *"ranges"*).</ins>
+        1. <ins>Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_, _namesField_, _scopesField_).</ins>
+        1. <ins>Let _ranges_ be DecodeGeneratedRanges(_rangesField_, _sources_, _namesField_).</ins>
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
         1. [declared="a,b"] Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
-        1. <ins>Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_, [[Ranges]]: _scopesAndRanges_.[[Ranges]] }.</ins>
+        1. <ins>Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_, [[Ranges]]: _ranges_.[[Ranges]] }.</ins>
       </emu-alg>
 
       <emu-clause id="sec-GetOptionalString" type="abstract operation">
@@ -1153,7 +1156,11 @@
 
     <p>The scope information is split across two data structures: original scopes and generated ranges. Original scopes describe the scope tree for original sources. Generated ranges describe where these scopes are found in the generated code. The scope information includes location information, for both original scopes and generated ranges, the type and name of a scope, as well as the original names of variables and how to retrieve their values in the generated code.</p>
 
-    <p>The scopes field is a comma (`,`) separated list of items. Each item is a list of base64 VLQs. The first base64 VLQ in each item is a tag that specifies which item is described by the rest of the VLQs. Both original scopes and generated ranges are trees. Each node in these trees are described by a respective "start" and "end" item. "start" items appear in pre-order and "end" items appear in post-order. Any items other then "start" or "end" describe the "current" scope or range. The "current" scope or range is defined by the last seen "start" item.</p>
+    <p>The scopes field is a list of strings, one string per sources entry. The ranges field is a string.</p>
+
+    <p>Each string is a comma (`,`) separated list of items. Each item is a list of base64 VLQs. The first base64 VLQ in each item is a tag that specifies which item is described by the rest of the VLQs. Both original scopes and generated ranges are trees. Each node in these trees are described by a respective "start" and "end" item. "start" items appear in pre-order and "end" items appear in post-order. Any items other then "start" or "end" describe the "current" scope or range. The "current" scope or range is defined by the last seen "start" item.</p>
+
+    <p>*TODO*: Split ranges string into segments to allow partial decoding</p>
 
     <emu-clause id="sec-original-scope-record-type">
       <h1>Original Scope Record</h1>
@@ -1321,13 +1328,12 @@
     </emu-clause>
 
     <emu-clause id="sec-scopes-grammar">
-      <h1>Scopes grammar</h1>
-      <p>The scopes field is described by the following <em>context-sensitive</em> grammar starting at the |Scopes| goal symbol:</p>
+      <h1>Scopes and Ranges grammar</h1>
+
+      <p>The scopes field is a list of strings, each string corresponding to the the entry from the sources field at the same index. The contents of each string is described by the following <em>context-sensitive</em> grammar starting at the |Scopes| goal symbol:</p>
       <emu-grammar type="definition">
         Scopes :
-          OriginalScopeTreeList
-          TopLevelItemList
-          OriginalScopeTreeList `,` TopLevelItemList
+          OriginalScopeTreeList?
 
         OriginalScopeTreeList :
           OriginalScopeTreeItem
@@ -1335,10 +1341,21 @@
 
         OriginalScopeTreeItem :
           OriginalScopeTree
-          EmptyItem
+      </emu-grammar>
 
-        EmptyItem :
-          `A`
+      <p>A source with no scopes has its scopes encoded as an empty string.</p>
+
+      <emu-note example>
+        <p>A source map with three authored sources where only the first and third source file have scope information available would be encoded as:</p>
+        <pre>
+    "scopes": ["&lt;OriginalScopeTreeList&gt;", "", "&lt;OriginalScopeTreeList&gt;"]
+        </pre>
+      </emu-note>
+
+      <p>The ranges field is a string. The contents of the string is described by the following <em>context-sensitive</em> grammar starting at the |Ranges| goal symbol:</p>
+      <emu-grammar type="definition">
+        Ranges :
+          TopLevelItemList?
 
         TopLevelItemList :
           TopLevelItem
@@ -1347,17 +1364,8 @@
         TopLevelItem :
           GeneratedRangeTree
           VendorExtensionItem
-          InvalidItem
+          InvalidRangeItem
       </emu-grammar>
-
-      <p>The number of |OriginalScopeTreeItem|s in the |OriginalScopeTreeList| is expected to match the length of the sources field. The n-th |OriginalScopeTreeItem| describes the scope tree of the n-th authored source file in the sources field. If no scope information is available for a particular source URL, an |EmptyItem| must be used.</p>
-
-      <emu-note example>
-        <p>A source map with three authored sources where only the first and third source file have scope information available would be encoded as:</p>
-        <pre>
-          "scopes": "&lt;OriginalScopeTree&gt;,A,&lt;OriginalScopeTree&gt;,&lt;GeneratedRangeTree&gt;"
-        </pre>
-      </emu-note>
 
       <emu-clause id="sec-original-scope-grammar">
         <h1>Original scope grammar</h1>
@@ -1383,7 +1391,7 @@
           OriginalScopeItem :
             OriginalScopeTree
             VendorExtensionItem
-            InvalidItem
+            InvalidScopeItem
 
           OriginalScopeStart :
             `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
@@ -1470,7 +1478,7 @@
             GeneratedSubRangeBinding
             GeneratedRangeTree
             VendorExtensionItem
-            InvalidItem
+            InvalidRangeItem
 
           GeneratedRangeStart :
             `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
@@ -1498,6 +1506,9 @@
           GeneratedRangeCallSite :
             `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
 
+          RangeDefinition :
+            DefinitionSourceIdx DefinitionScopeIdx
+
           RangeFlags :
             Vlq
 
@@ -1505,9 +1516,6 @@
             Vlq
 
           RangeColumn :
-            Vlq
-
-          RangeDefinition :
             Vlq
 
           VariableIndex :
@@ -1529,6 +1537,12 @@
             Vlq
 
           CallSiteColumn :
+            Vlq
+
+          DefinitionSourceIdx :
+            Vlq
+
+          DefinitionScopeIdx :
             Vlq
         </emu-grammar>
         <p>The VLQUnsignedValue of |RangeFlags| encodes the presence of |RangeLine| and |RangeDefinition|. All used bits:</p>
@@ -1579,44 +1593,30 @@
 
       <emu-clause id="sec-invalid-item-grammar">
         <h1>Invalid item grammar</h1>
-        <p>Complying source map consumers are expected to decode but ignore |InvalidItem| items. Complying source map generators are expected to never emit |InvalidItem| items. This allows the specification to add new items in the future, without breaking existing decoders.</p>
+        <p>Complying source map consumers are expected to decode but ignore |InvalidScopeItem| and |InvalidRangeItem| items. Complying source map generators are expected to never emit |InvalidScopeItem| or |InvalidRangeItem| items. This allows the specification to add new items in the future, without breaking existing decoders.</p>
         <emu-grammar type="definition">
-          InvalidItem :
-            Tag
-            Tag VlqList
+          InvalidScopeItem :
+            InvalidScopeTag
+            InvalidScopeTag VlqList
 
-          Tag :
-            Vlq but not `A` `B` `C` `D` `E` `F` `G` `H` `I` `/`
+          InvalidScopeTag :
+            Vlq but not `B` `C` `D` `/`
+        </emu-grammar>
+
+        <emu-grammar type="definition">
+          InvalidRangeItem :
+            InvalidRangeTag
+            InvalidRangeTag VlqList
+
+          InvalidRangeTag :
+            Vlq but not `E` `F` `G` `H` `I` `/`
         </emu-grammar>
       </emu-clause>
     </emu-clause>
 
     <emu-clause id="sec-decoding-scopes">
       <h1>Decoding scopes</h1>
-      <p>The scopes grammar defined in <emu-xref href="#sec-scopes-grammar"></emu-xref> is context-sensitive and heavily utilizes relative numbers to reduce the bytes required for the encoded scope information. As such, the grammar alone is not enough to describe how a |Scopes| parse node is turned into Original Scope Records and Generated Range Records.</p>
-
-      <emu-clause id="sec-scope-info-record-type">
-        <h1>Scope Info Record</h1>
-        <p>The <dfn>Scope Info Record</dfn> is a specification type and is the result of decoding the scopes field.</p>
-        <emu-table id="table-scope-info-record-fields" caption="Scope Info Record Fields">
-          <table>
-            <thead>
-              <tr>
-                <th>Field Name</th>
-                <th>Value Type</th>
-              </tr>
-            </thead>
-            <tr>
-              <td>[[Scopes]]</td>
-              <td>a List of either Original Scope Records or *null*</td>
-            </tr>
-            <tr>
-              <td>[[Ranges]]</td>
-              <td>a List of Generated Range Records</td>
-            </tr>
-          </table>
-        </emu-table>
-      </emu-clause>
+      <p>The scopes grammar defined in <emu-xref href="#sec-scopes-grammar"></emu-xref> is context-sensitive and heavily utilizes relative numbers to reduce the bytes required for the encoded scope information. As such, the grammar alone is not enough to describe how a |Scopes| parse node is turned into Original Scope Records, and a |Ranges| parse node it turned into Generated Range Records.</p>
 
       <emu-clause id="sec-decode-scope-state-record-type">
         <h1>Decode Scope State Record</h1>
@@ -1633,7 +1633,8 @@
             <tr>
               <td>[[FlatOriginalScopes]]</td>
               <td>a List of Original Scope Records</td>
-              <td>This is a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the [[Scopes]] field in the Scope Info Record. The |RangeDefinition| is an index into this List.</td>
+              <td><ins>*TODO*: Replace with abstract operation on Decoded Source Record?</ins>
+                <p>This is a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the scope trees. The |DefinitionScopeIdx| of |RangeDefinition| is used to index into this List.</p></td>
             </tr>
             <tr>
               <td>[[ScopePosition]]</td>
@@ -1655,13 +1656,31 @@
               <td>an Index Accumulator Record</td>
               <td>|ScopeVariable|</td>
             </tr>
+          </table>
+        </emu-table>
+
+        <p>The <dfn>Decode Range State Record</dfn> is a specification type that tracks absolute values of decoded fields.</p>
+        <emu-table id="table-decode-range-state-record-fields" caption="Decode Range State Record Fields">
+          <table>
+            <thead>
+              <tr>
+                <th>Field Name</th>
+                <th>Value</th>
+                <th>Meaning / Production</th>
+              </tr>
+            </thead>
             <tr>
               <td>[[RangePosition]]</td>
               <td>a Position Accumulator Record</td>
               <td>|RangeLine| and |RangeColumn|</td>
             </tr>
             <tr>
-              <td>[[RangeDefinitionIndex]]</td>
+              <td>[[RangeDefinitionSourceIndex]]</td>
+              <td>an Index Accumulator Record</td>
+              <td>|RangeDefinition|</td>
+            </tr>
+            <tr>
+              <td>[[RangeDefinitionScopeIndex]]</td>
               <td>an Index Accumulator Record</td>
               <td>|RangeDefinition|</td>
             </tr>
@@ -1747,60 +1766,59 @@
         </emu-clause>
       </emu-clause>
 
-      <emu-clause id="sec-DecodeScopesInfo" type="abstract operation">
+      <emu-clause id="sec-DecodeSourceScopes" type="abstract operation">
         <h1>
-          DecodeScopesInfo (
-            _scopes_: a String or *null*,
+          DecodeSourceScopes (
+            _scopes_: a String,
             _names_: a List of Strings,
-          ): a Scope Info Record
+          ): a List of Original Scope Records
         </h1>
-        <dl class="header"></dl>
+        <dl class="header">
+          <dt>description</dt>
+          <dd>It returns a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the scope trees. The |DefinitionScopeIdx| of |RangeDefinition| is used to index into this List.
+            <p>*TODO*: It might be cleaner to describe the flattening as an abstract operation. Operations like looking up a scope by source and scope-within-source would operate on the flattened abstraction, which would generally be implemented by caching the flattened list on the Decoded Source Record.</p>
+            <emu-note>There is a chicken-and-egg situation for the generator. Not all scopes in the original program will need to be present in the final source map. The generator will want to emit ranges that encode the scope index into this list, but the index will not be known until the until the surviving (i.e. referenced) scopes are known and the unreferenced scopes removed.</emu-note>
+          </dd>
+        </dl>
+
         <emu-alg>
-          1. Let _result_ be a new Scope Info Record { [[Scopes]]: « », [[Ranges]]: « » }.
-          1. If _scopes_ is *null*, return _result_.
           1. Let _parsedScopes_ be the root Parse Node when parsing _scopes_ using |Scopes| as the goal symbol.
           1. If parsing failed, then
             1. Optionally report an error.
-            1. Return _result_.
+            1. Return « ».
           1. Let _scopePosition_ be a new Position Accumulator Record { [[Line]]: 0, [[Column]]: 0 }.
           1. Let _scopeNameIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
           1. Let _scopeKindIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
           1. Let _scopeVariableIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+          1. Let _state_ be a new Decode Scope State Record { [[FlatOriginalScopes]]: « », [[ScopePosition]]: _scopePosition_, [[ScopeNameIndex]]: _scopeNameIndex_, [[ScopeKindIndex]]: _scopeKindIndex_, [[ScopeVariableIndex]]: _scopeVariableIndex_ }.
+          1. Perform DecodedTopLevelOriginalScopeTrees of _parsedScopes_ with arguments _state_ and _names_.
+          1. Return _state_.[[FlatOriginalScopes]].
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-DecodeGeneratedRanges" type="abstract operation">
+        <h1>
+          DecodeGeneratedRanges (
+            _ranges_: a String or *null*,
+            _sources_ : a List of Decoded Source Records,
+            _names_: a List of Strings,
+          ): a List of Generated Range Records
+        </h1>
+        <dl class="header"></dl>
+        <p>*TODO*: move this to just before DecodedGeneratedRangeTrees.</p>
+        <emu-alg>
+          1. If _ranges_ is *null*, return « ».
+          1. Let _parsedRanges_ be the root Parse Node when parsing _ranges_ using |Ranges| as the goal symbol.
+          1. If parsing failed, then
+            1. Optionally report an error.
+            1. Return « ».
           1. Let _rangePosition_ be a new Position Accumulator Record { [[Line]]: 0, [[Column]]: 0 }.
-          1. Let _rangeDefinitionIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
-          1. Let _state_ be a new Decode Scope State Record { [[FlatOriginalScopes]]: « », [[ScopePosition]]: _scopePosition_, [[ScopeNameIndex]]: _scopeNameIndex_, [[ScopeKindIndex]]: _scopeKindIndex_, [[ScopeVariableIndex]]: _scopeVariableIndex_, [[RangePosition]]: _rangePosition_, [[RangeDefinitionIndex]]: _rangeDefinitionIndex_ }.
-          1. Perform DecodeScopesInfoItem of _parsedScopes_ with arguments _result_, _state_ and _names_.
+          1. Let _rangeDefinitionSourceIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+          1. Let _rangeDefinitionScopeIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+          1. Let _state_ be a new Decode Range State Record { [[RangePosition]]: _rangePosition_, [[RangeDefinitionSourceIndex]]: _rangeDefinitionSourceIndex_ [[RangeDefinitionScopeIndex]]: _rangeDefinitionScopeIndex_ }.
+          1. Let _result_ be the DecodedGeneratedRangeTrees of _parsedRanges_ with arguments _state_, _sources_ and _names_.
           1. Return _result_.
         </emu-alg>
-
-        <emu-clause id="sec-DecodeScopesInfoItem" type="sdo">
-          <h1>
-            DecodeScopesInfoItem (
-              _info_: a Scope Info Record,
-              _state_: a Decode Scope State Record,
-              _names_: a List of Strings,
-            )
-          </h1>
-          <dl class="header"></dl>
-          <emu-grammar>
-            Scopes :
-              OriginalScopeTreeList
-          </emu-grammar>
-          <emu-alg>
-            1. Let _originalScopes_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
-            1. Set _info_.[[Scopes]] to _originalScopes_.
-          </emu-alg>
-          <emu-grammar>
-            Scopes :
-              OriginalScopeTreeList `,` TopLevelItemList
-          </emu-grammar>
-          <emu-alg>
-            1. Let _originalScopes_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
-            1. Set _info_.[[Scopes]] to _originalScopes_.
-            1. Let _generatedRanges_ be the DecodedGeneratedRangeTrees of |TopLevelItemList| with arguments _state_ and _names_.
-            1. Set _info_.[[Ranges]] to _generatedRanges_.
-          </emu-alg>
-        </emu-clause>
       </emu-clause>
 
       <emu-clause id="sec-DecodedTopLevelOriginalScopeTrees" type="sdo">
@@ -1808,9 +1826,20 @@
           DecodedTopLevelOriginalScopeTrees (
             _state_: a Decode Scope State Record,
             _names_: a List of Strings,
-          ): a List of either Original Scope Records or *null*
+          ): a List of Original Scope Records
         </h1>
-        <dl class="header"></dl>
+        <dl class="header">
+          <dt>description</dt>
+          <dd><p>*FIX*: We don't currently use the result (a list of top-level Original Scope Records). Perhaps we should store the top-level list instead, and specify the lookup in terms of the flattened tree and leave it up to the implementation to determine if some intermediate is cached.</p></dd>
+        </dl>
+        <emu-grammar>
+          Scopes :
+            OriginalScopeTreeList?
+        </emu-grammar>
+        <emu-alg>
+          1. If |OriginalScopeTreeList| is not present, return « ».
+          1. Return DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+        </emu-alg>
         <emu-grammar>
           OriginalScopeTreeList : OriginalScopeTreeList `,` OriginalScopeTreeItem
         </emu-grammar>
@@ -1823,15 +1852,7 @@
           OriginalScopeTreeItem : OriginalScopeTree
         </emu-grammar>
         <emu-alg>
-          1. Set _state_.[[ScopePosition]].[[Line]] to 0.
-          1. Set _state_.[[ScopePosition]].[[Column]] to 0.
           1. Return the DecodedOriginalScopeTrees of |OriginalScopeTree| with arguments _state_ and _names_.
-        </emu-alg>
-        <emu-grammar>
-          OriginalScopeTreeItem : EmptyItem
-        </emu-grammar>
-        <emu-alg>
-          1. Return « *null* ».
         </emu-alg>
 
         <emu-clause id="sec-DecodedOriginalScopeTrees" type="sdo">
@@ -1973,7 +1994,7 @@
           </emu-alg>
 
           <emu-note>
-            |OriginalScopeVariables| preserves out-of-bounds indices with the empty string. Otherwise bindings cannot be matched to their respective variable.
+            |OriginalScopeVariables| preserves out-of-bounds indices with an empty string. Otherwise bindings cannot be matched to their respective variable.
           </emu-note>
         </emu-clause>
 
@@ -2003,17 +2024,26 @@
       <emu-clause id="sec-DecodedGeneratedRangeTrees" type="sdo">
         <h1>
           DecodedGeneratedRangeTrees (
-            _state_: a Decode Scope State Record,
+            _state_: a Decode Range State Record,
+            _sources_: a List of Decoded Source Records,
             _names_: a List of Strings,
           ): a List of Generated Range Records
         </h1>
         <dl class="header"></dl>
         <emu-grammar>
+          Ranges :
+            TopLevelItemList?
+        </emu-grammar>
+        <emu-alg>
+          1. If |TopLevelItemList| is not present, « ».
+          1. Return the DecodedGeneratedRangeTrees of |TopLevelItemList| with arguments _state_, _sources_ and _names_.
+        </emu-alg>
+        <emu-grammar>
           TopLevelItemList : TopLevelItemList `,` TopLevelItem
         </emu-grammar>
         <emu-alg>
-          1. Let _left_ be the DecodedGeneratedRangeTrees of |TopLevelItemList| with arguments _state_ and _names_.
-          1. Let _right_ be the DecodedGeneratedRangeTrees of |TopLevelItem| with arguments _state_ and _names_.
+          1. Let _left_ be the DecodedGeneratedRangeTrees of |TopLevelItemList| with arguments _state_, _sources_ and _names_.
+          1. Let _right_ be the DecodedGeneratedRangeTrees of |TopLevelItem| with arguments _state_, _sources_ and _names_.
           1. Return the list-concatenation of _left_ and _right_.
         </emu-alg>
         <emu-grammar>
@@ -2022,7 +2052,7 @@
         </emu-grammar>
         <emu-alg>
           1. Let _start_ be the DecodedPosition of |GeneratedRangeStart| with argument _state_.[[RangePosition]].
-          1. Let _definition_ be the GeneratedRangeDefinition of |GeneratedRangeStart| with arguments _state_.[[RangeDefinitionIndex]] and _state_.[[FlatOriginalScopes]].
+          1. Let _definition_ be the GeneratedRangeDefinition of |GeneratedRangeStart| with arguments _state_ and _sources_.
           1. Let _flags_ be the VLQUnsignedValue of |GeneratedRangeStart|'s |RangeFlags| nonterminal.
           1. If _flags_ & 0xc = 0xc, then
             1. Let _stackFrameType_ be ~hidden~.
@@ -2036,11 +2066,11 @@
           1. Else,
             1. Let _bindings_ be « ».
           1. If |GeneratedRangeCallSiteItem| is present, then
-            1. Let _callSite_ be the GeneratedRangeCallSite of |GeneratedRangeCallSiteItem|.
+            1. Let _callSite_ be the GeneratedRangeCallSite of |GeneratedRangeCallSiteItem| with argument _sources_.
           1. Else,
             1. Let _callSite_ be *null*.
           1. If |GeneratedRangeItemList| is present, then
-            1. Let _children_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItemList| with arguments _state_ and _names_.
+            1. Let _children_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItemList| with arguments _state_, _sources_ and _names_.
           1. Else,
             1. Let _children_ be « ».
           1. If |GeneratedRangeItemList| is present, then
@@ -2058,16 +2088,16 @@
           GeneratedRangeItemList : GeneratedRangeItemList `,` GeneratedRangeItem
         </emu-grammar>
         <emu-alg>
-          1. Let _left_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItemList| with arguments _state_ and _names_.
-          1. Let _right_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItem| with arguments _state_ and _names_.
+          1. Let _left_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItemList| with arguments _state_, _sources_ and _names_.
+          1. Let _right_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItem| with arguments _state_, _sources_ and _names_.
           1. Return the list-concatenation of _left_ and _right_.
         </emu-alg>
 
         <emu-clause id="sec-GeneratedRangeDefinition" type="sdo">
           <h1>
             GeneratedRangeDefinition (
-              _accumulator_: an Index Accumulator Record,
-              _scopes_: a List of Original Scope Records,
+              _state_: a Decode Range State Record,
+              _sources_: a List of Decoded Source Records,
             ): a Original Scope Record or *null*
           </h1>
           <dl class="header"></dl>
@@ -2079,14 +2109,32 @@
             1. Let _flags_ be the VLQUnsignedValue of |RangeFlags|.
             1. If _flags_ & 0x2 ≠ 0x2, return *null*.
             1. Assert: |RangeDefinition| is present.
-            1. Let _relativeDefinition_ be the VLQSignedValue of |RangeDefinition|.
-            1. Let _scopeIndex_ be AccumulateIndex(_accumulator_, _relativeDefinition_).
-            1. Return _scopes_[_scopeIndex_].
+            1. Return GeneratedRangeDefinition of |RangeDefinition| with arguments _state_ and _sources_.
           </emu-alg>
+          <emu-grammar>
+            RangeDefinition :
+              DefinitionSourceIdx DefinitionScopeIdx
+          </emu-grammar>
+          <emu-alg>
+            1. Let _sourceOffset_ be the VLQSignedValue of |DefinitionSourceIdx|.
+            1. Let _sourceIndex_ be AccumulateIndex(_state_.[[RangeDefinitionSourceIndex]], _sourceOffset_).
+            1. Let _source_ be _sources_[_sourceIndex_].
+            1. If _sourceOffset_ = 0, then
+              1. Let _scopeOffset_ be the VLQSignedValue of |DefinitionScopeIdx|.
+            1. Else,
+              1. Set _state_.[[RangeDefinitionScopeIndex]][[Index]] to 0.
+              1. Let _scopeOffset_ be the VLQUnsignedValue of |DefinitionScopeIdx|.
+            1. Let _scopeIndex_ be AccumulateIndex(_state_.[[RangeDefinitionScopeIndex]], _scopeOffset_).
+            1. Return _source_[[FlatScopes]][_scopeIndex_].
+          </emu-alg>
+          <emu-note>An implementation may use lazy computation to avoid computing the [[FlatScopes]] field of the Decoded Source Record until the range definition is requested. The tuple (_source_, _scopeIndex_) is sufficient to defer the computation.</emu-note>
         </emu-clause>
 
         <emu-clause id="sec-GeneratedRangeCallSite" type="sdo">
-          <h1>GeneratedRangeCallSite ( ): a Original Position Record</h1>
+          <h1>
+            GeneratedRangeCallSite (
+              _sources_: a List of Decoded Source Record,
+            ): a Original Position Record</h1>
           <dl class="header"></dl>
           <emu-grammar>
             GeneratedRangeCallSite :
@@ -2096,7 +2144,7 @@
             1. Let _sourceIndex_ be the VLQUnsignedValue of |CallSiteSourceIdx|.
             1. Let _line_ be the VLQUnsignedValue of |CallSiteLine|.
             1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
-            1. Return a new Original Position Record { [[SourceIndex]]: _sourceIndex_, [[Line]]: _line_, [[Column]]: _column_ }.
+            1. Return a new Original Position Record { [[Source]]: _sources_[_sourceIndex_], [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
         </emu-clause>
 
@@ -2186,7 +2234,7 @@
             GeneratedRangeItem :
               GeneratedRangeTree
               VendorExtensionItem
-              InvalidItem
+              InvalidRangeItem
           </emu-grammar>
           <emu-alg>
             1. Return « ».
@@ -2247,7 +2295,8 @@
           _sources_: a List of either Strings or *null*,
           _sourcesContent_: a List of either Strings or *null*,
           _ignoreList_: a List of non-negative integers,
-          <ins>_scopes_: a List of either Original Scope Records or *null*,</ins>
+          <ins>_encodedScopes_: a List of Strings,</ins>
+          <ins>_names_: a List of Strings,</ins>
         ): a Decoded Source Record
       </h1>
       <dl class="header"></dl>
@@ -2263,7 +2312,7 @@
         1. Let _index_ be 0.
         1. Repeat, while _index_ &lt; _sources_' length,
           1. Let _source_ be _sources_[_index_].
-          1. <ins>Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false*, [[Scope]]: *null* }.</ins>
+          1. <ins>Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false*, [[FlatScopes]]: *null* }.</ins>
           1. If _source_ ≠ *null*, then
             1. Set _source_ to the string-concatenation of _sourceUrlPrefix_ and _source_.
             1. Let _sourceURL_ be the result of URL parsing _source_ with _baseURL_.
@@ -2271,11 +2320,14 @@
             1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
           1. If _ignoreList_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
           1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
-          1. <ins>If _index_ &lt; _scopes_' length, then</ins>
-            1. <ins>Set _decodedSource_.[[Scope]] to _scopes_.[_index_].</ins>
+          1. <ins>If _index_ &lt; _encodedScopes_' length, then</ins>
+            1. <ins>Let _decodedSourceScopes_ be DecodeSourceScopes(_encodedScopes_[_index_], _names_).</ins>
+            1. <ins>Set _decodedSource_.[[FlatScopes]] to _decodedSourceScopes_.</ins>
           1. Append _decodedSource_ to _decodedSources_.
         1. Return _decodedSources_.
       </emu-alg>
+
+      <emu-note>Implementations that support showing source contents but do not support showing multiple sources with the same URL and different content will arbitrarily choose one of the various contents corresponding to the given URL.</emu-note>
 
       <emu-note>Implementations that support showing source contents but do not support showing multiple sources with the same URL and different content will arbitrarily choose one of the various contents corresponding to the given URL.</emu-note>
     </emu-clause>
