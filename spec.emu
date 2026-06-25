@@ -714,7 +714,7 @@
         1. <ins>Let _ranges_ be DecodeGeneratedRanges(_rangesField_, _sources_, _namesField_).</ins>
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
         1. [declared="a,b"] Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
-        1. <ins>Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_, [[Ranges]]: _ranges_.[[Ranges]] }.</ins>
+        1. <ins>Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_, [[Ranges]]: _ranges_ }.</ins>
       </emu-alg>
 
       <emu-clause id="sec-GetOptionalString" type="abstract operation">
