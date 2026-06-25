@@ -666,7 +666,7 @@
           <td>a Boolean</td>
         </tr>
         <tr>
-          <td><ins>[[FlatScopes]]</ins></td>
+          <td><ins>[[RootScopes]]</ins></td>
           <td><ins>a List of Original Scope Records or *null*.</ins></td>
         </tr>
       </table>
@@ -1160,7 +1160,7 @@
 
     <p>Each string is a comma (`,`) separated list of items. Each item is a list of base64 VLQs. The first base64 VLQ in each item is a tag that specifies which item is described by the rest of the VLQs. Both original scopes and generated ranges are trees. Each node in these trees are described by a respective "start" and "end" item. "start" items appear in pre-order and "end" items appear in post-order. Any items other then "start" or "end" describe the "current" scope or range. The "current" scope or range is defined by the last seen "start" item.</p>
 
-    <p>*TODO*: Split ranges string into segments to allow partial decoding</p>
+    <emu-note>*TODO*: Split ranges string into segments to allow partial decoding.</emu-note>
 
     <emu-clause id="sec-original-scope-record-type">
       <h1>Original Scope Record</h1>
@@ -1631,13 +1631,6 @@
               </tr>
             </thead>
             <tr>
-              <td>[[FlatOriginalScopes]]</td>
-              <td>a List of Original Scope Records</td>
-              <td><ins>*TODO*: Replace with abstract operation on Decoded Source Record?</ins>
-                <p>This is a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the scope trees. The |DefinitionScopeIdx| of |RangeDefinition| is used to index into this List.</p>
-              </td>
-            </tr>
-            <tr>
               <td>[[ScopePosition]]</td>
               <td>a Position Accumulator Record</td>
               <td>|ScopeLine| and |ScopeColumn|</td>
@@ -1776,8 +1769,7 @@
         </h1>
         <dl class="header">
           <dt>description</dt>
-          <dd>It returns a list of Original Scope Records in order as seen while decoding. This is equivalent to a prefix walk of the scope trees. The |DefinitionScopeIdx| of |RangeDefinition| is used to index into this List.
-            <p>*TODO*: It might be cleaner to describe the flattening as an abstract operation. Operations like looking up a scope by source and scope-within-source would operate on the flattened abstraction, which would generally be implemented by caching the flattened list on the Decoded Source Record.</p>
+          <dd>It returns a list of the top level Original Scope Records. Nested scopes are reachable via the children.
             <emu-note>There is a chicken-and-egg situation for the generator. Not all scopes in the original program will need to be present in the final source map. The generator will want to emit ranges that encode the scope index into this list, but the index will not be known until the until the surviving (i.e. referenced) scopes are known and the unreferenced scopes removed.</emu-note></dd>
         </dl>
 
@@ -1790,9 +1782,8 @@
           1. Let _scopeNameIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
           1. Let _scopeKindIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
           1. Let _scopeVariableIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
-          1. Let _state_ be a new Decode Scope State Record { [[FlatOriginalScopes]]: « », [[ScopePosition]]: _scopePosition_, [[ScopeNameIndex]]: _scopeNameIndex_, [[ScopeKindIndex]]: _scopeKindIndex_, [[ScopeVariableIndex]]: _scopeVariableIndex_ }.
-          1. Perform DecodedTopLevelOriginalScopeTrees of _parsedScopes_ with arguments _state_ and _names_.
-          1. Return _state_.[[FlatOriginalScopes]].
+          1. Let _state_ be a new Decode Scope State Record { [[ScopePosition]]: _scopePosition_, [[ScopeNameIndex]]: _scopeNameIndex_, [[ScopeKindIndex]]: _scopeKindIndex_, [[ScopeVariableIndex]]: _scopeVariableIndex_ }.
+          1. Return DecodedTopLevelOriginalScopeTrees of _parsedScopes_ with arguments _state_ and _names_.
         </emu-alg>
       </emu-clause>
 
@@ -1828,12 +1819,7 @@
             _names_: a List of Strings,
           ): a List of Original Scope Records
         </h1>
-        <dl class="header">
-          <dt>description</dt>
-          <dd>
-            <p>*FIX*: We don't currently use the result (a list of top-level Original Scope Records). Perhaps we should store the top-level list instead, and specify the lookup in terms of the flattened tree and leave it up to the implementation to determine if some intermediate is cached.</p>
-          </dd>
-        </dl>
+        <dl class="header"></dl>
         <emu-grammar>
           Scopes :
             OriginalScopeTreeList?
@@ -1875,7 +1861,6 @@
             1. Let _kind_ be the OriginalScopeKind of |OriginalScopeStart| with arguments _state_.[[ScopeKindIndex]] and _names_.
             1. Let _flags_ be the VLQUnsignedValue of |OriginalScopeStart|'s |ScopeFlags| nonterminal.
             1. Let _originalScope_ be the Original Scope Record { [[Start]]: _start_, [[End]]: _start_, [[Name]]: _name_, [[Kind]]: _kind_, [[Variables]]: « », [[Children]]: « », [[IsStackFrame]]: *false* }.
-            1. Append _originalScope_ to _state_.[[FlatOriginalScopes]].
             1. If _flags_ & 0x4 = 0x4, set _originalScope_.[[IsStackFrame]] to *true*.
             1. If |OriginalScopeVariablesItem| is present, then
               1. Set _originalScope_.[[Variables]] to the OriginalScopeVariables of |OriginalScopeVariablesItem| with arguments _state_.[[ScopeVariableIndex]] and _names_.
@@ -2021,6 +2006,38 @@
             1. Return _names_[_index_].
           </emu-alg>
         </emu-clause>
+
+        <emu-clause id="sec-ScopeForScopeIndex" type="abstract operation">
+          <h1>
+            ScopeForScopeIndex (
+              _scopes_: a List of Original Scope Records,
+              _index_: a non-negative integer,
+            ): an Original Scope Record
+          </h1>
+          <dl class="header"></dl>
+          <emu-alg>
+            1. Return FlattenedScopes(_scopes_)[_index_].
+          </emu-alg>
+
+          <emu-clause id="sec-FlattenedScopes" type="abstract operation">
+            <h1>
+              FlattenedScopes (
+                _scopes_: a List of Original Scope Records,
+              ): a List of Original Scope Records
+            </h1>
+            <dl class="header">
+              <dt>description</dt>
+              <dd>It returns the pre-order traversal of _scopes_.</dd>
+            </dl>
+            <emu-alg>
+              1. Let _result_ be « ».
+              1. For each Original Scope Record _scope_ of _scopes_, do
+                1. Append _scope_ to _result_.
+                1. Append each element of FlattenedScopes(_scope_.[[Children]]) to _result_.
+              1. Return _result_.
+            </emu-alg>
+          </emu-clause>
+        </emu-clause>
       </emu-clause>
 
       <emu-clause id="sec-DecodedGeneratedRangeTrees" type="sdo">
@@ -2127,9 +2144,9 @@
               1. Set _state_.[[RangeDefinitionScopeIndex]][[Index]] to 0.
               1. Let _scopeOffset_ be the VLQUnsignedValue of |DefinitionScopeIdx|.
             1. Let _scopeIndex_ be AccumulateIndex(_state_.[[RangeDefinitionScopeIndex]], _scopeOffset_).
-            1. Return _source_[[FlatScopes]][_scopeIndex_].
+            1. Return ScopeForScopeIndex(_source_[[RootScopes]], _scopeIndex_).
           </emu-alg>
-          <emu-note>An implementation may use lazy computation to avoid computing the [[FlatScopes]] field of the Decoded Source Record until the range definition is requested. The tuple (_source_, _scopeIndex_) is sufficient to defer the computation.</emu-note>
+          <emu-note>An implementation may use lazy computation to avoid computing the [[RootScopes]] field of the Decoded Source Record until the range definition is requested. The tuple (_source_, _scopeIndex_) is sufficient to defer the computation.</emu-note>
         </emu-clause>
 
         <emu-clause id="sec-GeneratedRangeCallSite" type="sdo">
@@ -2315,7 +2332,7 @@
         1. Let _index_ be 0.
         1. Repeat, while _index_ &lt; _sources_' length,
           1. Let _source_ be _sources_[_index_].
-          1. <ins>Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false*, [[FlatScopes]]: *null* }.</ins>
+          1. <ins>Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false*, [[RootScopes]]: *null* }.</ins>
           1. If _source_ ≠ *null*, then
             1. Set _source_ to the string-concatenation of _sourceUrlPrefix_ and _source_.
             1. Let _sourceURL_ be the result of URL parsing _source_ with _baseURL_.
@@ -2325,7 +2342,7 @@
           1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
           1. <ins>If _index_ &lt; _encodedScopes_' length, then</ins>
             1. <ins>Let _decodedSourceScopes_ be DecodeSourceScopes(_encodedScopes_[_index_], _names_).</ins>
-            1. <ins>Set _decodedSource_.[[FlatScopes]] to _decodedSourceScopes_.</ins>
+            1. <ins>Set _decodedSource_.[[RootScopes]] to _decodedSourceScopes_.</ins>
           1. Append _decodedSource_ to _decodedSources_.
         1. Return _decodedSources_.
       </emu-alg>
