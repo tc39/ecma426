@@ -235,6 +235,13 @@
 
       <p>An implementation can choose different behaviours for different optional errors.</p>
     </emu-clause>
+
+    <emu-clause id="sec-assertions-as-optional-errors">
+      <h1>Assertions</h1>
+
+      <p>Similar to ECMA-262's <a href="https://tc39.es/ecma262/#assert">assert</a>, a step that begins with <em>"Assert:"</em> asserts an invariant condition of its algorithm. For an algorithm describing steps to decode the source map format, an <em>"Assert:"</em> may assert invariants of the format itself.</p>
+      <p>An implementation may choose to implement such assertions by rewriting a step <em>Assert: _condition_</em> as <em>If not _condition_, optionally report an error.</em> to be able to decode malformed source maps.</p>
+    </emu-clause>
   </emu-clause>
 
   <emu-clause id="sec-grammar-notation">
@@ -243,6 +250,7 @@
     <ul>
       <li>The terminal symbols of grammars defined in this specification are individual code points. This is similar to ECMA-262's <a href="https://tc39.es/ecma262/#sec-lexical-and-regexp-grammars">lexical grammar</a>, rather than to ECMA-262's <a href="https://tc39.es/ecma262/#sec-syntactic-grammar">syntactic grammar</a>.</li>
       <li>This specification does not use <a href="https://tc39.es/ecma262/#sec-grammatical-parameters">grammatical parameters</a> or <a href="https://tc39.es/ecma262/#sec-lookahead-restrictions">lookahead restrictions</a>, to reduce the grammar definitions complexity.</li>
+      <li>This specification describes a wire format and not a programming language. The grammars defined in this specification are <em>context-sensitive</em> (i.e. not context-free).</li>
     </ul>
   </emu-clause>
 </emu-clause>
