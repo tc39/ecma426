@@ -2146,6 +2146,7 @@
             1. Let _scopeIndex_ be AccumulateIndex(_state_.[[RangeDefinitionScopeIndex]], _scopeOffset_).
             1. Return ScopeForScopeIndex(_source_[[RootScopes]], _scopeIndex_).
           </emu-alg>
+          <emu-note>The _scopeOffset_ is signed and relative within the same _source_, but unsigned and effectively absolute when changing the _source_.</emu-note>
           <emu-note>An implementation may use lazy computation to avoid computing the [[RootScopes]] field of the Decoded Source Record until the range definition is requested. The tuple (_source_, _scopeIndex_) is sufficient to defer the computation.</emu-note>
         </emu-clause>
 
