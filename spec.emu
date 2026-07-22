@@ -601,7 +601,7 @@
     <li>The <dfn id="json-names"><code>names</code> field</dfn> is an optional list of symbol names which may be used by the mappings field.</li>
     <li>The <dfn id="json-mappings"><code>mappings</code> field</dfn> is a string with the encoded mapping data (see section <emu-xref href="#sec-mappings"></emu-xref>).</li>
     <li>The <dfn id="json-ignoreList"><code>ignoreList</code> field</dfn> is an optional list of indices of files that should be considered third party code, such as framework code or bundler-<emu-not-ref>generated code</emu-not-ref>. This allows developer tools to avoid code that developers likely don't want to see or step through, without requiring developers to configure this beforehand. It refers to the sources field and lists the indices of all the known third-party sources in the source map. Some browsers may also use the deprecated `x_google_ignoreList` field if `ignoreList` is not present.</li>
-    <li><ins>The <dfn id="json-scopes"><code>scopes</code> field</dfn> is an optional list of strings with encoded scope data (see section <emu-xref href="#sec-scopes"></emu-xref>). The encoded scope data strings correspond to source files and are listed in the same order as in the sources field</ins></li>
+    <li><ins>The <dfn id="json-scopes"><code>scopes</code> field</dfn> is an optional list of encoded scope data for each source (see section <emu-xref href="#sec-scopes"></emu-xref>). The contents are listed in the same order as in the sources field. An element of the scopes list is either a string containing encoded scope data, or *null* if there is no scope data for the corresponding source.</ins></li>
     <li><ins>The <dfn id="json-ranges"><code>ranges</code> field</dfn> is an optional string with encoded ranges data (see section <emu-xref href="#sec-scopes"></emu-xref>).</ins></li>
   </ul>
 
@@ -1343,12 +1343,12 @@
           OriginalScopeTree
       </emu-grammar>
 
-      <p>A source with no scopes has its scopes encoded as an empty string.</p>
+      <p>A source with no scopes has its scopes encoded as *null*.</p>
 
       <emu-note example>
         <p>A source map with three authored sources where only the first and third source file have scope information available would be encoded as:</p>
         <pre>
-    "scopes": ["&lt;OriginalScopeTreeList&gt;", "", "&lt;OriginalScopeTreeList&gt;"]
+    "scopes": ["&lt;OriginalScopeTreeList&gt;", null, "&lt;OriginalScopeTreeList&gt;"]
         </pre>
       </emu-note>
 
