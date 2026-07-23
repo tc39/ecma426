@@ -105,7 +105,7 @@
     <li>Support server-side stack trace deobfuscation</li>
   </ul>
   <p>The <emu-not-ref>original source</emu-not-ref> map format (v1) was created by Joseph Schorr for use by Closure Inspector to enable source-level debugging of optimized JavaScript code (although the format itself is language agnostic). However, as the size of the projects using source maps expanded, the verbosity of the format started to become a problem. The v2 format (Source Map Revision 2 Proposal) was created by trading some simplicity and flexibility to reduce the overall size of the source map. Even with the changes made with the v2 version of the format, the source map file size was limiting its usefulness. The v3 format is based on suggestions made by Pavel Podivilov (Google).</p>
-  <p>The source map format does not have version numbers anymore, and it is instead hard-coded to always be "3".</p>
+  <p>The source map format does not have version numbers anymore, and it is instead hard-coded to always be “3”.</p>
   <p>In 2023-2024, the source map format was developed into a more precise Ecma standard, with significant contributions from many people. Further iteration on the source map format is expected to come from TC39-TG4.</p>
   <p>
     Asumu Takikawa, Nicolò Ribaudo, Jon Kuperman<br>
@@ -270,7 +270,7 @@
     <dt><dfn id="sec-terms-and-definitions-colun">column</dfn></dt>
     <dd>
       <p>zero-based indexed offset within a line of the generated code, computed as UTF-16 code units for JavaScript and CSS source maps, and as byte indices in the binary content (represented as a single line) for WebAssembly source maps.</p>
-      <emu-note>That means that "A" (`LATIN CAPITAL LETTER A`) measures as 1 code unit, and "🔥" (`FIRE`) measures as 2 code units. Source maps for other content types may diverge from this.</emu-note>
+      <emu-note>That means that “A” (`LATIN CAPITAL LETTER A`) measures as 1 code unit, and “🔥” (`FIRE`) measures as 2 code units. Source maps for other content types may diverge from this.</emu-note>
     </dd>
 
     <ins class="block">
@@ -290,7 +290,7 @@
 
 <emu-clause id="sec-base64-vlq">
   <h1>base64 VLQ</h1>
-  <p>A <dfn id="sec-base64-vlq">base64 VLQ</dfn> is a <emu-xref href="#sec-references-informative">base64</emu-xref>-encoded variable-length quantity, where the most significant bit (the 6th bit) is used as the continuation bit, and the "digits" are encoded into the string least significant first, and where the least significant bit of the first digit is used as the sign bit.</p>
+  <p>A <dfn id="sec-base64-vlq">base64 VLQ</dfn> is a <emu-xref href="#sec-references-informative">base64</emu-xref>-encoded variable-length quantity, where the most significant bit (the 6th bit) is used as the continuation bit, and the “digits” are encoded into the string least significant first, and where the least significant bit of the first digit is used as the sign bit.</p>
   <emu-note>The values that can be represented by the base64 VLQ encoding are limited to 32-bit quantities until some use case for larger values is presented. This means that values exceeding 32-bits are invalid and implementations may reject them. The sign bit is counted towards the limit, but the continuation bits are not.</emu-note>
   <emu-note example>
     The string `"iB"` represents a base64 VLQ with two digits. The first digit `"i"` encodes the bit pattern `0b100010`, which has a continuation bit of `1` (the VLQ continues), a sign bit of `0` (non-negative), and the value bits `0b0001`. The second digit `B` encodes the bit pattern `0b000001`, which has a continuation bit of `0`, no sign bit, and value bits `0b00001`. The decoding of this VLQ string is the number 17.
@@ -446,7 +446,7 @@
     </h1>
     <dl class="header">
       <dt>description</dt>
-      <dd>It returns a List containing all elements of _array_, so that it can be iterated by algorithms using "For each".</dd>
+      <dd>It returns a List containing all elements of _array_, so that it can be iterated by algorithms using “For each”.</dd>
     </dl>
     <emu-alg>
       1. Let _length_ be JSONObjectGet(_array_, *"length"*).
@@ -808,7 +808,7 @@
         </emu-alg>
         <!--
            TODO:
-          Should the "If _item_ ≠ *null*, optionally report an error" step be
+          Should the “If _item_ ≠ *null*, optionally report an error” step be
           removed, so that the list only contains numbers?
         -->
       </emu-clause>
@@ -1109,10 +1109,10 @@
 
       <p>The following enumeration lists productions of the <a href="https://tc39.es/ecma262/#sec-syntactic-grammar">ECMAScript Syntactic Grammar</a> and the respective token or non-terminal (on the right-hand side of the production) for which source map generators should emit a named mapping. The <emu-xref href="#decoded-mapping-record">mapping</emu-xref> entry created for such tokens shall follow section <emu-xref href="#sec-mappings-for-generated-javascript-code"></emu-xref>.</p>
 
-      <p>The enumeration should be understood as the "minimum". In general, source map generators are free to emit any additional named mappings.</p>
+      <p>The enumeration should be understood as the “minimum”. In general, source map generators are free to emit any additional named mappings.</p>
 
       <emu-note>
-        The enumeration also lists tokens where generators "may" emit named mappings in addition to the tokens where they "should". These reflect the reality where existing tooling emits or expects named mappings. The duplicated named mapping is comparably cheap: Indices into names are encoded relative to each other so subsequent mappings to the same name are encoded as 0 (`A`).
+        The enumeration also lists tokens where generators “may” emit named mappings in addition to the tokens where they “should”. These reflect the reality where existing tooling emits or expects named mappings. The duplicated named mapping is comparably cheap: Indices into names are encoded relative to each other so subsequent mappings to the same name are encoded as 0 (`A`).
       </emu-note>
 
       <ul>
@@ -1158,7 +1158,7 @@
 
     <p>The scopes field is a list of strings, one string per sources entry. The ranges field is a string.</p>
 
-    <p>Each string is a comma (`,`) separated list of items. Each item is a list of base64 VLQs. The first base64 VLQ in each item is a tag that specifies which item is described by the rest of the VLQs. Both original scopes and generated ranges are trees. Each node in these trees are described by a respective "start" and "end" item. "start" items appear in pre-order and "end" items appear in post-order. Any items other then "start" or "end" describe the "current" scope or range. The "current" scope or range is defined by the last seen "start" item.</p>
+    <p>Each string is a comma (`,`) separated list of items. Each item is a list of base64 VLQs. The first base64 VLQ in each item is a tag that specifies which item is described by the rest of the VLQs. Both original scopes and generated ranges are trees. Each node in these trees are described by a respective “start” and “end” item. “start” items appear in pre-order and “end” items appear in post-order. Any items other then “start” or “end” describe the “current” scope or range. The “current” scope or range is defined by the last seen “start” item.</p>
 
     <emu-note>*TODO*: Split ranges string into segments to allow partial decoding.</emu-note>
 
@@ -1270,7 +1270,7 @@
       <p>[[Bindings]] are intended for debuggers to retrieve the values of original variables. The length of [[Bindings]] must be equal to [[Variables]] of the corresponding Original Scope Record. Given an index _i_, [[Bindings]][_i_] describes how to retrieve the value for the original variable [[Variables]][_i_].</p>
       <p>[[Bindings]][_i_] is a List of Binding Records, as there might be different expressions required in different parts of the generated range to retrieve a variables' value. In the common case, [[Bindings]][_i_] will either be an empty List, in which case the variable is unavailable throughout the range. Or a single element list where [[Bindings]][_i_][0].[[From]] matches [[Start]] and [[Bindings]][_i_][0].[[Binding]] is a JavaScript expression.</p>
       <emu-note example>
-        Let _range_ be a Generated Range Record that starts at "0:0" (line 0, column 0) and ends at "0:30". The corresponding Original Scope Record contains a single variable "foo". The value of "foo" can be retrieved via the expression "a" in the range ["0:0", "0:10"). "foo" is unavailable in the range ["0:10", "0:20") and in the range ["0:20", "0:30") the expression "b" must be used. Then _range_ looks like:
+        Let _range_ be a Generated Range Record that starts at “0:0” (line 0, column 0) and ends at “0:30”. The corresponding Original Scope Record contains a single variable “foo”. The value of “foo” can be retrieved via the expression “a” in the range [“0:0”, “0:10”). “foo” is unavailable in the range [“0:10”, “0:20”) and in the range [“0:20”, “0:30”) the expression “b” must be used. Then _range_ looks like:
         <pre><code>
           {
             [[Start]]: { [[Line]]: 0, [[Column]]: 0 },
@@ -1976,7 +1976,7 @@
           </emu-grammar>
           <emu-alg>
             1. Let _variable_ be RelativeName(|Vlq|, _accumulator_, _names_).
-            1. If _variable_ is *null*, return « "" ».
+            1. If _variable_ is *null*, return « “” ».
             1. Return « _variable_ ».
           </emu-alg>
 
@@ -2751,7 +2751,7 @@
 
     <p>It is getting more common to have tools generate sources from some DSL (templates) or compile TypeScript → JavaScript → minified JavaScript, resulting in multiple translations before the final source map is created. This problem can be handled in one of two ways. The easy but lossy way is to ignore the intermediate steps in the process for the purposes of debugging, the source location information from the translation is either ignored (the intermediate translation is considered the “Original Source”) or the source location information is carried through (the intermediate translation hidden). The more complete way is to support multiple levels of mapping: if the Original Source also has a source map reference, the user is given the choice of using that as well.</p>
 
-    <p>However, it is unclear what a "source map reference" looks like in anything other than JavaScript. More specifically, what a source map reference looks like in a language that doesn't support JavaScript-style single-line comments.</p>
+    <p>However, it is unclear what a “source map reference” looks like in anything other than JavaScript. More specifically, what a source map reference looks like in a language that doesn't support JavaScript-style single-line comments.</p>
   </emu-annex>
 </emu-annex>
 
