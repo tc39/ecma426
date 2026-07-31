@@ -1343,7 +1343,7 @@
           OriginalScopeTree
       </emu-grammar>
 
-      <p>A source with no scopes has its scopes encoded as *null*.</p>
+      <p>A source with no scopes has its scopes entry encoded as *null*.</p>
 
       <emu-note example>
         <p>A source map with three authored sources where only the first and third source file have scope information available would be encoded as:</p>
@@ -1770,7 +1770,7 @@
         <dl class="header">
           <dt>description</dt>
           <dd>It returns a list of the top level Original Scope Records. Nested scopes are reachable via the children.
-            <emu-note>There is a chicken-and-egg situation for the generator. Not all scopes in the original program will need to be present in the final source map. The generator will want to emit ranges that encode the scope index into this list, but the index will not be known until the until the surviving (i.e. referenced) scopes are known and the unreferenced scopes removed.</emu-note></dd>
+            <emu-note>There is a chicken-and-egg situation for the generator. Not all scopes in the original program will need to be present in the final source map. The generator will want to emit ranges that encode the scope index into this list, but the index will not be known until the surviving (i.e. referenced) scopes are known and the unreferenced scopes removed.</emu-note></dd>
         </dl>
 
         <emu-alg>
