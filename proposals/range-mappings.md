@@ -4,11 +4,11 @@ Draft spec: https://tc39.es/ecma426/branch/proposal-range-mappings/
 
 ## Current Status
 
-Source maps proposal at stage 2 of the process, see [Our process document](https://github.com/tc39/source-map/blob/main/PROCESS.md)
+Source maps proposal at stage 3 of the process, see [Our process document](https://github.com/tc39/source-map/blob/main/PROCESS.md)
 
 ## Author
 
-* Stage: 2
+* Stage: 3
 * Author: Asumu Takikawa, Tobias Koppers
 * Date: November, 2023
 
@@ -27,7 +27,7 @@ Here we can only use locations that are specified in both SourceMaps. We have to
 As an example let's look at a build process when a TypeScript file is converted to JavaScript first and that is minified afterwards.
 
 A simplistic TypeScript to JavaScript transformation such as SWC's [`strip_types`](https://play.swc.rs/?version=1.10.7&code=H4sIAAAAAAAAA0WMQQqDMBBF93OKv6wgPYBpu5HewAvEQTA0Tcpkggvx7k2E4OrD%2B4%2FH3qaE0epjemEn4Jdn7xjb6tJnkTQg5O%2B8iLkutc4PmAwVxDEklcwa5cYxB21%2B37TurAJagvdWxROnba6r6gXXqfSgg0hXiRveIqXemT8eTB9GqwAAAA%3D%3D&config=H4sIAAAAAAAAA1VPOw7DIAzdOQXy3KFi6NA79BCIOhERAYQdqSjK3QsJpM1mv4%2Ff8yqkhIkMPOVaxrJEnQjTuReEsmf9KQhwjkgm2chw6yxTpQbtCHdoOxhgnUbk6kJSd6WaA1wIhN3RsNl6O%2BT%2FTBPmmJDoKqxS7UeH10TRUmEO72Un2y%2B179HgAT9RDzsPg6VXd3JaUGxfBMLf3xcBAAA%3D&strip-types=) keeps the runtime code identical, whilst removing type annotations.
-Theoretically only a few SourceMap mappings are needs, as most code stays identical.
+Theoretically only a few SourceMap mappings are needed, as most code stays identical.
 
 Minifying is a bigger transformation of the code, which one it's own would result in a lot of SourceMap mappings to be generated.
 
