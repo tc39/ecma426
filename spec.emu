@@ -1763,7 +1763,7 @@
       <emu-clause id="sec-DecodeSourceScopes" type="abstract operation">
         <h1>
           DecodeSourceScopes (
-            _scopes_: a String,
+            _scopes_: a String or *null*,
             _names_: a List of Strings,
           ): a List of Original Scope Records
         </h1>
@@ -1774,6 +1774,7 @@
         </dl>
 
         <emu-alg>
+          1. If _scopes_ is *null*, return « ».
           1. Let _parsedScopes_ be the root Parse Node when parsing _scopes_ using |Scopes| as the goal symbol.
           1. If parsing failed, then
             1. Optionally report an error.
