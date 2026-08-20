@@ -1341,6 +1341,8 @@
 
         OriginalScopeTreeItem :
           OriginalScopeTree
+          VendorExtensionItem
+          InvalidScopeItem
       </emu-grammar>
 
       <p>A source with no scopes has its scopes entry encoded as *null*.</p>
@@ -1379,19 +1381,10 @@
         <p>In grammar form:</p>
         <emu-grammar type="definition">
           OriginalScopeTree :
-            OriginalScopeStart OriginalScopeVariablesItem? OriginalScopeItemList? `,` OriginalScopeEnd
+            OriginalScopeStart OriginalScopeVariablesItem? OriginalScopeTreeList? `,` OriginalScopeEnd
 
           OriginalScopeVariablesItem :
             `,` OriginalScopeVariables
-
-          OriginalScopeItemList :
-            `,` OriginalScopeItem
-            OriginalScopeItemList `,` OriginalScopeItem
-
-          OriginalScopeItem :
-            OriginalScopeTree
-            VendorExtensionItem
-            InvalidScopeItem
 
           OriginalScopeStart :
             `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
@@ -1784,7 +1777,7 @@
           1. Let _scopeKindIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
           1. Let _scopeVariableIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
           1. Let _state_ be a new Decode Scope State Record { [[ScopePosition]]: _scopePosition_, [[ScopeNameIndex]]: _scopeNameIndex_, [[ScopeKindIndex]]: _scopeKindIndex_, [[ScopeVariableIndex]]: _scopeVariableIndex_ }.
-          1. Return DecodedTopLevelOriginalScopeTrees of _parsedScopes_ with arguments _state_ and _names_.
+          1. Return the DecodedOriginalScopeTrees of _parsedScopes_ with arguments _state_ and _names_.
         </emu-alg>
       </emu-clause>
 
@@ -1813,9 +1806,9 @@
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-DecodedTopLevelOriginalScopeTrees" type="sdo">
+      <emu-clause id="sec-DecodedOriginalScopeTrees" type="sdo">
         <h1>
-          DecodedTopLevelOriginalScopeTrees (
+          DecodedOriginalScopeTrees (
             _state_: a Decode Scope State Record,
             _names_: a List of Strings,
           ): a List of Original Scope Records
@@ -1827,58 +1820,42 @@
         </emu-grammar>
         <emu-alg>
           1. If |OriginalScopeTreeList| is not present, return « ».
-          1. Return DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+          1. Return the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
         </emu-alg>
         <emu-grammar>
           OriginalScopeTreeList : OriginalScopeTreeList `,` OriginalScopeTreeItem
         </emu-grammar>
         <emu-alg>
-          1. Let _left_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
-          1. Let _right_ be the DecodedTopLevelOriginalScopeTrees of |OriginalScopeTreeItem| with arguments _state_ and _names_.
+          1. Let _left_ be the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+          1. Let _right_ be the DecodedOriginalScopeTrees of |OriginalScopeTreeItem| with arguments _state_ and _names_.
           1. Return the list-concatenation of _left_ and _right_.
         </emu-alg>
         <emu-grammar>
-          OriginalScopeTreeItem : OriginalScopeTree
+          OriginalScopeTreeItem :
+            VendorExtensionItem
+            InvalidScopeItem
         </emu-grammar>
         <emu-alg>
-          1. Return the DecodedOriginalScopeTrees of |OriginalScopeTree| with arguments _state_ and _names_.
+          1. Return « ».
         </emu-alg>
-
-        <emu-clause id="sec-DecodedOriginalScopeTrees" type="sdo">
-          <h1>
-            DecodedOriginalScopeTrees (
-              _state_: a Decode Scope State Record,
-              _names_: a List of Strings,
-            ): a List of Original Scope Records
-          </h1>
-          <dl class="header"></dl>
-          <emu-grammar>
-            OriginalScopeTree :
-              OriginalScopeStart OriginalScopeVariablesItem? OriginalScopeItemList? `,` OriginalScopeEnd
-          </emu-grammar>
-          <emu-alg>
-            1. Let _start_ be the DecodedPosition of |OriginalScopeStart| with argument _state_.[[ScopePosition]].
-            1. Let _name_ be the OriginalScopeName of |OriginalScopeStart| with arguments _state_.[[ScopeNameIndex]] and _names_.
-            1. Let _kind_ be the OriginalScopeKind of |OriginalScopeStart| with arguments _state_.[[ScopeKindIndex]] and _names_.
-            1. Let _flags_ be the VLQUnsignedValue of |OriginalScopeStart|'s |ScopeFlags| nonterminal.
-            1. Let _originalScope_ be the Original Scope Record { [[Start]]: _start_, [[End]]: _start_, [[Name]]: _name_, [[Kind]]: _kind_, [[Variables]]: « », [[Children]]: « », [[IsStackFrame]]: *false* }.
-            1. If _flags_ & 0x4 = 0x4, set _originalScope_.[[IsStackFrame]] to *true*.
-            1. If |OriginalScopeVariablesItem| is present, then
-              1. Set _originalScope_.[[Variables]] to the OriginalScopeVariables of |OriginalScopeVariablesItem| with arguments _state_.[[ScopeVariableIndex]] and _names_.
-            1. If |OriginalScopeItemList| is present, then
-              1. Set _originalScope_.[[Children]] to the DecodedOriginalScopeTrees of |OriginalScopeItemList| with arguments _state_ and _names_.
-            1. Set _originalScope_.[[End]] to the DecodedPosition of |OriginalScopeEnd| with argument _state_.[[ScopePosition]].
-            1. Return « _originalScope_ ».
-          </emu-alg>
-          <emu-grammar>
-            OriginalScopeItemList : OriginalScopeItemList `,` OriginalScopeItem
-          </emu-grammar>
-          <emu-alg>
-            1. Let _left_ be the DecodedOriginalScopeTrees of |OriginalScopeItemList| with arguments _state_ and _names_.
-            1. Let _right_ be the DecodedOriginalScopeTrees of |OriginalScopeItem| with arguments _state_ and _names_.
-            1. Return the list-concatenation of _left_ and _right_.
-          </emu-alg>
-        </emu-clause>
+        <emu-grammar>
+          OriginalScopeTree :
+            OriginalScopeStart OriginalScopeVariablesItem? OriginalScopeTreeList? `,` OriginalScopeEnd
+        </emu-grammar>
+        <emu-alg>
+          1. Let _start_ be the DecodedPosition of |OriginalScopeStart| with argument _state_.[[ScopePosition]].
+          1. Let _name_ be the OriginalScopeName of |OriginalScopeStart| with arguments _state_.[[ScopeNameIndex]] and _names_.
+          1. Let _kind_ be the OriginalScopeKind of |OriginalScopeStart| with arguments _state_.[[ScopeKindIndex]] and _names_.
+          1. Let _flags_ be the VLQUnsignedValue of |OriginalScopeStart|'s |ScopeFlags| nonterminal.
+          1. Let _originalScope_ be the Original Scope Record { [[Start]]: _start_, [[End]]: _start_, [[Name]]: _name_, [[Kind]]: _kind_, [[Variables]]: « », [[Children]]: « », [[IsStackFrame]]: *false* }.
+          1. If _flags_ & 0x4 = 0x4, set _originalScope_.[[IsStackFrame]] to *true*.
+          1. If |OriginalScopeVariablesItem| is present, then
+            1. Set _originalScope_.[[Variables]] to the OriginalScopeVariables of |OriginalScopeVariablesItem| with arguments _state_.[[ScopeVariableIndex]] and _names_.
+          1. If |OriginalScopeTreeList| is present, then
+            1. Set _originalScope_.[[Children]] to the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
+          1. Set _originalScope_.[[End]] to the DecodedPosition of |OriginalScopeEnd| with argument _state_.[[ScopePosition]].
+          1. Return « _originalScope_ ».
+        </emu-alg>
 
         <emu-clause id="sec-DecodedPosition" type="sdo">
           <h1>
