@@ -1387,10 +1387,10 @@
             `,` OriginalScopeVariables
 
           OriginalScopeStart :
-            `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
+            `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind? VlqList?
 
           OriginalScopeEnd :
-            `C` ScopeLine ScopeColumn
+            `C` ScopeLine ScopeColumn VlqList?
 
           OriginalScopeVariables :
             `D` ScopeVariableList
@@ -1474,7 +1474,7 @@
             InvalidRangeItem
 
           GeneratedRangeStart :
-            `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
+            `E` RangeFlags RangeLine? RangeColumn RangeDefinition? VlqList?
 
           GeneratedRangeEnd :
             `F` RangeLine? RangeColumn
@@ -1497,7 +1497,7 @@
             BindingLine BindingColumn BindingExpression
 
           GeneratedRangeCallSite :
-            `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
+            `I` CallSiteSourceIdx CallSiteLine CallSiteColumn VlqList?
 
           RangeDefinition :
             DefinitionSourceIdx DefinitionScopeIdx
@@ -1866,10 +1866,10 @@
           <dl class="header"></dl>
           <emu-grammar>
             OriginalScopeStart :
-              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
+              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind? VlqList?
 
             OriginalScopeEnd :
-              `C` ScopeLine ScopeColumn
+              `C` ScopeLine ScopeColumn VlqList?
           </emu-grammar>
           <emu-alg>
             1. Let _relativeLine_ be the VLQUnsignedValue of |ScopeLine|.
@@ -1878,7 +1878,7 @@
           </emu-alg>
           <emu-grammar>
             GeneratedRangeStart :
-              `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
+              `E` RangeFlags RangeLine? RangeColumn RangeDefinition? VlqList?
 
             GeneratedRangeEnd :
               `F` RangeLine? RangeColumn
@@ -1900,7 +1900,7 @@
           <dl class="header"></dl>
           <emu-grammar>
             OriginalScopeStart :
-              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
+              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind? VlqList?
           </emu-grammar>
           <emu-alg>
             1. Let _flags_ be the VLQUnsignedValue of |ScopeFlags|.
@@ -1920,7 +1920,7 @@
           <dl class="header"></dl>
           <emu-grammar>
             OriginalScopeStart :
-              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind?
+              `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind? VlqList?
           </emu-grammar>
           <emu-alg>
             1. Let _flags_ be the VLQUnsignedValue of |ScopeFlags|.
@@ -2100,7 +2100,7 @@
           <dl class="header"></dl>
           <emu-grammar>
             GeneratedRangeStart :
-              `E` RangeFlags RangeLine? RangeColumn RangeDefinition?
+              `E` RangeFlags RangeLine? RangeColumn RangeDefinition? VlqList?
           </emu-grammar>
           <emu-alg>
             1. Let _flags_ be the VLQUnsignedValue of |RangeFlags|.
@@ -2137,7 +2137,7 @@
           <dl class="header"></dl>
           <emu-grammar>
             GeneratedRangeCallSite :
-              `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
+              `I` CallSiteSourceIdx CallSiteLine CallSiteColumn VlqList?
           </emu-grammar>
           <emu-alg>
             1. Let _sourceIndex_ be the VLQUnsignedValue of |CallSiteSourceIdx|.
