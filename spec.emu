@@ -74,6 +74,8 @@
   shortname: ECMA-426
   status: draft
   location: https://tc39.es/ecma426/
+  boilerplate:
+    copyright: alternative
 </pre>
 <p><img src="img/ecma-logo.svg" id="ecma-logo" alt="Ecma International logo"></p>
 <div id="metadata-block">
