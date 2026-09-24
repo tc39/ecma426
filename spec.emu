@@ -2065,7 +2065,7 @@
           1. Else,
             1. Let _bindings_ be « ».
           1. If |GeneratedRangeCallSiteItem| is present, then
-            1. Let _callSite_ be the GeneratedRangeCallSite of |GeneratedRangeCallSiteItem| with arguments _sources_ and _parentDefinition_.
+            1. Let _callSite_ be the GeneratedRangeCallSite of |GeneratedRangeCallSiteItem| with arguments _sources_.
           1. Else,
             1. Let _callSite_ be *null*.
           1. If |GeneratedRangeItemList| is present, then
@@ -2134,7 +2134,6 @@
           <h1>
             GeneratedRangeCallSite (
             _sources_: a List of Decoded Source Record,
-            _inliningParent_: a Generated Range Record or *null*
             ): a Original Position Record
           </h1>
           <dl class="header"></dl>
@@ -2144,16 +2143,17 @@
           </emu-grammar>
           <emu-alg>
             1. Let _sourceIndex_ be the VLQUnsignedValue of |CallSiteSourceIdx|.
+            1. Let _source_ be _sources_[_sourceIndex_].
             1. Let _line_ be the VLQUnsignedValue of |CallSiteLine|.
             1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
-            1. Return a new Original Position Record { [[Source]]: _sources_[_sourceIndex_], [[Line]]: _line_, [[Column]]: _column_ }.
+            1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
           <emu-grammar>
             GeneratedRangeCallSite :
               `I` CallSiteLine CallSiteColumn
           </emu-grammar>
           <emu-alg>
-            1. Let _parentDefinition_ be _inliningParent_[[Definition]].
+            1. Let _parentDefinition_ be InliningParentRange()[[Definition]].
             1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
             1. Let _line_ be _parentDefinition_[[Start]][[Line]] + the VLQUnsignedValue of |CallSiteLine|.
             1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
@@ -2164,28 +2164,46 @@
               `I` CallSiteColumn
           </emu-grammar>
           <emu-alg>
-            1. Let _parentDefinition_ be _inliningParent_[[Definition]].
+            1. Let _parentDefinition_ be InliningParentRange()[[Definition]].
             1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
             1. Let _line_ be _parentDefinition_[[Start]][[Line]].
             1. Let _column_ be _parentDefinition_[[Start]][[Column]]the VLQUnsignedValue of |CallSiteColumn|.
-            1. Return a new Original Position Record { [[Source]]: _sources_, [[Line]]: _line_, [[Column]]: _column_ }.
+            1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
 
-          <emu-clause id="sec-ScopeSource" type="abstract operation">
+          <emu-clause id="sec-InliningParentRange" type="abstract operation">
+            <h1>
+              InliningParentRange (
+              ): an Generated Range Record, or *null*
+            </h1>
+            <dl class="header">
+              <dt>description</dt>
+              <dd>A |GeneratedRangeCallSite| belongs to a generated range for code inlined into another function. The operation returns the closest enclosing (i.e. parent) Generated Range Record _range_ of the owning generated range for which _range_[[Definition]] ≠ *null*.</dd>
+            </dl>
+            <emu-alg>
+              1. TBD.
+            </emu-alg>
+          </emu-clause>
+
+          <emu-clause id="sec-SourceOfScope" type="abstract operation">
             <h1>
               SourceOfScope (
                 _sources_: a List of Decoded Source Record,
                 _scope_: an Original Scope Record
-              ): an Original Scope Record
+              ): a Decoded Source Record
             </h1>
-            <dl class="header"></dl>
+            <dl class="header">
+              <dt>description</dt>
+              <dd>It returns the Decoded Source Record which contains the Original Scope Record.</dd>
+            </dl>
             <emu-alg>
-              1. For each _source_ of _sources_, do
+              1. For each element _source_ of _sources_, do
                 1. If FlattenedScopes(_source_[[RootScopes]]) contains _scope, then
-                  1. Return _source_
+                  1. Return _source_.
               1. Report an error.
             </emu-alg>
           </emu-clause>
+        </emu-clause>
         </emu-clause>
 
         <emu-clause id="sec-GeneratedRangeBindings" type="sdo">
