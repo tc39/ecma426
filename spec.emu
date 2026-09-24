@@ -588,7 +588,7 @@
     "mappings": "A,AAAB;;ABCDE",
     "ignoreList": [0],
     "scopes": ["BCCAQ,BHAAAC,BCCaC,CDC,CCA,CCY", ""],
-    "ranges": "EDBAA,EGAC,ECvBC,FW,FJ,FI",
+    "ranges": ["EDBAA,EGAC,ECvBC,FW,FJ,FI"]
   }
   </code></pre>
   </ins>
@@ -602,7 +602,7 @@
     <li>The <dfn id="json-mappings"><code>mappings</code> field</dfn> is a string with the encoded mapping data (see section <emu-xref href="#sec-mappings"></emu-xref>).</li>
     <li>The <dfn id="json-ignoreList"><code>ignoreList</code> field</dfn> is an optional list of indices of files that should be considered third party code, such as framework code or bundler-<emu-not-ref>generated code</emu-not-ref>. This allows developer tools to avoid code that developers likely don't want to see or step through, without requiring developers to configure this beforehand. It refers to the sources field and lists the indices of all the known third-party sources in the source map. Some browsers may also use the deprecated `x_google_ignoreList` field if `ignoreList` is not present.</li>
     <li><ins>The <dfn id="json-scopes"><code>scopes</code> field</dfn> is an optional list of encoded scope data for each source (see section <emu-xref href="#sec-scopes"></emu-xref>). The contents are listed in the same order as in the sources field. An element of the scopes list is either a string containing encoded scope data, or *null* if there is no scope data for the corresponding source.</ins></li>
-    <li><ins>The <dfn id="json-ranges"><code>ranges</code> field</dfn> is an optional string with encoded ranges data (see section <emu-xref href="#sec-scopes"></emu-xref>).</ins></li>
+    <li><ins>The <dfn id="json-ranges"><code>ranges</code> field</dfn> is an optional list of strings encoding range data. Each string encodes ranges from successive regions of the generated code (see section <emu-xref href="#sec-scopes"></emu-xref>).</ins></li>
   </ul>
 
   <emu-clause id="sec-decoding-source-maps">
@@ -709,7 +709,7 @@
         1. Let _ignoreListField_ be GetOptionalListOfArrayIndexes(_json_, *"ignoreList"*).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
         1. <ins>Let _scopesField_ be GetOptionalListOfStrings(_json_, *"scopes"*).</ins>
-        1. <ins>Let _rangesField_ be GetOptionalString(_json_, *"ranges"*).</ins>
+        1. <ins>Let _rangesField_ be GetOptionalListOfStrings(_json_, *"ranges"*).</ins>
         1. <ins>Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_, _namesField_, _scopesField_).</ins>
         1. <ins>Let _ranges_ be DecodeGeneratedRanges(_rangesField_, _sources_, _namesField_).</ins>
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
@@ -1781,31 +1781,6 @@
         </emu-alg>
       </emu-clause>
 
-      <emu-clause id="sec-DecodeGeneratedRanges" type="abstract operation">
-        <h1>
-          DecodeGeneratedRanges (
-            _ranges_: a String or *null*,
-            _sources_: a List of Decoded Source Records,
-            _names_: a List of Strings,
-          ): a List of Generated Range Records
-        </h1>
-        <dl class="header"></dl>
-        <p>*TODO*: move this to just before DecodedGeneratedRangeTrees.</p>
-        <emu-alg>
-          1. If _ranges_ is *null*, return « ».
-          1. Let _parsedRanges_ be the root Parse Node when parsing _ranges_ using |Ranges| as the goal symbol.
-          1. If parsing failed, then
-            1. Optionally report an error.
-            1. Return « ».
-          1. Let _rangePosition_ be a new Position Accumulator Record { [[Line]]: 0, [[Column]]: 0 }.
-          1. Let _rangeDefinitionSourceIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
-          1. Let _rangeDefinitionScopeIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
-          1. Let _state_ be a new Decode Range State Record { [[RangePosition]]: _rangePosition_, [[RangeDefinitionSourceIndex]]: _rangeDefinitionSourceIndex_ [[RangeDefinitionScopeIndex]]: _rangeDefinitionScopeIndex_ }.
-          1. Let _result_ be the DecodedGeneratedRangeTrees of _parsedRanges_ with arguments _state_, _sources_ and _names_.
-          1. Return _result_.
-        </emu-alg>
-      </emu-clause>
-
       <emu-clause id="sec-DecodedOriginalScopeTrees" type="sdo">
         <h1>
           DecodedOriginalScopeTrees (
@@ -2016,6 +1991,38 @@
             </emu-alg>
           </emu-clause>
         </emu-clause>
+      </emu-clause>
+
+      <emu-clause id="sec-DecodeGeneratedRanges" type="abstract operation">
+        <h1>
+          DecodeGeneratedRanges (
+            _ranges_: either a List of Strings, or *null*,
+            _sources_: a List of Decoded Source Records,
+            _names_: a List of Strings,
+          ): a List of Generated Range Records
+        </h1>
+        <dl class="header"></dl>
+        <emu-alg>
+          1. If _ranges_ is *null*, return « ».
+          1. Let _result_ be « ».
+          1. For each String _segment_ of _ranges_, do
+            1. Let _parsedRanges_ be the root Parse Node when parsing _segment_ using |Ranges| as the goal symbol.
+            1. If parsing failed, then
+              1. Optionally report an error.
+              1. Return « ».
+            1. Let _rangePosition_ be a new Position Accumulator Record { [[Line]]: 0, [[Column]]: 0 }.
+            1. Let _rangeDefinitionSourceIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+            1. Let _rangeDefinitionScopeIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
+            1. Let _state_ be a new Decode Range State Record { [[RangePosition]]: _rangePosition_, [[RangeDefinitionSourceIndex]]: _rangeDefinitionSourceIndex_ [[RangeDefinitionScopeIndex]]: _rangeDefinitionScopeIndex_ }.
+            1. Let _segmentResult_ be the DecodedGeneratedRangeTrees of _parsedRanges_ with arguments _state_, _sources_ and _names_.
+            1. If _segmentResult_ is not empty and _result_ is not empty, then
+              1. Let _previousRange_ be the last element of _result_.
+              1. Let _nextRange_ be the first element of _segmentResult_.
+              1. If ComparePositions(_nextRange_.[[Start]], _previousRange_.[[End]]) is ~lesser~, optionally report an error.
+            1. Append each element of _segmentResult_ to _result_.
+          1. Return _result_.
+        </emu-alg>
+        <emu-note>Each String encodes zero or more top-level ranges for the segment. The unsigned offsets in the grammar ensure that top level ranges are in generated code order and cannot overlap. The ComparePositions test ensures the same restriction across segments.</emu-note>
       </emu-clause>
 
       <emu-clause id="sec-DecodedGeneratedRangeTrees" type="sdo">
