@@ -1498,8 +1498,8 @@
 
           GeneratedRangeCallSite :
             `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
-            `I` CallSiteLine CallSiteColumn
-            `I` CallSiteColumn
+            `I` CallSiteLineOffset CallSiteColumn
+            `I` CallSiteColumnOffset
 
           RangeDefinition :
             DefinitionSourceIdx DefinitionScopeIdx
@@ -1531,7 +1531,13 @@
           CallSiteLine :
             Vlq
 
+          CallSiteLineOffset :
+            Vlq
+
           CallSiteColumn :
+            Vlq
+
+          CallSiteColumnOffset :
             Vlq
 
           DefinitionSourceIdx :
@@ -2136,7 +2142,10 @@
               _sources_: a List of Decoded Source Record,
             ): a Original Position Record
           </h1>
-          <dl class="header"></dl>
+          <dl class="header">
+            <dt>description</dt>
+            <dd>The operation decodes both absolute and relative encodings.</dd>
+          </dl>
           <emu-grammar>
             GeneratedRangeCallSite :
               `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
@@ -2150,32 +2159,36 @@
           </emu-alg>
           <emu-grammar>
             GeneratedRangeCallSite :
-              `I` CallSiteLine CallSiteColumn
+              `I` CallSiteLineOffset CallSiteColumn
           </emu-grammar>
           <emu-alg>
             1. Let _parentDefinition_ be InliningParentRange()[[Definition]].
             1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
-            1. Let _line_ be _parentDefinition_[[Start]][[Line]] + the VLQUnsignedValue of |CallSiteLine|.
+            1. Let _line_ be _parentDefinition_[[Start]][[Line]] + the VLQUnsignedValue of |CallSiteLineOffset|.
             1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
             1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
           <emu-grammar>
             GeneratedRangeCallSite :
-              `I` CallSiteColumn
+              `I` CallSiteColumnOffset
           </emu-grammar>
           <emu-alg>
             1. Let _parentDefinition_ be InliningParentRange()[[Definition]].
             1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
             1. Let _line_ be _parentDefinition_[[Start]][[Line]].
-            1. Let _column_ be _parentDefinition_[[Start]][[Column]]the VLQUnsignedValue of |CallSiteColumn|.
+            1. Let _column_ be _parentDefinition_[[Start]][[Column]] + the VLQUnsignedValue of |CallSiteColumnOffset|.
             1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
+          <emu-note>
+            <p>It is always possible to encode a call-site position directly via the first production.</p>
+            <p>It is usually more concise to encode the position relative to the scope of the function containing the call site via the second or third production.</p>
+          </emu-note>
 
           <emu-clause id="sec-InliningParentRange" type="abstract operation">
             <h1>InliningParentRange ( ): an Generated Range Record, or *null*</h1>
             <dl class="header">
               <dt>description</dt>
-              <dd>A |GeneratedRangeCallSite| belongs to a generated range for code inlined into another function. The operation returns the closest enclosing (i.e. parent) Generated Range Record _range_ of the owning generated range for which _range_[[Definition]] ≠ *null*.</dd>
+              <dd>A |GeneratedRangeCallSite| belongs to a generated range for code inlined into a host function. The operation returns the closest enclosing (i.e. parent) Generated Range Record _range_ of the owning generated range for which _range_[[Definition]] ≠ *null* and _range_[[Definition]][[IsStackFrame]] is *true*.</dd>
             </dl>
             <emu-alg>
               1. TBD.
