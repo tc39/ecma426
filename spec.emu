@@ -1497,7 +1497,9 @@
             BindingLine BindingColumn BindingExpression
 
           GeneratedRangeCallSite :
-            `I` CallSiteSourceIdx CallSiteLine CallSiteColumn VlqList?
+            `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
+            `I` CallSiteLineOffset CallSiteColumn
+            `I` CallSiteColumnOffset
 
           RangeDefinition :
             DefinitionSourceIdx DefinitionScopeIdx
@@ -1529,7 +1531,13 @@
           CallSiteLine :
             Vlq
 
+          CallSiteLineOffset :
+            Vlq
+
           CallSiteColumn :
+            Vlq
+
+          CallSiteColumnOffset :
             Vlq
 
           DefinitionSourceIdx :
@@ -2141,209 +2149,270 @@
               _sources_: a List of Decoded Source Record,
             ): a Original Position Record
           </h1>
-          <dl class="header"></dl>
+          <dl class="header">
+            <dt>description</dt>
+            <dd>The operation decodes both absolute and relative encodings.</dd>
+          </dl>
           <emu-grammar>
             GeneratedRangeCallSite :
-              `I` CallSiteSourceIdx CallSiteLine CallSiteColumn VlqList?
+              `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
           </emu-grammar>
           <emu-alg>
             1. Let _sourceIndex_ be the VLQUnsignedValue of |CallSiteSourceIdx|.
+            1. Let _source_ be _sources_[_sourceIndex_].
             1. Let _line_ be the VLQUnsignedValue of |CallSiteLine|.
             1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
-            1. Return a new Original Position Record { [[Source]]: _sources_[_sourceIndex_], [[Line]]: _line_, [[Column]]: _column_ }.
-          </emu-alg>
-        </emu-clause>
-
-        <emu-clause id="sec-GeneratedRangeBindings" type="sdo">
-          <h1>
-            GeneratedRangeBindings (
-              _start_: a Position Record,
-              _names_: a List of Strings,
-            ): a List of Lists of Binding Records
-          </h1>
-          <dl class="header"></dl>
-          <emu-grammar>
-            BindingExpressionList : BindingExpressionList BindingExpression
-          </emu-grammar>
-          <emu-alg>
-            1. Let _left_ be the GeneratedRangeBindings of |BindingExpressionList| with arguments _start_ and _names_.
-            1. Let _right_ be the GeneratedRangeBindings of |BindingExpression| with arguments _start_ and _names_.
-            1. Return the list-concatenation of _left_ and _right_.
+            1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
           <emu-grammar>
-            BindingExpression : Vlq
+            GeneratedRangeCallSite :
+              `I` CallSiteLineOffset CallSiteColumn
           </emu-grammar>
           <emu-alg>
-            1. Let _binding_ be the BindingExpression of |BindingExpression| with argument _names_.
-            1. Return « « { [[From]]: _start_, [[Binding]]: _binding_ } » ».
+            1. Let _parentDefinition_ be InliningParentRange()[[Definition]].
+            1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
+            1. Let _line_ be _parentDefinition_[[Start]][[Line]] + the VLQUnsignedValue of |CallSiteLineOffset|.
+            1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
+            1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
-        </emu-clause>
-
-        <emu-clause id="sec-BindingExpression" type="sdo">
-          <h1>
-            BindingExpression (
-              _names_: a List of Strings,
-            ): a String or *null*
-          </h1>
-          <dl class="header"></dl>
           <emu-grammar>
-            BindingExpression : Vlq
+            GeneratedRangeCallSite :
+              `I` CallSiteColumnOffset
           </emu-grammar>
           <emu-alg>
-            1. Let _unadjustedBindingIndex_ be the VLQUnsignedValue of |Vlq|.
-            1. If _unadjustedBindingIndex_ = 0, return *null*.
-            1. Let _bindingIndex_ be _unadjustedBindingIndex_ - 1.
-            1. If _bindingIndex_ >= the length of _names_, then
-              1. Optionally report an error.
-              1. Return *null*.
-            1. Return _names_[_bindingIndex_].
+            1. Let _parentDefinition_ be InliningParentRange()[[Definition]].
+            1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
+            1. Let _line_ be _parentDefinition_[[Start]][[Line]].
+            1. Let _column_ be _parentDefinition_[[Start]][[Column]] + the VLQUnsignedValue of |CallSiteColumnOffset|.
+            1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
-        </emu-clause>
+          <emu-note>
+            <p>It is always possible to encode a call-site position directly via the first production.</p>
+            <p>It is usually more concise to encode the position relative to the scope of the function containing the call site via the second or third production.</p>
+          </emu-note>
 
-        <p>A <dfn id="sub-range-binding-records" variants="Sub-Range Binding Records">Sub-Range Binding Record</dfn> is the result of decoding a |GeneratedSubRangeBinding|. It has the following fields:</p>
-        <emu-table id="table-sub-range-binding-record-fields" caption="Sub-Range Binding Record Fields">
-          <table>
-            <thead>
-              <tr>
-                <th>Field Name</th>
-                <th>Type</th>
-              </tr>
-            </thead>
+          <emu-clause id="sec-InliningParentRange" type="abstract operation">
+            <h1>InliningParentRange ( ): an Generated Range Record, or *null*</h1>
+            <dl class="header">
+              <dt>description</dt>
+              <dd>A |GeneratedRangeCallSite| belongs to a generated range for code inlined into a host function. The operation returns the closest enclosing (i.e. parent) Generated Range Record _range_ of the owning generated range for which _range_[[Definition]] ≠ *null* and _range_[[Definition]][[IsStackFrame]] is *true*.</dd>
+            </dl>
+            <emu-alg>
+              1. TBD.
+            </emu-alg>
+          </emu-clause>
+
+          <emu-clause id="sec-SourceOfScope" type="abstract operation">
+            <h1>
+              SourceOfScope (
+                _sources_: a List of Decoded Source Record,
+                _scope_: an Original Scope Record,
+              ): a Decoded Source Record
+            </h1>
+            <dl class="header">
+              <dt>description</dt>
+              <dd>It returns the Decoded Source Record which contains the Original Scope Record.</dd>
+            </dl>
+            <emu-alg>
+              1. For each element _source_ of _sources_, do
+                1. If FlattenedScopes(_source_[[RootScopes]]) contains _scope, then
+                  1. Return _source_.
+              1. Report an error.
+            </emu-alg>
+          </emu-clause>
+        </emu-clause>
+      </emu-clause>
+
+      <emu-clause id="sec-GeneratedRangeBindings" type="sdo">
+        <h1>
+          GeneratedRangeBindings (
+            _start_: a Position Record,
+            _names_: a List of Strings,
+          ): a List of Lists of Binding Records
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar>
+          BindingExpressionList : BindingExpressionList BindingExpression
+        </emu-grammar>
+        <emu-alg>
+          1. Let _left_ be the GeneratedRangeBindings of |BindingExpressionList| with arguments _start_ and _names_.
+          1. Let _right_ be the GeneratedRangeBindings of |BindingExpression| with arguments _start_ and _names_.
+          1. Return the list-concatenation of _left_ and _right_.
+        </emu-alg>
+        <emu-grammar>
+          BindingExpression : Vlq
+        </emu-grammar>
+        <emu-alg>
+          1. Let _binding_ be the BindingExpression of |BindingExpression| with argument _names_.
+          1. Return « « { [[From]]: _start_, [[Binding]]: _binding_ } » ».
+        </emu-alg>
+      </emu-clause>
+
+      <emu-clause id="sec-BindingExpression" type="sdo">
+        <h1>
+          BindingExpression (
+            _names_: a List of Strings,
+          ): a String or *null*
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar>
+          BindingExpression : Vlq
+        </emu-grammar>
+        <emu-alg>
+          1. Let _unadjustedBindingIndex_ be the VLQUnsignedValue of |Vlq|.
+          1. If _unadjustedBindingIndex_ = 0, return *null*.
+          1. Let _bindingIndex_ be _unadjustedBindingIndex_ - 1.
+          1. If _bindingIndex_ >= the length of _names_, then
+            1. Optionally report an error.
+            1. Return *null*.
+          1. Return _names_[_bindingIndex_].
+        </emu-alg>
+      </emu-clause>
+
+      <p>A <dfn id="sub-range-binding-records" variants="Sub-Range Binding Records">Sub-Range Binding Record</dfn> is the result of decoding a |GeneratedSubRangeBinding|. It has the following fields:</p>
+      <emu-table id="table-sub-range-binding-record-fields" caption="Sub-Range Binding Record Fields">
+        <table>
+          <thead>
             <tr>
-              <td>[[VariableIndex]]</td>
-              <td>a non-negative integer</td>
+              <th>Field Name</th>
+              <th>Type</th>
             </tr>
-            <tr>
-              <td>[[Bindings]]</td>
-              <td>a List of Binding Records</td>
-            </tr>
-          </table>
-        </emu-table>
+          </thead>
+          <tr>
+            <td>[[VariableIndex]]</td>
+            <td>a non-negative integer</td>
+          </tr>
+          <tr>
+            <td>[[Bindings]]</td>
+            <td>a List of Binding Records</td>
+          </tr>
+        </table>
+      </emu-table>
 
-        <emu-clause id="sec-GeneratedSubRangeBindings" type="sdo">
-          <h1>
-            GeneratedSubRangeBindings (
-              _start_: a Position Record,
-              _names_: a List of Strings,
-            ): a List of Sub-Range Binding Records
-          </h1>
-          <dl class="header"></dl>
-          <emu-grammar>
-            GeneratedRangeItemList : GeneratedRangeItemList `,` GeneratedRangeItem
-          </emu-grammar>
-          <emu-alg>
-            1. Let _left_ be the GeneratedSubRangeBindings of |GeneratedRangeItemList| with arguments _start_ and _names_.
-            1. Let _right_ be the GeneratedSubRangeBindings of |GeneratedRangeItem| with arguments _start_ and _names_.
-            1. Return the list-concatenation of _left_ and _right_.
-          </emu-alg>
-          <emu-grammar>
-            GeneratedRangeItem :
-              GeneratedRangeTree
-              VendorExtensionItem
-              InvalidRangeItem
-          </emu-grammar>
-          <emu-alg>
-            1. Return « ».
-          </emu-alg>
-          <emu-grammar>
-            GeneratedSubRangeBinding :
-              `H` VariableIndex BindingFromList
-          </emu-grammar>
-          <emu-alg>
-            1. Let _variableIndex_ be the VLQUnsignedValue of |VariableIndex|.
-            1. Let _from_ be a new Position Accumulator Record { [[Line]]: _start_.[[Line]], [[Column]]: _start_.[[Column]] }.
-            1. Let _bindings_ be the SubRangeBinding of |BindingFromList| with arguments _from_ and _names_.
-            1. Return « { [[VariableIndex]]: _variableIndex_, [[Bindings]]: _bindings_ } ».
-          </emu-alg>
-        </emu-clause>
+      <emu-clause id="sec-GeneratedSubRangeBindings" type="sdo">
+        <h1>
+          GeneratedSubRangeBindings (
+            _start_: a Position Record,
+            _names_: a List of Strings,
+          ): a List of Sub-Range Binding Records
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar>
+          GeneratedRangeItemList : GeneratedRangeItemList `,` GeneratedRangeItem
+        </emu-grammar>
+        <emu-alg>
+          1. Let _left_ be the GeneratedSubRangeBindings of |GeneratedRangeItemList| with arguments _start_ and _names_.
+          1. Let _right_ be the GeneratedSubRangeBindings of |GeneratedRangeItem| with arguments _start_ and _names_.
+          1. Return the list-concatenation of _left_ and _right_.
+        </emu-alg>
+        <emu-grammar>
+          GeneratedRangeItem :
+            GeneratedRangeTree
+            VendorExtensionItem
+            InvalidRangeItem
+        </emu-grammar>
+        <emu-alg>
+          1. Return « ».
+        </emu-alg>
+        <emu-grammar>
+          GeneratedSubRangeBinding :
+            `H` VariableIndex BindingFromList
+        </emu-grammar>
+        <emu-alg>
+          1. Let _variableIndex_ be the VLQUnsignedValue of |VariableIndex|.
+          1. Let _from_ be a new Position Accumulator Record { [[Line]]: _start_.[[Line]], [[Column]]: _start_.[[Column]] }.
+          1. Let _bindings_ be the SubRangeBinding of |BindingFromList| with arguments _from_ and _names_.
+          1. Return « { [[VariableIndex]]: _variableIndex_, [[Bindings]]: _bindings_ } ».
+        </emu-alg>
+      </emu-clause>
 
-        <emu-clause id="sec-SubRangeBinding" type="sdo">
-          <h1>
-            SubRangeBinding (
-              _from_: a Position Accumulator Record,
-              _names_: a List of Strings,
-            ): a List of Binding Records
-          </h1>
-          <dl class="header"></dl>
-          <emu-grammar>
-            BindingFromList : BindingFromList BindingFrom
-          </emu-grammar>
-          <emu-alg>
-            1. Let _left_ be the SubRangeBinding of |BindingFromList| with arguments _from_ and _names_.
-            1. Let _right_ be the SubRangeBinding of |BindingFrom| with arguments _from_ and _names_.
-            1. Return the list-concatenation of _left_ and _right_.
-          </emu-alg>
-          <emu-grammar>
-            BindingFrom : BindingLine BindingColumn BindingExpression
-          </emu-grammar>
-          <emu-alg>
-            1. Let _relativeLine_ be the VLQUnsignedValue of |BindingLine|.
-            1. Let _relativeColumn_ be the VLQUnsignedValue of |BindingColumn|.
-            1. Let _fromPosition_ be AccumulatePosition(_from_, _relativeLine_, _relativeColumn_).
-            1. Let _binding_ be the BindingExpression of |BindingExpression| with argument _names_.
-            1. Return « { [[From]]: _fromPosition_, [[Binding]]: _binding_ } ».
-          </emu-alg>
-        </emu-clause>
+      <emu-clause id="sec-SubRangeBinding" type="sdo">
+        <h1>
+          SubRangeBinding (
+            _from_: a Position Accumulator Record,
+            _names_: a List of Strings,
+          ): a List of Binding Records
+        </h1>
+        <dl class="header"></dl>
+        <emu-grammar>
+          BindingFromList : BindingFromList BindingFrom
+        </emu-grammar>
+        <emu-alg>
+          1. Let _left_ be the SubRangeBinding of |BindingFromList| with arguments _from_ and _names_.
+          1. Let _right_ be the SubRangeBinding of |BindingFrom| with arguments _from_ and _names_.
+          1. Return the list-concatenation of _left_ and _right_.
+        </emu-alg>
+        <emu-grammar>
+          BindingFrom : BindingLine BindingColumn BindingExpression
+        </emu-grammar>
+        <emu-alg>
+          1. Let _relativeLine_ be the VLQUnsignedValue of |BindingLine|.
+          1. Let _relativeColumn_ be the VLQUnsignedValue of |BindingColumn|.
+          1. Let _fromPosition_ be AccumulatePosition(_from_, _relativeLine_, _relativeColumn_).
+          1. Let _binding_ be the BindingExpression of |BindingExpression| with argument _names_.
+          1. Return « { [[From]]: _fromPosition_, [[Binding]]: _binding_ } ».
+        </emu-alg>
       </emu-clause>
     </emu-clause>
   </emu-clause>
+</emu-clause>
 
-  <emu-clause id="sec-sources">
-    <h1>Resolving sources</h1>
+<emu-clause id="sec-sources">
+  <h1>Resolving sources</h1>
 
-    <p>If the sources are not absolute URLs after prepending the sourceRoot, the sources are resolved relative to the source map (like resolving the script `src` attribute in an HTML document).</p>
+  <p>If the sources are not absolute URLs after prepending the sourceRoot, the sources are resolved relative to the source map (like resolving the script `src` attribute in an HTML document).</p>
 
-    <emu-clause id="sec-DecodeSourceMapSources" type="abstract operation">
-      <h1>
-        DecodeSourceMapSources (
-          _baseURL_: an URL,
-          _sourceRoot_: a String or *null*,
-          _sources_: a List of either Strings or *null*,
-          _sourcesContent_: a List of either Strings or *null*,
-          _ignoreList_: a List of non-negative integers,
-          <ins>_encodedScopes_: a List of Strings,</ins>
-          <ins>_names_: a List of Strings,</ins>
-        ): a Decoded Source Record
-      </h1>
-      <dl class="header"></dl>
-      <emu-alg>
-        1. Let _decodedSources_ be a new empty List.
-        1. Let _sourcesContentCount_ be the the number of elements in _sourcesContent_.
-        1. Let _sourceUrlPrefix_ be *""*.
-        1. If _sourceRoot_ ≠ *null*, then
-          1. If _sourceRoot_ ends with the code point U+002F (SOLIDUS), then
-            1. Set _sourceUrlPrefix_ to _sourceRoot_.
-          1. Else,
-            1. Set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
-        1. Let _index_ be 0.
-        1. Repeat, while _index_ &lt; _sources_' length,
-          1. Let _source_ be _sources_[_index_].
-          1. <ins>Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false*, [[RootScopes]]: *null* }.</ins>
-          1. If _source_ ≠ *null*, then
-            1. Set _source_ to the string-concatenation of _sourceUrlPrefix_ and _source_.
-            1. Let _sourceURL_ be the result of URL parsing _source_ with _baseURL_.
-            1. If _sourceURL_ is ~failure~, optionally report an error.
-            1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
-          1. If _ignoreList_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
-          1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
-          1. <ins>If _index_ &lt; _encodedScopes_' length, then</ins>
-            1. <ins>Let _decodedSourceScopes_ be DecodeSourceScopes(_encodedScopes_[_index_], _names_).</ins>
-            1. <ins>Set _decodedSource_.[[RootScopes]] to _decodedSourceScopes_.</ins>
-          1. Append _decodedSource_ to _decodedSources_.
-        1. Return _decodedSources_.
-      </emu-alg>
+  <emu-clause id="sec-DecodeSourceMapSources" type="abstract operation">
+    <h1>
+      DecodeSourceMapSources (
+        _baseURL_: an URL,
+        _sourceRoot_: a String or *null*,
+        _sources_: a List of either Strings or *null*,
+        _sourcesContent_: a List of either Strings or *null*,
+        _ignoreList_: a List of non-negative integers,
+        <ins>_encodedScopes_: a List of Strings,</ins>
+        <ins>_names_: a List of Strings,</ins>
+      ): a Decoded Source Record
+    </h1>
+    <dl class="header"></dl>
+    <emu-alg>
+      1. Let _decodedSources_ be a new empty List.
+      1. Let _sourcesContentCount_ be the the number of elements in _sourcesContent_.
+      1. Let _sourceUrlPrefix_ be *""*.
+      1. If _sourceRoot_ ≠ *null*, then
+        1. If _sourceRoot_ ends with the code point U+002F (SOLIDUS), then
+          1. Set _sourceUrlPrefix_ to _sourceRoot_.
+        1. Else,
+          1. Set _sourceUrlPrefix_ to the string-concatenation of _sourceRoot_ and *"/"*.
+      1. Let _index_ be 0.
+      1. Repeat, while _index_ &lt; _sources_' length,
+        1. Let _source_ be _sources_[_index_].
+        1. <ins>Let _decodedSource_ be the Decoded Source Record { [[URL]]: *null*, [[Content]]: *null*, [[Ignored]]: *false*, [[RootScopes]]: *null* }.</ins>
+        1. If _source_ ≠ *null*, then
+          1. Set _source_ to the string-concatenation of _sourceUrlPrefix_ and _source_.
+          1. Let _sourceURL_ be the result of URL parsing _source_ with _baseURL_.
+          1. If _sourceURL_ is ~failure~, optionally report an error.
+          1. Else, set _decodedSource_.[[URL]] to _sourceURL_.
+        1. If _ignoreList_ contains _index_, set _decodedSource_.[[Ignored]] to *true*.
+        1. If _sourcesContentCount_ > _index_, set _decodedSource_.[[Content]] to _sourcesContent_[_index_].
+        1. <ins>If _index_ &lt; _encodedScopes_' length, then</ins>
+          1. <ins>Let _decodedSourceScopes_ be DecodeSourceScopes(_encodedScopes_[_index_], _names_).</ins>
+          1. <ins>Set _decodedSource_.[[RootScopes]] to _decodedSourceScopes_.</ins>
+        1. Append _decodedSource_ to _decodedSources_.
+      1. Return _decodedSources_.
+    </emu-alg>
 
-      <emu-note>Implementations that support showing source contents but do not support showing multiple sources with the same URL and different content will arbitrarily choose one of the various contents corresponding to the given URL.</emu-note>
+    <emu-note>Implementations that support showing source contents but do not support showing multiple sources with the same URL and different content will arbitrarily choose one of the various contents corresponding to the given URL.</emu-note>
 
-      <emu-note>Implementations that support showing source contents but do not support showing multiple sources with the same URL and different content will arbitrarily choose one of the various contents corresponding to the given URL.</emu-note>
-    </emu-clause>
+    <emu-note>Implementations that support showing source contents but do not support showing multiple sources with the same URL and different content will arbitrarily choose one of the various contents corresponding to the given URL.</emu-note>
   </emu-clause>
+</emu-clause>
 
-  <emu-clause id="sec-extensions">
-    <h1>Extensions</h1>
+<emu-clause id="sec-extensions">
+  <h1>Extensions</h1>
 
-    <p>Source map consumers shall ignore any additional unrecognized properties, rather than causing the source map to be rejected, so that additional features can be added to this format without breaking existing users.</p>
-  </emu-clause>
+  <p>Source map consumers shall ignore any additional unrecognized properties, rather than causing the source map to be rejected, so that additional features can be added to this format without breaking existing users.</p>
+</emu-clause>
 </emu-clause>
 
 <emu-clause id="sec-index-source-map">
