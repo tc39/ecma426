@@ -1569,11 +1569,11 @@
 
       <emu-clause id="sec-vendor-extension-item-grammar">
         <h1>Vendor extension item grammar</h1>
-        <p>The specification reserves the `/` tag for vendor-specific extension items. |VendorExtensionName| must be interpreted with VLQUnsignedValue and is an absolute index into the <emu-xref href="#json-names">names</emu-xref> array. The corresponding string identifies the vendor-specific item.</p>
+        <p>The specification reserves the `V` tag for vendor-specific extension items. |VendorExtensionName| must be interpreted with VLQUnsignedValue and is an absolute index into the <emu-xref href="#json-names">names</emu-xref> array. The corresponding string identifies the vendor-specific item.</p>
         <emu-grammar type="definition">
           VendorExtensionItem :
-            `/` VendorExtensionName
-            `/` VendorExtensionName VlqList
+            `V` VendorExtensionName
+            `V` VendorExtensionName VlqList
 
           VendorExtensionName :
             Vlq
@@ -1593,7 +1593,7 @@
             InvalidScopeTag VlqList
 
           InvalidScopeTag :
-            Vlq but not `B` `C` `D` `/`
+            Vlq but not `B` `C` `D` `V`
         </emu-grammar>
 
         <emu-grammar type="definition">
@@ -1602,7 +1602,7 @@
             InvalidRangeTag VlqList
 
           InvalidRangeTag :
-            Vlq but not `E` `F` `G` `H` `I` `/`
+            Vlq but not `E` `F` `G` `H` `I` `V`
         </emu-grammar>
       </emu-clause>
     </emu-clause>
