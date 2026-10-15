@@ -2111,7 +2111,7 @@
           1. If _definition_ is not *null*, then
             1. Pop top element off _state_.[[DefinitionStack]].
           1. Return « Generated Range Record { [[Start]]: _start_, [[End]]: _end_, [[Definition]]: _definition_, [[StackFrameType]]: _stackFrameType_, [[Bindings]]: _bindings_, [[CallSite]]: _callSite_, [[Children]]: _children_ } ».
-                              </emu-alg>
+        </emu-alg>
         <emu-note>The GeneratedRangeCallSite operation is executed before pushing the _definition_ of the new generated range so that only parent definitions are on the stack for the operation.</emu-note>
         <emu-grammar>
           GeneratedRangeItemList : GeneratedRangeItemList `,` GeneratedRangeItem
@@ -2218,15 +2218,16 @@
           </emu-alg>
           <emu-note>
             <p>It is always possible to encode a call-site position directly via the first `I` production.</p>
-            <p>It is usually more concise to encode the position relative to a scope containing the call site via the `J` productions. </p>
+            <p>It is usually more concise to encode the position relative to a scope containing the call site via the `J` productions.</p>
           </emu-note>
 
           <emu-clause id="sec-ParentDefinition" type="abstract operation">
             <h1>
               ParentDefinition (
                 _state_: A Decode Range State Record,
-                _parentRangeIndex_: an integer
-              ): an Original Scope Record, or *null*</h1>
+                _parentRangeIndex_: an integer,
+              ): an Original Scope Record
+            </h1>
             <dl class="header">
               <dt>description</dt>
               <dd>A |GeneratedRangeCallSite| belongs to a generated range for code inlined into a host function. The Original Scope Record is the [[Definition]] of one of the parent ranges. The _parentRangeIndex_ starts with 0 indicating the nearest parent Generated Range Record having a definition. The operation considers only ranges with definitions.</dd>
