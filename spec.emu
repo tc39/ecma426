@@ -1462,6 +1462,7 @@
 
           GeneratedRangeCallSiteItem :
             `,` GeneratedRangeCallSite
+            `,` GeneratedRangeRelativeCallSite
 
           GeneratedRangeItemList :
             `,` GeneratedRangeItem
@@ -1498,8 +1499,11 @@
 
           GeneratedRangeCallSite :
             `I` CallSiteSourceIdx CallSiteLine CallSiteColumn
-            `I` CallSiteLineOffset CallSiteColumn
-            `I` CallSiteColumnOffset
+
+          GeneratedRangeRelativeCallSite :
+            `J` CallSiteRangeParentIdx CallSiteLineOffset CallSiteColumn
+            `J` CallSiteLineOffset CallSiteColumn
+            `J` CallSiteColumnOffset
 
           RangeDefinition :
             DefinitionSourceIdx DefinitionScopeIdx
@@ -1526,6 +1530,9 @@
             Vlq
 
           CallSiteSourceIdx :
+            Vlq
+
+          CallSiteRangeParentIdx :
             Vlq
 
           CallSiteLine :
@@ -1678,6 +1685,11 @@
               <td>[[RangeDefinitionScopeIndex]]</td>
               <td>an Index Accumulator Record</td>
               <td>|RangeDefinition|</td>
+            </tr>
+            <tr>
+              <td>[[DefinitionStack]]</td>
+              <td>a List of Original Scope Records</td>
+              <td>|GeneratedRangeTree| and |GeneratedRangeCallSiteItem|</td>
             </tr>
           </table>
         </emu-table>
@@ -2021,7 +2033,7 @@
             1. Let _rangePosition_ be a new Position Accumulator Record { [[Line]]: 0, [[Column]]: 0 }.
             1. Let _rangeDefinitionSourceIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
             1. Let _rangeDefinitionScopeIndex_ be a new Index Accumulator Record { [[Index]]: 0 }.
-            1. Let _state_ be a new Decode Range State Record { [[RangePosition]]: _rangePosition_, [[RangeDefinitionSourceIndex]]: _rangeDefinitionSourceIndex_ [[RangeDefinitionScopeIndex]]: _rangeDefinitionScopeIndex_ }.
+            1. Let _state_ be a new Decode Range State Record { [[RangePosition]]: _rangePosition_, [[RangeDefinitionSourceIndex]]: _rangeDefinitionSourceIndex_ [[RangeDefinitionScopeIndex]]: _rangeDefinitionScopeIndex_, [[DefinitionStack]]: « »}.
             1. Let _segmentResult_ be the DecodedGeneratedRangeTrees of _parsedRanges_ with arguments _state_, _sources_ and _names_.
             1. If _segmentResult_ is not empty and _result_ is not empty, then
               1. Let _previousRange_ be the last element of _result_.
@@ -2078,9 +2090,11 @@
           1. Else,
             1. Let _bindings_ be « ».
           1. If |GeneratedRangeCallSiteItem| is present, then
-            1. Let _callSite_ be the GeneratedRangeCallSite of |GeneratedRangeCallSiteItem| with argument _sources_.
+            1. Let _callSite_ be the GeneratedRangeCallSite of |GeneratedRangeCallSiteItem| with arguments _state_ and _sources_.
           1. Else,
             1. Let _callSite_ be *null*.
+          1. If _definition_ is not *null*, then
+            1. Push _definition_ on _state_.[[DefinitionStack]].
           1. If |GeneratedRangeItemList| is present, then
             1. Let _children_ be the DecodedGeneratedRangeTrees of |GeneratedRangeItemList| with arguments _state_, _sources_ and _names_.
           1. Else,
@@ -2094,8 +2108,11 @@
               1. Else,
                 1. Optionally report an error.
           1. Let _end_ be the DecodedPosition of |GeneratedRangeEnd| with argument _state_.[[RangePosition]].
+          1. If _definition_ is not *null*, then
+            1. Pop top element off _state_.[[DefinitionStack]].
           1. Return « Generated Range Record { [[Start]]: _start_, [[End]]: _end_, [[Definition]]: _definition_, [[StackFrameType]]: _stackFrameType_, [[Bindings]]: _bindings_, [[CallSite]]: _callSite_, [[Children]]: _children_ } ».
-        </emu-alg>
+                              </emu-alg>
+        <emu-note>The GeneratedRangeCallSite operation is executed before pushing the _definition_ of the new generated range so that only parent definitions are on the stack for the operation.</emu-note>
         <emu-grammar>
           GeneratedRangeItemList : GeneratedRangeItemList `,` GeneratedRangeItem
         </emu-grammar>
@@ -2146,6 +2163,7 @@
         <emu-clause id="sec-GeneratedRangeCallSite" type="sdo">
           <h1>
             GeneratedRangeCallSite (
+              _state_: a Decode Range State Record,
               _sources_: a List of Decoded Source Record,
             ): a Original Position Record
           </h1>
@@ -2165,40 +2183,57 @@
             1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
           <emu-grammar>
-            GeneratedRangeCallSite :
-              `I` CallSiteLineOffset CallSiteColumn
+            GeneratedRangeRelativeCallSite :
+              `J` CallSiteRangeParentIdx CallSiteLineOffset CallSiteColumn
           </emu-grammar>
           <emu-alg>
-            1. Let _parentDefinition_ be InliningParentRange()[[Definition]].
+            1. Let _parentDefinitionIndex_ be the VLQUnsignedValue of |CallSiteRangeParentIdx|.
+            1. Let _parentDefinition_ be ParentDefinition(_state_, _parentDefinitionIndex_).
             1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
-            1. Let _line_ be _parentDefinition_[[Start]][[Line]] + the VLQUnsignedValue of |CallSiteLineOffset|.
-            1. Let _column_ be the VLQUnsignedValue of |CallSiteColumn|.
+            1. Let _line_ be _parentDefinition_.[[Start]].[[Line]].
+            1. Let _column_ be _parentDefinition_.[[Start]].[[Column]] + the VLQUnsignedValue of |CallSiteColumnOffset|.
             1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
           <emu-grammar>
-            GeneratedRangeCallSite :
-              `I` CallSiteColumnOffset
+            GeneratedRangeRelativeCallSite :
+              `J` CallSiteLineOffset CallSiteColumn
           </emu-grammar>
           <emu-alg>
-            1. Let _parentDefinition_ be InliningParentRange()[[Definition]].
+            1. Let _parentDefinition_ be ParentDefinition(_state_, 0).
             1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
-            1. Let _line_ be _parentDefinition_[[Start]][[Line]].
-            1. Let _column_ be _parentDefinition_[[Start]][[Column]] + the VLQUnsignedValue of |CallSiteColumnOffset|.
+            1. Let _line_ be _parentDefinition_.[[Start]].[[Line]] + the VLQUnsignedValue if |CallSiteLineOffset].
+            1. Let _column_ be the VLQUnsignedValue of |CallSiteColumnOffset|.
+            1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
+          </emu-alg>
+          <emu-grammar>
+            GeneratedRangeRelativeCallSite :
+              `J` CallSiteColumnOffset
+          </emu-grammar>
+          <emu-alg>
+            1. Let _parentDefinition_ be ParentDefinition(_state_, 0).
+            1. Let _source_ be SourceOfScope(_sources_, _parentDefinition_).
+            1. Let _line_ be _parentDefinition_.[[Start]].[[Line]].
+            1. Let _column_ be _parentDefinition_.[[Start]].[[Column]] + the VLQUnsignedValue of |CallSiteColumnOffset|.
             1. Return a new Original Position Record { [[Source]]: _source_, [[Line]]: _line_, [[Column]]: _column_ }.
           </emu-alg>
           <emu-note>
-            <p>It is always possible to encode a call-site position directly via the first production.</p>
-            <p>It is usually more concise to encode the position relative to the scope of the function containing the call site via the second or third production.</p>
+            <p>It is always possible to encode a call-site position directly via the first `I` production.</p>
+            <p>It is usually more concise to encode the position relative to a scope containing the call site via the `J` productions. </p>
           </emu-note>
 
-          <emu-clause id="sec-InliningParentRange" type="abstract operation">
-            <h1>InliningParentRange ( ): an Generated Range Record, or *null*</h1>
+          <emu-clause id="sec-ParentDefinition" type="abstract operation">
+            <h1>
+              ParentDefinition (
+                _state_: A Decode Range State Record,
+                _parentRangeIndex_: an integer
+              ): an Original Scope Record, or *null*</h1>
             <dl class="header">
               <dt>description</dt>
-              <dd>A |GeneratedRangeCallSite| belongs to a generated range for code inlined into a host function. The operation returns the closest enclosing (i.e. parent) Generated Range Record _range_ of the owning generated range for which _range_[[Definition]] ≠ *null* and _range_[[Definition]][[IsStackFrame]] is *true*.</dd>
+              <dd>A |GeneratedRangeCallSite| belongs to a generated range for code inlined into a host function. The Original Scope Record is the [[Definition]] of one of the parent ranges. The _parentRangeIndex_ starts with 0 indicating the nearest parent Generated Range Record having a definition. The operation considers only ranges with definitions.</dd>
             </dl>
             <emu-alg>
-              1. TBD.
+              1. Let _stack_ be _state_.[[DefinitionStack]].
+              1. Return _stack_[_stack_.length - _parentRangeIndex_ - 1].
             </emu-alg>
           </emu-clause>
 
