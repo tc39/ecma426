@@ -1257,7 +1257,7 @@
             1. NOTE: This part of the decoding algorithm checks that entries of the sections field of index source maps are ordered and do not overlap. While it is expected that generators should not produce index source maps with overlapping sections, source map consumers may, for example, only check the simpler condition that the section offsets are ordered.
           1. Let _mapField_ be JSONObjectGet(_section_, *"map"*).
           1. If _mapField_ is not a JSON object, throw an error.
-          1. Let _decodedSectionCompletion_ be Completion(DecodeSourceMap(_json_, _baseURL_)).
+          1. Let _decodedSectionCompletion_ be Completion(DecodeSourceMap(_mapField_, _baseURL_)).
           1. If _decodedSectionCompletion_ is a throw completion, then
             1. Optionally report an error.
           1. Else,
@@ -1274,7 +1274,7 @@
             1. Set _sourceMap_.[[Mappings]] to the list-concatenation of _sourceMap_.[[Mappings]] and _offsetMappings_.
             1. Set _previousOffsetPosition_ to _offsetPosition_.
             1. If _offsetMappings_ is not empty, set _previousLastMapping_ to the last element of _offsetMappings_.
-        1. Return _sourceMap_.
+      1. Return _sourceMap_.
     </emu-alg>
 
     <emu-note>
