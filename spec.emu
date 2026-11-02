@@ -1243,10 +1243,10 @@
           1. If _offset_ is not a JSON object, throw an error.
           1. Let _offsetLine_ be JSONObjectGet(_offset_, *"line"*).
           1. Let _offsetColumn_ be JSONObjectGet(_offset_, *"column"*).
-          1. If _offsetLine_ is not an integral Number, then
+          1. If _offsetLine_ is not a non-negative integral Number, then
             1. Optionally report an error.
             1. Set _offsetLine_ to *+0*<sub>𝔽</sub>.
-          1. If _offsetColumn_ is not an integral Number, then
+          1. If _offsetColumn_ is not a non-negative integral Number, then
             1. Optionally report an error.
             1. Set _offsetColumn_ to *+0*<sub>𝔽</sub>.
           1. Let _offsetPosition_ be a new Position Record { [[Line]]: _offsetLine_, [[Column]]: _offsetColumn_ }.
