@@ -758,7 +758,7 @@
       <emu-clause id="sec-GetOptionalListOfArrayIndexes" type="abstract operation">
         <h1>
           GetOptionalListOfArrayIndexes (
-            _object_: an Object,
+            _object_: a JSON object,
             _key_: a String,
           ): a List of non-negative integers
         </h1>
@@ -1221,7 +1221,7 @@
   <emu-clause id="sec-DecodeIndexSourceMap" type="abstract operation">
     <h1>
       DecodeIndexSourceMap (
-        _json_: an Object,
+        _json_: a JSON object,
         _baseURL_: an URL,
       ): a Decoded Source Map Record
     </h1>
