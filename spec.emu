@@ -685,7 +685,7 @@
         1. Let _sources_ be DecodeSourceMapSources(_baseURL_, _sourceRootField_, _sourcesField_, _sourcesContentField_, _ignoreListField_).
         1. Let _namesField_ be GetOptionalListOfStrings(_json_, *"names"*).
         1. Let _mappings_ be DecodeMappings(_mappingsField_, _namesField_, _sources_).
-        1. [declared="a,b"] Sort _mappings_ in ascending order, with a Decoded Mapping Record _a_ being less than a Decoded Mapping Record _b_ if ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~.
+        1. Set _mappings_ to SortMappings(_mappings_).
         1. Return the Decoded Source Map Record { [[File]]: _fileField_, [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
       </emu-alg>
 
@@ -1052,6 +1052,25 @@
         1. Perform DecodeMappingsField of _mappingsNode_ with arguments _state_, _mappings_, _names_ and _sources_.
         1. Return _mappings_.
       </emu-alg>
+    </emu-clause>
+
+    <emu-clause id="sec-sortmappings" type="abstract operation">
+      <h1>
+        SortMappings (
+          _mappings_: a List of Decoded Mapping Records,
+        ): a List of Decoded Mapping Records
+      </h1>
+      <dl class="header">
+        <dt>description</dt>
+        <dd>It returns a new List containing the elements of _mappings_ ordered by their [[GeneratedPosition]] fields. Elements whose generated positions are equal keep their relative order from _mappings_.</dd>
+      </dl>
+      <emu-alg>
+        1. [declared="a,b"] Let _sortedMappings_ be a List whose elements are exactly the elements of _mappings_, ordered such that for any two elements _a_ and _b_ of _sortedMappings_ where _a_ precedes _b_, ComparePositions(_a_.[[GeneratedPosition]], _b_.[[GeneratedPosition]]) is ~lesser~ or ~equal~, and if it is ~equal~ then _a_ also precedes _b_ in _mappings_.
+        1. Return _sortedMappings_.
+      </emu-alg>
+      <emu-note>
+        <p>Since SortMappings is a stable sort, keyed on generated position, generators that emit several mappings for the same generated position should emit them in the order they want consumers to see.</p>
+      </emu-note>
     </emu-clause>
 
     <emu-clause id="sec-mappings-for-generated-javascript-code">
