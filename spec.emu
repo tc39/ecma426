@@ -279,7 +279,7 @@
 
 <emu-clause id="sec-base64-vlq">
   <h1>base64 VLQ</h1>
-  <p>A <dfn id="sec-base64-vlq">base64 VLQ</dfn> is a <emu-xref href="#sec-references-informative">base64</emu-xref>-encoded variable-length quantity, where the most significant bit (the 6th bit) is used as the continuation bit, and the “digits” are encoded into the string least significant first, and where the least significant bit of the first digit is used as the sign bit.</p>
+  <p>A <dfn id="dfn-base64-vlq">base64 VLQ</dfn> is a <emu-xref href="#sec-references-informative">base64</emu-xref>-encoded variable-length quantity, where the most significant bit (the 6th bit) is used as the continuation bit, and the “digits” are encoded into the string least significant first, and where the least significant bit of the first digit is used as the sign bit.</p>
   <emu-note>The values that can be represented by the base64 VLQ encoding are limited to 32-bit quantities until some use case for larger values is presented. This means that values exceeding 32-bits are invalid and implementations may reject them. The sign bit is counted towards the limit, but the continuation bits are not.</emu-note>
   <emu-note example>
     The string `"iB"` represents a base64 VLQ with two digits. The first digit `"i"` encodes the bit pattern `0b100010`, which has a continuation bit of `1` (the VLQ continues), a sign bit of `0` (non-negative), and the value bits `0b0001`. The second digit `B` encodes the bit pattern `0b000001`, which has a continuation bit of `0`, no sign bit, and value bits `0b00001`. The decoding of this VLQ string is the number 17.
