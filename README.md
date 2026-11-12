@@ -29,6 +29,7 @@ don't have widespread adoption in tools.
 | [Range Mappings](https://github.com/tc39/ecma426/blob/main/proposals/range-mappings.md) | Tobias Koppers          | Stage 2 |
 | [Debug ID](https://github.com/tc39/ecma426/blob/main/proposals/debug-id.md)             | Luca Forstner           | Stage 2 |
 | [Env](https://github.com/tc39/ecma426/blob/main/proposals/env.md)                       | Nick Fitzgerald         | Stage 1 |
+| [Ignore try/catch](https://github.com/tc39/ecma426/blob/main/proposals/ignore-try-catch.md) | Nicolò Ribaudo | Stage 1 |
 
 ## License
 
