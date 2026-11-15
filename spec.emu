@@ -1376,7 +1376,7 @@
                 1. Let _second_ be _line_[_position_].
                 1. If _second_ is U+002F (SOLIDUS), then
                   1. Set _position_ to _position_ + 1.
-                  1. Let _comment_ be the substring of _lineStr_ from _position_ to _lineLength_.
+                  1. Let _comment_ be CodePointsToString(the sequence of code points in _line_ from index _position_ to the end of _line_).
                   1. If _comment_ contains one of the code points U+0022 (QUOTATION MARK), U+0027 (APOSTROPHE), or U+0060 (GRAVE ACCENT), then
                     1. Return *null*.
                   1. If _comment_ contains the code point U+002A (ASTERISK) immediately followed by the code point U+002F (SOLIDUS), then
