@@ -1504,6 +1504,33 @@
   <p>After decoding a source map, source map consumers can use the resulting Decoded Source Map Records to look up position information for debugging or other use cases. This section describes the behaviour of typical operations that may be supported by source map consumers.</p>
   <p>The GetOriginalPositions operation may be used to query the positions in an original source that correspond to a position in the generated code. For example, this can be used in a debugger to navigate from the generated code to the original source based on a user's mouse click.</p>
 
+  <emu-clause id="sec-getmappingsforposition" type="abstract operation">
+    <h1>
+      GetMappingsForPosition (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _generatedPosition_: a Position Record,
+      ): a List of Decoded Mapping Records
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>It returns the <emu-xref href="#decoded-mapping-record">mappings</emu-xref> of _sourceMapRecord_ that apply to _generatedPosition_: those whose [[GeneratedPosition]] is the last one that does not occur after _generatedPosition_.</dd>
+    </dl>
+    <emu-alg>
+      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
+      1. Let _last_ be *null*.
+      1. Let _mappingsForPosition_ be a new empty List.
+      1. For each element _mapping_ of _mappings_, in reverse List order, do
+        1. If _last_ is *null*, then
+          1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~lesser~ or ~equal~, then
+            1. Set _last_ to _mapping_.
+      1. If _last_ is not *null*, then
+        1. For each element _mapping_ of _mappings_, do
+          1. If the result of performing ComparePositions(_last_.[[GeneratedPosition]], _mapping_.[[GeneratedPosition]]) is ~equal~, then
+            1. Append _mapping_ to _mappingsForPosition_.
+      1. Return _mappingsForPosition_.
+    </emu-alg>
+  </emu-clause>
+
   <emu-clause id="sec-GetOriginalPositions" type="abstract operation">
     <h1>
       GetOriginalPositions (
@@ -1513,17 +1540,9 @@
     </h1>
     <dl class="header"></dl>
     <emu-alg>
-      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
-      1. Let _last_ be *null*.
       1. Let _originalPositions_ be a new empty List.
-      1. For each element _mapping_ of _mappings_, in reverse List order, do
-        1. If _last_ is *null*, then
-          1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~lesser~ or ~equal~, then
-            1. Set _last_ to _mapping_.
-      1. If _last_ is not *null*, then
-        1. For each element _mapping_ of _mappings_, do
-          1. If the result of performing ComparePositions(_last_.[[GeneratedPosition]], _mapping_.[[GeneratedPosition]]) is ~equal~, then
-            1. Append _mapping_.[[OriginalPosition]] to _originalPositions_.
+      1. For each element _mapping_ of GetMappingsForPosition(_sourceMapRecord_, _generatedPosition_), do
+        1. Append _mapping_.[[OriginalPosition]] to _originalPositions_.
       1. Return _originalPositions_.
     </emu-alg>
   </emu-clause>
