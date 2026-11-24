@@ -1503,6 +1503,7 @@
 
   <p>After decoding a source map, source map consumers can use the resulting Decoded Source Map Records to look up position information for debugging or other use cases. This section describes the behaviour of typical operations that may be supported by source map consumers.</p>
   <p>The GetOriginalPositions operation may be used to query the positions in an original source that correspond to a position in the generated code. For example, this can be used in a debugger to navigate from the generated code to the original source based on a user's mouse click.</p>
+  <p>The ComposeSourceMaps operation may be used when generated code is the result of more than one transformation, each of which produced its own source map. For example, a minifier's source map can be composed with that of the compiler that produced the minifier's input, giving a single source map from the minified code to the originally authored sources.</p>
 
   <emu-clause id="sec-getmappingsforposition" type="abstract operation">
     <h1>
