@@ -1211,7 +1211,7 @@
           </tr>
         </table>
       </emu-table>
-      <p>A root Original Scope Record describes the lexical scope tree of a original source file.</p>
+      <p>A root Original Scope Record describes a lexical scope tree of an original source file. Child scopes in [[Children]] must be contained within their parent scope ([[Start]] is not before the parent's [[Start]] and [[End]] is not after the parent's [[End]]). Sibling scopes may overlap or share identical [[Start]] and [[End]] positions.</p>
       <emu-note>
         In case the original source language is JavaScript or JavaScript-like, source map generators are encouraged to use the terms <em>Block</em>, <em>Function</em>, <em>Script</em>/<em>Module</em> and <em>Global</em> for the [[Kind]] field where it makes sense.
       </emu-note>
@@ -1417,7 +1417,7 @@
           ScopeVariable :
             Vlq
         </emu-grammar>
-        <p>The VLQUnsignedValue of |ScopeFlags| encodes the presence of |ScopeNameOrKind| and |ScopeKind| and marks the scope as a function:</p>
+        <p>The VLQUnsignedValue of |ScopeFlags| encodes the presence of |ScopeNameOrKind| and |ScopeKind|, marks the scope as a function, and indicates the direction of the relative position offset:</p>
         <emu-table id="table-scope-flags" caption="|ScopeFlags| bits">
           <table>
             <thead>
@@ -1437,6 +1437,10 @@
             <tr>
               <td>0x4</td>
               <td>Mark this scope as something callable. That is the [[IsStackFrame]] field is set to *true*.</td>
+            </tr>
+            <tr>
+              <td>0x8</td>
+              <td>The relative position offset in |ScopeLine| (or |ScopeColumn| if |ScopeLine| is 0) is subtracted from, rather than added to, the position accumulator. Allows sibling original scopes to overlap.</td>
             </tr>
           </table>
         </emu-table>
@@ -1754,8 +1758,8 @@
           <h1>
             AccumulatePosition (
               _accumulator_: a Position Accumulator Record,
-              _lineIncrement_: a non-negative integer,
-              _columnIncrement_: a non-negative integer,
+              _lineIncrement_: an integer,
+              _columnIncrement_: an integer,
             ): a Position Record
           </h1>
           <dl class="header">
@@ -1764,10 +1768,16 @@
           </dl>
           <emu-alg>
             1. Set _accumulator_.[[Line]] to _accumulator_.[[Line]] + _lineIncrement_.
+            1. If _accumulator_.[[Line]] &lt; 0, then
+              1. Optionally report an error.
+              1. Set _accumulator_.[[Line]] to 0.
             1. If _lineIncrement_ = 0, then
               1. Set _accumulator_.[[Column]] to _accumulator_.[[Column]] + _columnIncrement_.
             1. Else,
               1. Set _accumulator_.[[Column]] to _columnIncrement_.
+            1. If _accumulator_.[[Column]] &lt; 0, then
+              1. Optionally report an error.
+              1. Set _accumulator_.[[Column]] to 0.
             1. Return { [[Line]]: _accumulator_.[[Line]], [[Column]]: _accumulator_.[[Column]] }.
           </emu-alg>
         </emu-clause>
@@ -1849,6 +1859,9 @@
           1. If |OriginalScopeTreeList| is present, then
             1. Set _originalScope_.[[Children]] to the DecodedOriginalScopeTrees of |OriginalScopeTreeList| with arguments _state_ and _names_.
           1. Set _originalScope_.[[End]] to the DecodedPosition of |OriginalScopeEnd| with argument _state_.[[ScopePosition]].
+          1. If ComparePositions(_originalScope_.[[End]], _originalScope_.[[Start]]) is ~lesser~, optionally report an error.
+          1. For each Original Scope Record _child_ of _originalScope_.[[Children]], do
+            1. If ComparePositions(_child_.[[Start]], _originalScope_.[[Start]]) is ~lesser~ or ComparePositions(_originalScope_.[[End]], _child_.[[End]]) is ~lesser~, optionally report an error.
           1. Return « _originalScope_ ».
         </emu-alg>
 
@@ -1862,7 +1875,17 @@
           <emu-grammar>
             OriginalScopeStart :
               `B` ScopeFlags ScopeLine ScopeColumn ScopeNameOrKind? ScopeKind? VlqList?
-
+          </emu-grammar>
+          <emu-alg>
+            1. Let _flags_ be the VLQUnsignedValue of |ScopeFlags|.
+            1. Let _relativeLine_ be the VLQUnsignedValue of |ScopeLine|.
+            1. Let _column_ be the VLQUnsignedValue of |ScopeColumn|.
+            1. If _flags_ & 0x8 = 0x8, then
+              1. If _relativeLine_ = 0, set _column_ to -_column_.
+              1. Else, set _relativeLine_ to -_relativeLine_.
+            1. Return AccumulatePosition(_accumulator_, _relativeLine_, _column_).
+          </emu-alg>
+          <emu-grammar>
             OriginalScopeEnd :
               `C` ScopeLine ScopeColumn VlqList?
           </emu-grammar>
@@ -1883,6 +1906,7 @@
             1. Let _relativeColumn_ be the VLQUnsignedValue of |RangeColumn|.
             1. Return AccumulatePosition(_accumulator_, _relativeLine_, _relativeColumn_).
           </emu-alg>
+          <emu-note>For |OriginalScopeStart|, setting bit 0x8 of |ScopeFlags| negates the relative line offset (or column offset when |ScopeLine| is 0), allowing sibling original scopes to overlap or share identical spans (for example, monomorphized generics, macro expansions, or compiler-synthesized accessors) while keeping |ScopeLine| and |ScopeColumn| unsigned. |OriginalScopeEnd| remains unsigned and non-negative because a scope's end position is never before its start position or the end position of its last child.</emu-note>
         </emu-clause>
 
         <emu-clause id="sec-OriginalScopeName" type="sdo">
