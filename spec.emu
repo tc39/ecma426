@@ -1503,6 +1503,34 @@
 
   <p>After decoding a source map, source map consumers can use the resulting Decoded Source Map Records to look up position information for debugging or other use cases. This section describes the behaviour of typical operations that may be supported by source map consumers.</p>
   <p>The GetOriginalPositions operation may be used to query the positions in an original source that correspond to a position in the generated code. For example, this can be used in a debugger to navigate from the generated code to the original source based on a user's mouse click.</p>
+  <p>The ComposeSourceMaps operation may be used when generated code is the result of more than one transformation, each of which produced its own source map. For example, a minifier's source map can be composed with that of the compiler that produced the minifier's input, giving a single source map from the minified code to the originally authored sources.</p>
+
+  <emu-clause id="sec-getmappingsforposition" type="abstract operation">
+    <h1>
+      GetMappingsForPosition (
+        _sourceMapRecord_: a Decoded Source Map Record,
+        _generatedPosition_: a Position Record,
+      ): a List of Decoded Mapping Records
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>It returns the <emu-xref href="#decoded-mapping-record">mappings</emu-xref> of _sourceMapRecord_ that apply to _generatedPosition_: those whose [[GeneratedPosition]] is the last one that does not occur after _generatedPosition_.</dd>
+    </dl>
+    <emu-alg>
+      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
+      1. Let _last_ be *null*.
+      1. Let _mappingsForPosition_ be a new empty List.
+      1. For each element _mapping_ of _mappings_, in reverse List order, do
+        1. If _last_ is *null*, then
+          1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~lesser~ or ~equal~, then
+            1. Set _last_ to _mapping_.
+      1. If _last_ is not *null*, then
+        1. For each element _mapping_ of _mappings_, do
+          1. If the result of performing ComparePositions(_last_.[[GeneratedPosition]], _mapping_.[[GeneratedPosition]]) is ~equal~, then
+            1. Append _mapping_ to _mappingsForPosition_.
+      1. Return _mappingsForPosition_.
+    </emu-alg>
+  </emu-clause>
 
   <emu-clause id="sec-GetOriginalPositions" type="abstract operation">
     <h1>
@@ -1513,19 +1541,55 @@
     </h1>
     <dl class="header"></dl>
     <emu-alg>
-      1. Let _mappings_ be _sourceMapRecord_.[[Mappings]].
-      1. Let _last_ be *null*.
       1. Let _originalPositions_ be a new empty List.
-      1. For each element _mapping_ of _mappings_, in reverse List order, do
-        1. If _last_ is *null*, then
-          1. If the result of performing ComparePositions(_mapping_.[[GeneratedPosition]], _generatedPosition_) is ~lesser~ or ~equal~, then
-            1. Set _last_ to _mapping_.
-      1. If _last_ is not *null*, then
-        1. For each element _mapping_ of _mappings_, do
-          1. If the result of performing ComparePositions(_last_.[[GeneratedPosition]], _mapping_.[[GeneratedPosition]]) is ~equal~, then
-            1. Append _mapping_.[[OriginalPosition]] to _originalPositions_.
+      1. For each element _mapping_ of GetMappingsForPosition(_sourceMapRecord_, _generatedPosition_), do
+        1. Append _mapping_.[[OriginalPosition]] to _originalPositions_.
       1. Return _originalPositions_.
     </emu-alg>
+  </emu-clause>
+
+  <emu-clause id="sec-composesourcemaps" type="abstract operation">
+    <h1>
+      ComposeSourceMaps (
+        _outerMap_: a Decoded Source Map Record,
+        _innerMap_: a Decoded Source Map Record,
+        _source_: a Decoded Source Record that is an element of _outerMap_.[[Sources]],
+      ): a Decoded Source Map Record
+    </h1>
+    <dl class="header">
+      <dt>description</dt>
+      <dd>It returns a source map for the same generated code as _outerMap_, where _source_ is itself generated code described by _innerMap_. Each <emu-xref href="#decoded-mapping-record">mapping</emu-xref> into _source_ is replaced by the mappings of _innerMap_ that apply to its original position.</dd>
+    </dl>
+    <emu-alg>
+      1. Let _sources_ be a new empty List.
+      1. For each element _outerSource_ of _outerMap_.[[Sources]], do
+        1. If _outerSource_ is _source_, then
+          1. For each element _innerSource_ of _innerMap_.[[Sources]], do
+            1. If _sources_ does not contain _innerSource_, append _innerSource_ to _sources_.
+        1. Else if _sources_ does not contain _outerSource_, then
+          1. Append _outerSource_ to _sources_.
+      1. Let _mappings_ be a new empty List.
+      1. For each element _mapping_ of _outerMap_.[[Mappings]], do
+        1. Let _generatedPosition_ be _mapping_.[[GeneratedPosition]].
+        1. Let _originalPosition_ be _mapping_.[[OriginalPosition]].
+        1. If _originalPosition_ is *null* or _originalPosition_.[[Source]] is not _source_, then
+          1. Append _mapping_ to _mappings_.
+        1. Else,
+          1. Let _intermediatePosition_ be a new Position Record { [[Line]]: _originalPosition_.[[Line]], [[Column]]: _originalPosition_.[[Column]] }.
+          1. Let _innerMappings_ be GetMappingsForPosition(_innerMap_, _intermediatePosition_).
+          1. If _innerMappings_ is empty, then
+            1. Append a new Decoded Mapping Record { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: *null*, [[Name]]: *null* } to _mappings_.
+            1. NOTE: Without this <emu-xref href="#decoded-mapping-record">mapping</emu-xref>, the preceding one would appear to extend over this position.
+          1. For each element _innerMapping_ of _innerMappings_, do
+            1. If _innerMapping_.[[OriginalPosition]] is *null*, then
+              1. Append a new Decoded Mapping Record { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: *null*, [[Name]]: *null* } to _mappings_.
+            1. Else,
+              1. Let _name_ be _innerMapping_.[[Name]].
+              1. If _name_ is *null*, set _name_ to _mapping_.[[Name]].
+              1. Append a new Decoded Mapping Record { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: _innerMapping_.[[OriginalPosition]], [[Name]]: _name_ } to _mappings_.
+      1. Return the Decoded Source Map Record { [[File]]: _outerMap_.[[File]], [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
+    </emu-alg>
+    <emu-note>For any generated position, the original positions given by GetOriginalPositions for the returned source map are those given by GetOriginalPositions for _outerMap_, except that each one whose source is _source_ is replaced by the original positions that GetOriginalPositions gives for it in _innerMap_, or by *null* if there are none.</emu-note>
   </emu-clause>
 </emu-clause>
 
