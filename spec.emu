@@ -1589,6 +1589,7 @@
               1. Append a new Decoded Mapping Record { [[GeneratedPosition]]: _generatedPosition_, [[OriginalPosition]]: _innerMapping_.[[OriginalPosition]], [[Name]]: _name_ } to _mappings_.
       1. Return the Decoded Source Map Record { [[File]]: _outerMap_.[[File]], [[Sources]]: _sources_, [[Mappings]]: _mappings_ }.
     </emu-alg>
+    <emu-note>For any generated position, the original positions given by GetOriginalPositions for the returned source map are those given by GetOriginalPositions for _outerMap_, except that each one whose source is _source_ is replaced by the original positions that GetOriginalPositions gives for it in _innerMap_, or by *null* if there are none.</emu-note>
   </emu-clause>
 </emu-clause>
 
